@@ -6,13 +6,11 @@ import GoogleProvider from "next-auth/providers/google";
 declare module "next-auth" {
   interface User {
     role?: string;
-    organizationId?: string;
   }
   interface Session {
     user: {
       id: string;
       role?: string;
-      organizationId?: string;
     } & DefaultSession["user"];
   }
 }
@@ -47,14 +45,12 @@ export const authOptions: NextAuthOptions = {
       if (session?.user) {
         session.user.id = token.sub!;
         session.user.role = token.role as string;
-        session.user.organizationId = token.organizationId as string;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        token.organizationId = user.organizationId;
       }
       return token;
     },

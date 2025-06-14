@@ -3,7 +3,6 @@ import { Toaster } from "react-hot-toast";
 
 export default function SubmitExpensesPage() {
   // TODO: Get these from the authenticated user's session
-  const organizationId = "temp-org-id";
   const userId = "temp-user-id";
 
   return (
@@ -16,10 +15,7 @@ export default function SubmitExpensesPage() {
           </p>
         </div>
 
-        <ExpenseSubmissionForm
-          organizationId={organizationId}
-          userId={userId}
-        />
+        <ExpenseSubmissionForm userId={userId} />
       </div>
       <Toaster position="top-right" />
     </div>

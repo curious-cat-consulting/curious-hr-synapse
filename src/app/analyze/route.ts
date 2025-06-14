@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { files, organizationId, userId } = await req.json();
+    const { files, userId } = await req.json();
 
     const analyzedExpenses = await Promise.all(
       files.map(async (file: any) => {
@@ -51,7 +51,6 @@ export async function POST(req: Request) {
             date: new Date(analysis.date),
             receiptUrl: file.receiptUrl,
             submittedById: userId,
-            organizationId,
             aiCategory: analysis.category,
             aiConfidence: analysis.confidence,
             aiNotes: JSON.stringify(analysis),

@@ -1,22 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    console.log("Starting POST request to /api/expenses");
-
+    // Use regular client for auth verification
     const supabase = await createClient();
-    console.log("Created Supabase client");
-
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-
-    console.log("User data:", user);
-    console.log("User error:", userError);
 
     if (userError) {
       console.error("User error:", userError);
@@ -27,44 +22,22 @@ export async function POST(req: Request) {
     }
 
     if (!user) {
-      console.log("No user found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     console.log("User authenticated:", user.id);
 
-    // Check if user has an organization
-    const { data: existingExpense } = await supabase
-      .from("expenses")
-      .select("organization_id")
-      .eq("submitted_by_id", user.id)
-      .limit(1)
-      .single();
-
-    let organizationId = existingExpense?.organization_id;
-
-    // If no organization exists, create one
-    if (!organizationId) {
-      const response = await fetch(
-        `${req.headers.get("origin")}/api/organizations`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create organization");
+    // Create service client for database operations (bypasses RLS)
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
       }
-
-      const organization = await response.json();
-      organizationId = organization.id;
-    }
-
-    console.warn("starting expenses");
+    );
 
     const formData = await req.formData();
     const title = formData.get("title") as string;
@@ -80,7 +53,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Upload receipts to Supabase Storage
+    // Upload receipts to Supabase Storage (use regular client for storage)
     const receiptUrls = await Promise.all(
       files.map(async (file) => {
         const fileExt = file.name.split(".").pop();
@@ -91,25 +64,36 @@ export async function POST(req: Request) {
           .from("receipts")
           .upload(filePath, file);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Storage upload error:", error);
+          throw error;
+        }
         return data.path;
       })
     );
 
-    // Create expense record
-    const { data: expense, error } = await supabase
+    console.warn("receiptUrls", receiptUrls);
+
+    // Create expense record using service client (bypasses RLS)
+    console.log("Attempting to create expense with data:", {
+      title,
+      description,
+      receipt_urls: receiptUrls,
+      submitted_by_id: user.id,
+      status: "PENDING",
+    });
+
+    const { data: expense, error } = await serviceSupabase
       .from("expenses")
       .insert({
         title,
         description,
-        receipt_urls: receiptUrls,
         submitted_by_id: user.id,
-        organization_id: organizationId,
-        status: "PENDING",
       })
       .select()
       .single();
 
+    console.warn("expense result:", expense, error);
     if (error) throw error;
 
     return NextResponse.json(expense);
@@ -124,8 +108,8 @@ export async function POST(req: Request) {
 
 export async function GET(request: Request) {
   try {
+    // Use regular client for auth verification
     const supabase = await createClient();
-
     const {
       data: { user },
       error: userError,
@@ -137,8 +121,20 @@ export async function GET(request: Request) {
       });
     }
 
+    // Use service client for database query (bypasses RLS)
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
     // Get expenses for the authenticated user
-    const { data: expenses, error } = await supabase
+    const { data: expenses, error } = await serviceSupabase
       .from("expenses")
       .select("*")
       .eq("submitted_by_id", user.id)

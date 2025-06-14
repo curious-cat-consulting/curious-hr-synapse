@@ -11,81 +11,15 @@ datasource db {
   directUrl = env("DIRECT_URL") // Used for direct connection to the database
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole  @default(EMPLOYEE)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  submittedExpenses    Expense[]    @relation("SubmittedExpenses")
-  approvedExpenses     Expense[]    @relation("ApprovedExpenses")
-  organization         Organization? @relation(fields: [organizationId], references: [id])
-  organizationId       String?
-}
-
-model Organization {
-  id          String    @id @default(uuid())
-  name        String
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  users       User[]
-  expenses    Expense[]
-  categories  ExpenseCategory[]
-
-  @@map("organizations")
-}
-
 model Expense {
-  id             String   @id @default(uuid())
+  id             UUID    @id @default(gen_random_uuid())
   title          String
   description    String?
-  receiptUrls    String[] @map("receipt_urls")
-  status         String   @default("PENDING")
-  submittedById  String   @map("submitted_by_id")
-  organizationId String   @map("organization_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  organization Organization @relation(fields: [organizationId], references: [id])
-
-  // AI Analysis Fields
-  aiCategory      String?
-  aiConfidence    Float?
-  aiAnomalies     String[]
-  aiNotes         String?
-
+  receiptUrls    String[]  @map("receipt_urls")
+  status         String    @default("PENDING")
+  submittedById  String    @map("submitted_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime? @updatedAt @map("updated_at")
+  
   @@map("expenses")
-}
-
-model ExpenseCategory {
-  id             String    @id @default(cuid())
-  name           String
-  description    String?
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  expenses       Expense[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@unique([name, organizationId])
-}
-
-enum UserRole {
-  ADMIN
-  MANAGER
-  EMPLOYEE
-}
-
-enum ExpenseStatus {
-  PENDING
-  APPROVED
-  REJECTED
 } 

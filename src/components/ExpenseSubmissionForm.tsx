@@ -4,12 +4,10 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
 
 interface ExpenseSubmissionFormProps {
-  organizationId: string;
   userId: string;
 }
 
 export default function ExpenseSubmissionForm({
-  organizationId,
   userId,
 }: Readonly<ExpenseSubmissionFormProps>) {
   const [files, setFiles] = useState<File[]>([]);
@@ -37,7 +35,7 @@ export default function ExpenseSubmissionForm({
       const uploadPromises = files.map(async (file) => {
         const fileExt = file.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${organizationId}/${userId}/${fileName}`;
+        const filePath = `${userId}/${fileName}`;
 
         const { data, error } = await supabase.storage
           .from("receipts")
@@ -67,7 +65,6 @@ export default function ExpenseSubmissionForm({
         },
         body: JSON.stringify({
           files: uploadedFiles,
-          organizationId,
           userId,
         }),
       });
