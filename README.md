@@ -17,10 +17,10 @@ Catalyst HR is an AI-powered HR & Employee Admin Assistant designed for small bu
 
 - **Frontend**: Next.js 14 with TypeScript
 - **Backend**: Next.js API Routes
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: PostgreSQL with Supabase
 - **AI/ML**: OpenAI GPT-4 for intelligent processing
-- **Storage**: AWS S3 for receipt storage
-- **Authentication**: NextAuth.js
+- **Storage**: Supabase Storage for receipt storage
+- **Authentication**: NextAuth.js with Supabase Adapter
 - **UI Framework**: Tailwind CSS + Shadcn/ui
 
 ## Getting Started
@@ -28,8 +28,7 @@ Catalyst HR is an AI-powered HR & Employee Admin Assistant designed for small bu
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL
-- AWS Account (for S3)
+- Supabase Account
 - OpenAI API Key
 
 ### Installation
@@ -53,7 +52,13 @@ npm install
 cp .env.example .env.local
 ```
 
-4. Run the development server
+4. Set up the database
+
+```bash
+npm run db:setup
+```
+
+5. Run the development server
 
 ```bash
 npm run dev
@@ -70,7 +75,7 @@ catalyst-hr/
 │   └── layout.tsx        # Root layout
 ├── components/            # Reusable components
 ├── lib/                   # Utility functions
-├── prisma/               # Database schema and migrations
+├── supabase/             # Supabase migrations and config
 ├── public/               # Static assets
 └── types/                # TypeScript type definitions
 ```

@@ -7,14 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:setup": "ts-node --project scripts/tsconfig.json scripts/setup-db.ts",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "update": "npx npm-check-updates -u && npm i"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.9.1",
-    "@prisma/client": "^6.9.0",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-toast": "^1.1.5",
@@ -46,7 +42,7 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0",
     "postcss": "^8.4.35",
-    "prisma": "^6.9.0",
+    "supabase": "^1.145.4",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
