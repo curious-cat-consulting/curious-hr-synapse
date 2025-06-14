@@ -33,6 +33,37 @@ export async function POST(req: Request) {
 
     console.log("User authenticated:", user.id);
 
+    // Check if user has an organization
+    const { data: existingExpense } = await supabase
+      .from("expenses")
+      .select("organization_id")
+      .eq("submitted_by_id", user.id)
+      .limit(1)
+      .single();
+
+    let organizationId = existingExpense?.organization_id;
+
+    // If no organization exists, create one
+    if (!organizationId) {
+      const response = await fetch(
+        `${req.headers.get("origin")}/api/organizations`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create organization");
+      }
+
+      const organization = await response.json();
+      organizationId = organization.id;
+    }
+
     console.warn("starting expenses");
 
     const formData = await req.formData();
@@ -73,7 +104,7 @@ export async function POST(req: Request) {
         description,
         receipt_urls: receiptUrls,
         submitted_by_id: user.id,
-        organization_id: user.user_metadata.organization_id,
+        organization_id: organizationId,
         status: "PENDING",
       })
       .select()
@@ -110,7 +141,7 @@ export async function GET(request: Request) {
     const { data: expenses, error } = await supabase
       .from("expenses")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("submitted_by_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;

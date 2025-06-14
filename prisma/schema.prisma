@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Used for direct connection to the database
 }
 
 model User {
@@ -29,43 +30,39 @@ model User {
 }
 
 model Organization {
-  id          String   @id @default(cuid())
+  id          String    @id @default(uuid())
   name        String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
   users       User[]
   expenses    Expense[]
   categories  ExpenseCategory[]
+
+  @@map("organizations")
 }
 
 model Expense {
-  id              String    @id @default(cuid())
-  amount          Float
-  currency        String    @default("USD")
-  description     String
-  date            DateTime
-  status          ExpenseStatus @default(PENDING)
-  receiptUrl      String?
-  categoryId      String?
-  category        ExpenseCategory? @relation(fields: [categoryId], references: [id])
-  submittedById   String
-  submittedBy     User      @relation("SubmittedExpenses", fields: [submittedById], references: [id])
-  approvedById    String?
-  approvedBy      User?     @relation("ApprovedExpenses", fields: [approvedById], references: [id])
-  approvedAt      DateTime?
-  rejectionReason String?
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String   @id @default(uuid())
+  title          String
+  description    String?
+  receiptUrls    String[] @map("receipt_urls")
+  status         String   @default("PENDING")
+  submittedById  String   @map("submitted_by_id")
+  organizationId String   @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   // AI Analysis Fields
   aiCategory      String?
   aiConfidence    Float?
   aiAnomalies     String[]
   aiNotes         String?
+
+  @@map("expenses")
 }
 
 model ExpenseCategory {

@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:setup": "ts-node --project scripts/tsconfig.json scripts/setup-db.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.9.1",
@@ -39,8 +43,10 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0",
     "postcss": "^8.4.35",
+    "prisma": "^6.9.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
 }
