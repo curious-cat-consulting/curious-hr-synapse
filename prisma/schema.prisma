@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(EMPLOYEE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  submittedExpenses    Expense[]    @relation("SubmittedExpenses")
+  approvedExpenses     Expense[]    @relation("ApprovedExpenses")
+  organization         Organization? @relation(fields: [organizationId], references: [id])
+  organizationId       String?
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  expenses    Expense[]
+  categories  ExpenseCategory[]
+}
+
+model Expense {
+  id              String    @id @default(cuid())
+  amount          Float
+  currency        String    @default("USD")
+  description     String
+  date            DateTime
+  status          ExpenseStatus @default(PENDING)
+  receiptUrl      String?
+  categoryId      String?
+  category        ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  submittedById   String
+  submittedBy     User      @relation("SubmittedExpenses", fields: [submittedById], references: [id])
+  approvedById    String?
+  approvedBy      User?     @relation("ApprovedExpenses", fields: [approvedById], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // AI Analysis Fields
+  aiCategory      String?
+  aiConfidence    Float?
+  aiAnomalies     String[]
+  aiNotes         String?
+}
+
+model ExpenseCategory {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  expenses       Expense[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([name, organizationId])
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+} 
