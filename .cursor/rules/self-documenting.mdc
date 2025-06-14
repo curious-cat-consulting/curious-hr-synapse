@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule: "Code should be easy to understand without excessive comments."
+
+Guidance: "Use descriptive variable, function, and class names. Structure code logically. Comments should explain 'why,' not 'what.'"

@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule: "Follow the project's existing style guide and conventions."
+
+Guidance: "Maintain consistent formatting, naming conventions, and architectural patterns throughout the codebase."

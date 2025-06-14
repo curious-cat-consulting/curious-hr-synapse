@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule: "Create generic functions/components that can be used in multiple contexts."
+
+Guidance: "Avoid hardcoding values. Pass configurations, data, and callbacks as parameters to make components flexible."
