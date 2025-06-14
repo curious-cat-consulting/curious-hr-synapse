@@ -1,24 +1,69 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    console.log("Starting POST request to /api/expenses");
+
+    // Create a new cookie store for this request
+    const cookieStore = cookies();
+    console.log("Cookie store:", cookieStore.getAll());
+
+    // Create the Supabase client with the cookie store
+    const supabase = createRouteHandlerClient(
+      {
+        cookies: () => cookieStore,
+      },
+      {
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      }
+    );
+
+    console.log("Created Supabase client");
+
+    // Get the session
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    console.log("Session data:", session);
+    console.log("Session error:", sessionError);
+
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+      return NextResponse.json(
+        { error: "Authentication error" },
+        { status: 401 }
+      );
+    }
+
+    if (!session) {
+      console.log("No session found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    console.log("User authenticated:", session.user.id);
+
+    console.warn("starting expenses");
 
     const formData = await req.formData();
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const files = formData.getAll("receipts") as File[];
+
+    console.warn("submitting expenses");
+
+    if (!title || files.length === 0) {
+      return NextResponse.json(
+        { error: "Title and at least one receipt are required" },
+        { status: 400 }
+      );
+    }
 
     // Upload receipts to Supabase Storage
     const receiptUrls = await Promise.all(
@@ -44,7 +89,7 @@ export async function POST(req: Request) {
         description,
         receipt_urls: receiptUrls,
         submitted_by_id: session.user.id,
-        organization_id: session.user.organizationId,
+        organization_id: session.user.user_metadata.organization_id,
         status: "PENDING",
       })
       .select()
@@ -62,60 +107,35 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const supabase = createRouteHandlerClient({ cookies });
+
+    // Check if user is authenticated
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
     }
 
-    // Get query parameters
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
-
-    // Build query
-    let query = supabase
+    // Get expenses for the authenticated user
+    const { data: expenses, error } = await supabase
       .from("expenses")
-      .select(
-        `
-        *,
-        submitted_by:users!submitted_by_id(id, name, email),
-        approved_by:users!approved_by_id(id, name, email),
-        category:expense_categories(id, name)
-      `
-      )
-      .eq("organization_id", session.user.organizationId);
-
-    // Add filters based on user role
-    if (session.user.role === "EMPLOYEE") {
-      query = query.eq("submitted_by_id", session.user.id);
-    }
-
-    if (status) {
-      query = query.eq("status", status);
-    }
-
-    if (startDate) {
-      query = query.gte("date", startDate);
-    }
-
-    if (endDate) {
-      query = query.lte("date", endDate);
-    }
-
-    const { data: expenses, error } = await query.order("created_at", {
-      ascending: false,
-    });
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
     return NextResponse.json(expenses);
   } catch (error) {
     console.error("Error fetching expenses:", error);
-    return NextResponse.json(
-      { error: "Error fetching expenses" },
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }),
       { status: 500 }
     );
   }

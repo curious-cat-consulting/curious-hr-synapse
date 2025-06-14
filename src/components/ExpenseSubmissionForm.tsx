@@ -11,7 +11,7 @@ interface ExpenseSubmissionFormProps {
 export default function ExpenseSubmissionForm({
   organizationId,
   userId,
-}: ExpenseSubmissionFormProps) {
+}: Readonly<ExpenseSubmissionFormProps>) {
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -108,8 +108,8 @@ export default function ExpenseSubmissionForm({
           <div className="space-y-2">
             <h3 className="font-medium">Selected Files:</h3>
             <ul className="list-disc list-inside">
-              {files.map((file, index) => (
-                <li key={index}>{file.name}</li>
+              {files.map((file) => (
+                <li key={file.name}>{file.name}</li>
               ))}
             </ul>
           </div>
@@ -134,7 +134,7 @@ export default function ExpenseSubmissionForm({
           <h3 className="text-lg font-medium mb-4">Analyzed Expenses</h3>
           <div className="space-y-4">
             {expenses.map((expense, index) => (
-              <div key={index} className="border rounded-lg p-4">
+              <div key={expense.id} className="border rounded-lg p-4">
                 <p>
                   <strong>Amount:</strong> ${expense.amount}
                 </p>

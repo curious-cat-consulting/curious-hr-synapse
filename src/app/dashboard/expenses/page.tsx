@@ -59,6 +59,19 @@ export default function ExpensesPage() {
     }
   };
 
+  // Show success message if redirected from new expense submission
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("success") === "true") {
+      toast({
+        title: "Success",
+        description: "Expense report submitted successfully",
+      });
+      // Clean up the URL
+      router.replace("/dashboard/expenses");
+    }
+  }, [router, toast]);
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">

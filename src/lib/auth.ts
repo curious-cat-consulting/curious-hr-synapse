@@ -1,6 +1,7 @@
 import { NextAuthOptions, DefaultSession } from "next-auth";
 import { SupabaseAdapter } from "@auth/supabase-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 declare module "next-auth" {
   interface User {
@@ -18,6 +19,10 @@ declare module "next-auth" {
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {

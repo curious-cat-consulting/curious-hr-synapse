@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 interface ReceiptFile {
   file: File;
@@ -39,11 +40,37 @@ export default function NewExpensePage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement API call to create expense report
-      // For now, just redirect back to expenses list
-      router.push("/dashboard/expenses");
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+
+      // Append all receipt files
+      receipts.forEach((receipt) => {
+        formData.append("receipts", receipt.file);
+      });
+
+      const response = await fetch("/api/expenses", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create expense report");
+      }
+
+      // Show success toast and redirect
+      toast({
+        title: "Success",
+        description: "Expense report created successfully",
+      });
+      router.push("/dashboard/expenses?success=true");
     } catch (error) {
       console.error("Error creating expense report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create expense report",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
