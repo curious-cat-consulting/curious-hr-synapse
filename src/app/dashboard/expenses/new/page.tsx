@@ -57,7 +57,7 @@ export default function NewExpensePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create expense report");
+        throw new Error(data.error ?? "Failed to create expense report");
       }
 
       // Show success toast and redirect
@@ -70,7 +70,7 @@ export default function NewExpensePage() {
       console.error("Error creating expense report:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create expense report",
+        description: error.message ?? "Failed to create expense report",
         variant: "destructive",
       });
     } finally {

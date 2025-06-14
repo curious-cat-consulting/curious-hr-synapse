@@ -55,7 +55,9 @@ cp .env.example .env.local
 4. Set up the database
 
 ```bash
-npm run db:setup
+npx supabase init
+npx supabase login
+npx supabase link
 ```
 
 5. Run the development server
