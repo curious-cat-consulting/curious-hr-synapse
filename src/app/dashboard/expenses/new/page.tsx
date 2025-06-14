@@ -54,8 +54,10 @@ export default function NewExpensePage() {
         body: formData,
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to create expense report");
+        throw new Error(data.error || "Failed to create expense report");
       }
 
       // Show success toast and redirect
@@ -64,11 +66,11 @@ export default function NewExpensePage() {
         description: "Expense report created successfully",
       });
       router.push("/dashboard/expenses?success=true");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating expense report:", error);
       toast({
         title: "Error",
-        description: "Failed to create expense report",
+        description: error.message || "Failed to create expense report",
         variant: "destructive",
       });
     } finally {

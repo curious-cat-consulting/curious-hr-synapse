@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -8,46 +7,31 @@ export async function POST(req: Request) {
   try {
     console.log("Starting POST request to /api/expenses");
 
-    // Create a new cookie store for this request
-    const cookieStore = cookies();
-    console.log("Cookie store:", cookieStore.getAll());
-
-    // Create the Supabase client with the cookie store
-    const supabase = createRouteHandlerClient(
-      {
-        cookies: () => cookieStore,
-      },
-      {
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      }
-    );
-
+    const supabase = await createClient();
     console.log("Created Supabase client");
 
-    // Get the session
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    console.log("Session data:", session);
-    console.log("Session error:", sessionError);
+    console.log("User data:", user);
+    console.log("User error:", userError);
 
-    if (sessionError) {
-      console.error("Session error:", sessionError);
+    if (userError) {
+      console.error("User error:", userError);
       return NextResponse.json(
         { error: "Authentication error" },
         { status: 401 }
       );
     }
 
-    if (!session) {
-      console.log("No session found");
+    if (!user) {
+      console.log("No user found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("User authenticated:", session.user.id);
+    console.log("User authenticated:", user.id);
 
     console.warn("starting expenses");
 
@@ -70,7 +54,7 @@ export async function POST(req: Request) {
       files.map(async (file) => {
         const fileExt = file.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${session.user.id}/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { data, error } = await supabase.storage
           .from("receipts")
@@ -88,8 +72,8 @@ export async function POST(req: Request) {
         title,
         description,
         receipt_urls: receiptUrls,
-        submitted_by_id: session.user.id,
-        organization_id: session.user.user_metadata.organization_id,
+        submitted_by_id: user.id,
+        organization_id: user.user_metadata.organization_id,
         status: "PENDING",
       })
       .select()
@@ -109,14 +93,14 @@ export async function POST(req: Request) {
 
 export async function GET(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
 
-    // Check if user is authenticated
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (userError || !user) {
       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
       });
@@ -126,7 +110,7 @@ export async function GET(request: Request) {
     const { data: expenses, error } = await supabase
       .from("expenses")
       .select("*")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;

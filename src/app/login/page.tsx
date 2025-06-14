@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,10 +21,11 @@ export default function LoginPage() {
   useEffect(() => {
     const checkUser = async () => {
       try {
+        const supabase = createClient();
         const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session) {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
           const redirectTo = searchParams.get("redirectTo") ?? "/";
           router.push(redirectTo);
         }
@@ -42,6 +43,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -50,12 +52,6 @@ export default function LoginPage() {
       if (error) throw error;
 
       if (data.session) {
-        // Set the session cookie
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-
         toast({
           title: "Success",
           description: "Welcome back!",
@@ -77,6 +73,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      const supabase = createClient();
       const redirectTo = searchParams.get("redirectTo") ?? "/";
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",

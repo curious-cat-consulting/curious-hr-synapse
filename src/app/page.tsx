@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -14,18 +14,20 @@ export default function HomePage() {
   useEffect(() => {
     const getUser = async () => {
       try {
+        const supabase = createClient();
         const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUser(user);
       } catch (error) {
-        console.error("Error getting session:", error);
+        console.error("Error getting user:", error);
       } finally {
         setLoading(false);
       }
     };
     getUser();
 
+    const supabase = createClient();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -37,6 +39,7 @@ export default function HomePage() {
 
   const handleSignOut = async () => {
     try {
+      const supabase = createClient();
       await supabase.auth.signOut();
       router.push("/login");
     } catch (error) {
@@ -53,6 +56,11 @@ export default function HomePage() {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    router.push("/login");
+    return null;
   }
 
   return (
