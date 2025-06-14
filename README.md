@@ -52,12 +52,11 @@ npm install
 cp .env.example .env.local
 ```
 
-4. Set up the database
+4. Run local database (requires docker)
 
 ```bash
 npx supabase init
-npx supabase login
-npx supabase link
+npx supabase start
 ```
 
 5. Run the development server
