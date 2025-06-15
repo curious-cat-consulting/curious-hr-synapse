@@ -77,4 +77,4 @@ INSERT INTO public.expenses (
     'rejected',
     now(),
     now()
-  ); 
+  );

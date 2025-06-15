@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@lib/supabase/server";
 
 interface SupabaseUser {
   id: string;
@@ -14,7 +14,6 @@ interface SupabaseExpense {
   description: string;
   amount: number;
   status: 'pending' | 'approved' | 'rejected';
-  receipt_url: string;
   created_at: string;
   updated_at: string;
   profiles: {
@@ -49,7 +48,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Upload receipts to Supabase Storage
+    // Create expense record in the database first
+    const { data: expense, error: dbError } = await supabase
+      .from('expenses')
+      .insert({
+        user_id: user.id,
+        profile_id: user.id,
+        title: title,
+        description: description ?? title,
+        amount: 0,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      throw dbError;
+    }
+
+    // Upload receipts to Supabase Storage using expense ID in path
     const uploadedReceipts = await Promise.all(
       receipts.map(async (receipt) => {
         const bytes = await receipt.arrayBuffer();
@@ -57,7 +73,7 @@ export async function POST(request: Request) {
         
         // Create a unique filename
         const filename = `${Date.now()}-${receipt.name}`;
-        const filepath = `${user.id}/${filename}`;
+        const filepath = `${user.id}/${expense.id}/${filename}`;
         
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase
@@ -72,39 +88,9 @@ export async function POST(request: Request) {
           throw uploadError;
         }
 
-        // Get the public URL
-        const { data: { publicUrl } } = supabase
-          .storage
-          .from('receipts')
-          .getPublicUrl(filepath);
-
-        return {
-          filename,
-          originalName: receipt.name,
-          size: receipt.size,
-          type: receipt.type,
-          url: publicUrl
-        };
+        return uploadData.id;
       })
     );
-
-    // Create expense record in the database
-    const { data: expense, error: dbError } = await supabase
-      .from('expenses')
-      .insert({
-        user_id: user.id,
-        profile_id: user.id,
-        title: title,
-        description: description || title,
-        receipt_url: uploadedReceipts[0]?.url, // Store the first receipt URL
-        amount: 0,
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      throw dbError;
-    }
 
     return NextResponse.json({
       id: expense.id,
@@ -149,7 +135,7 @@ export async function GET() {
       .order('created_at', { ascending: false }) as { data: any[] | null, error: any };
 
     if (fetchError || !expenses) {
-      throw fetchError || new Error('No expenses found');
+      throw fetchError ?? new Error('No expenses found');
     }
 
     // Transform the data to match the frontend interface
@@ -157,13 +143,12 @@ export async function GET() {
       id: expense.id,
       title: expense.title,
       description: expense.description,
-      amount: expense.amount || 0,
+      amount: expense.amount ?? 0,
       currency: 'USD', // Default currency
       status: expense.status.toUpperCase(),
-      receipt_urls: expense.receipt_url ? [expense.receipt_url] : [],
       submitted_by: {
         id: expense.profiles.id,
-        name: expense.profiles.full_name || 'User',
+        name: expense.profiles.full_name ?? 'User',
         email: expense.profiles.email,
         avatar_url: expense.profiles.avatar_url
       },

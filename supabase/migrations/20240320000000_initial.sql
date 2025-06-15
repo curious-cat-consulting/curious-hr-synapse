@@ -59,7 +59,6 @@ create table public.expenses (
   title text not null,
   amount decimal(10,2) not null,
   description text not null,
-  receipt_url text,
   status expense_status not null default 'pending',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null

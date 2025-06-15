@@ -2,32 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@components/ui/button";
+import { Card, CardContent } from "@components/ui/card";
 import { Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-
-interface Expense {
-  id: string;
-  title: string;
-  description: string;
-  amount: number;
-  currency: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  receipt_urls: string[];
-  submitted_by: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  approved_by?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  created_at: string;
-  updated_at: string;
-}
+import { useToast } from "@components/ui/use-toast";
+import { Expense } from "@type/expense";
+import { ExpenseCard } from "@components/expenses/ExpenseCard";
 
 export default function ExpensesPage() {
   const router = useRouter();
@@ -94,17 +74,6 @@ function ExpensesList({
   expenses: Expense[];
   isLoading: boolean;
 }>) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "APPROVED":
-        return "bg-green-100 text-green-800";
-      case "REJECTED":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-yellow-100 text-yellow-800";
-    }
-  };
-
   if (isLoading) return <div>Loading...</div>;
   if (expenses.length === 0) {
     return (
@@ -119,41 +88,7 @@ function ExpensesList({
   return (
     <div className="grid gap-4">
       {expenses.map((expense) => (
-        <Card key={expense.id}>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold text-lg">{expense.title}</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {expense.description}
-                </p>
-                <div className="mt-2 text-sm">
-                  <p>Submitted by: {expense.submitted_by.name}</p>
-                  <p>
-                    Amount: {expense.amount} {expense.currency}
-                  </p>
-                  <p>
-                    Date: {new Date(expense.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    expense.status
-                  )}`}
-                >
-                  {expense.status}
-                </span>
-                {expense.approved_by && (
-                  <span className="text-sm text-gray-500">
-                    Approved by: {expense.approved_by.name}
-                  </span>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ExpenseCard key={expense.id} expense={expense} />
       ))}
     </div>
   );
