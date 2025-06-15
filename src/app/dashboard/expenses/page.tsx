@@ -123,8 +123,10 @@ function ExpensesList({
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-semibold">{expense.title}</h3>
-                <p className="text-sm text-gray-500">{expense.description}</p>
+                <h3 className="font-semibold text-lg">{expense.title}</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {expense.description}
+                </p>
                 <div className="mt-2 text-sm">
                   <p>Submitted by: {expense.submitted_by.name}</p>
                   <p>

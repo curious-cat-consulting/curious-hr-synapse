@@ -65,6 +65,12 @@ npx supabase start
 npm run dev
 ```
 
+To reset the migration from scratch after changes, use
+
+```bash
+npx supabase db reset
+```
+
 ## Project Structure
 
 ```

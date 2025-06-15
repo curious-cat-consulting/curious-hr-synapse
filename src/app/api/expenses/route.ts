@@ -13,10 +13,15 @@ interface SupabaseExpense {
   title: string;
   description: string;
   amount: number;
-  status: string;
+  status: 'pending' | 'approved' | 'rejected';
   receipt_url: string;
   created_at: string;
   updated_at: string;
+  profiles: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
 }
 
 export async function POST(request: Request) {
@@ -88,6 +93,8 @@ export async function POST(request: Request) {
       .from('expenses')
       .insert({
         user_id: user.id,
+        profile_id: user.id,
+        title: title,
         description: description || title,
         receipt_url: uploadedReceipts[0]?.url, // Store the first receipt URL
         amount: 0,
@@ -132,16 +139,14 @@ export async function GET() {
     const { data: expenses, error: fetchError } = await supabase
       .from('expenses')
       .select(`
-        id,
-        user_id,
-        description,
-        amount,
-        status,
-        receipt_url,
-        created_at,
-        updated_at
+        *,
+        profiles (
+          email,
+          full_name,
+          avatar_url
+        )
       `)
-      .order('created_at', { ascending: false }) as { data: SupabaseExpense[] | null, error: any };
+      .order('created_at', { ascending: false }) as { data: any[] | null, error: any };
 
     if (fetchError || !expenses) {
       throw fetchError || new Error('No expenses found');
@@ -154,12 +159,13 @@ export async function GET() {
       description: expense.description,
       amount: expense.amount || 0,
       currency: 'USD', // Default currency
-      status: expense.status || 'PENDING',
+      status: expense.status.toUpperCase(),
       receipt_urls: expense.receipt_url ? [expense.receipt_url] : [],
       submitted_by: {
-        id: expense.user_id,
-        name: 'User', // We'll need to fetch user details separately if needed
-        email: ''
+        id: expense.profiles.id,
+        name: expense.profiles.full_name || 'User',
+        email: expense.profiles.email,
+        avatar_url: expense.profiles.avatar_url
       },
       created_at: expense.created_at,
       updated_at: expense.updated_at
