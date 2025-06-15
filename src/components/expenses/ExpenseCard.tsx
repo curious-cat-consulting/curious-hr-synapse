@@ -3,7 +3,8 @@ import { Card, CardContent } from "@components/ui/card";
 import { Button } from "@components/ui/button";
 import { useToast } from "@components/ui/use-toast";
 import { Expense } from "@type/expense";
-import { Loader2 } from "lucide-react";
+import { Eye } from "lucide-react";
+import Link from "next/link";
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -19,6 +20,8 @@ export function ExpenseCard({ expense }: Readonly<ExpenseCardProps>) {
         return "bg-green-100 text-green-800";
       case "REJECTED":
         return "bg-red-100 text-red-800";
+      case "ANALYZED":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-yellow-100 text-yellow-800";
     }
@@ -45,6 +48,7 @@ export function ExpenseCard({ expense }: Readonly<ExpenseCardProps>) {
       toast({
         title: "Success",
         description: "Receipts analyzed successfully",
+        variant: "success",
       });
     } catch (error) {
       console.error("Error analyzing expense:", error);
@@ -63,49 +67,37 @@ export function ExpenseCard({ expense }: Readonly<ExpenseCardProps>) {
     <Card>
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
-          <div>
-            <h3 className="font-semibold text-lg">{expense.title}</h3>
-            <p className="text-sm text-gray-600 mt-1">{expense.description}</p>
-            <div className="mt-2 text-sm">
-              <p>Submitted by: {expense.submitted_by.name}</p>
-              <p>
-                Amount: {expense.amount} {expense.currency}
-              </p>
-              <p>Date: {new Date(expense.created_at).toLocaleDateString()}</p>
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <h3 className="font-semibold">{expense.title}</h3>
+              <Link href={`/dashboard/expenses/${expense.id}`}>
+                <Eye className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+              </Link>
             </div>
+            <p className="text-sm text-gray-500">{expense.description}</p>
           </div>
-          <div className="flex items-center space-x-4">
-            {expense.status === "PENDING" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  "Analyze"
-                )}
-              </Button>
-            )}
+          <div className="text-right">
+            <p className="font-semibold">${expense.amount.toFixed(2)}</p>
             <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                 expense.status
               )}`}
             >
               {expense.status}
             </span>
-            {expense.approved_by && (
-              <span className="text-sm text-gray-500">
-                Approved by: {expense.approved_by.name}
-              </span>
-            )}
           </div>
         </div>
+        {expense.status === "PENDING" && (
+          <div className="mt-4">
+            <Button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="w-full"
+            >
+              {isAnalyzing ? "Analyzing..." : "Analyze Receipts"}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -46,6 +46,7 @@ export default function ExpensesPage() {
       toast({
         title: "Success",
         description: "Expense report submitted successfully",
+        variant: "success",
       });
       // Clean up the URL
       router.replace("/dashboard/expenses");

@@ -2,13 +2,12 @@
 CREATE TABLE receipt_metadata (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   expense_id UUID REFERENCES expenses(id),
+  receipt_name VARCHAR(255) NOT NULL,
   vendor_name VARCHAR(255),
-  vendor_address TEXT,
   receipt_date DATE,
   receipt_total DECIMAL,
   tax_amount DECIMAL,
   confidence_score DECIMAL,
-  raw_ai_response JSONB,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -16,6 +15,7 @@ CREATE TABLE receipt_metadata (
 CREATE TABLE receipt_line_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   expense_id UUID REFERENCES expenses(id),
+  receipt_name VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
   quantity DECIMAL,
   unit_price DECIMAL,
@@ -27,6 +27,8 @@ CREATE TABLE receipt_line_items (
 -- Add indexes for better query performance
 CREATE INDEX idx_receipt_metadata_expense_id ON receipt_metadata(expense_id);
 CREATE INDEX idx_receipt_line_items_expense_id ON receipt_line_items(expense_id);
+CREATE INDEX idx_receipt_metadata_receipt_name ON receipt_metadata(receipt_name);
+CREATE INDEX idx_receipt_line_items_receipt_name ON receipt_line_items(receipt_name);
 
 -- Add RLS policies
 ALTER TABLE receipt_metadata ENABLE ROW LEVEL SECURITY;

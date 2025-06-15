@@ -31,6 +31,7 @@ export async function POST(request: Request) {
       .single();
 
     if (expenseError || !expense) {
+      console.error('Failed to fetch expense details', expenseError);
       throw new Error('Failed to fetch expense details');
     }
 
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       .list(`${user.id}/${expenseId}`);
 
     if (listError) {
+      console.error('Failed to list receipts', listError);
       throw new Error('Failed to list receipts');
     }
 
@@ -58,8 +60,37 @@ export async function POST(request: Request) {
       );
     }
 
-    // Process each receipt
-    const receiptPromises = receipts.map(async (receipt) => {
+    // Get existing receipt metadata to check which receipts have been analyzed
+    const { data: existingMetadata, error: metadataError } = await supabase
+      .from('receipt_metadata')
+      .select('id, receipt_name')
+      .eq('expense_id', expenseId);
+
+    if (metadataError) {
+      console.error('Failed to fetch existing receipt metadata', metadataError);
+      throw new Error('Failed to fetch existing receipt metadata');
+    }
+
+    // Create a set of already analyzed receipt names
+    const analyzedReceipts = new Set(
+      existingMetadata?.map(meta => meta.receipt_name) || []
+    );
+
+    // Filter out receipts that have already been analyzed
+    const receiptsToProcess = receipts.filter(
+      receipt => !analyzedReceipts.has(receipt.name)
+    );
+
+    if (receiptsToProcess.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'All receipts have already been analyzed',
+        data: []
+      });
+    }
+
+    // Process each receipt that hasn't been analyzed yet
+    const receiptPromises = receiptsToProcess.map(async (receipt) => {
       // Get the receipt file from storage
       const { data: receiptData, error: receiptError } = await supabase
         .storage
@@ -77,20 +108,17 @@ export async function POST(request: Request) {
       // Analyze receipt using OpenAI
       const analysis = await analyzeReceipt(base64);
 
-      console.warn('analysis', analysis);
-
       // Store receipt metadata
       const { data: metadataData, error: metadataError } = await supabase
         .from('receipt_metadata')
         .insert({
           expense_id: expenseId,
+          receipt_name: receipt.name,
           vendor_name: analysis.vendor_name,
-          vendor_address: analysis.vendor_address,
           receipt_date: analysis.receipt_date,
-          receipt_total: analysis.total_amount,
+          receipt_total: analysis.receipt_total,
           tax_amount: analysis.tax_amount,
           confidence_score: analysis.confidence_score,
-          raw_ai_response: analysis
         })
         .select()
         .single();
@@ -102,6 +130,7 @@ export async function POST(request: Request) {
       // Store line items
       const lineItems = analysis.line_items.map((item) => ({
         expense_id: expenseId,
+        receipt_name: receipt.name,
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -125,13 +154,25 @@ export async function POST(request: Request) {
 
     const results = await Promise.all(receiptPromises);
 
-    // Update expense amount based on receipt totals
-    const totalAmount = results.reduce((sum, result) => 
-      sum + (result.metadata.receipt_total ?? 0), 0);
+    // Update expense amount based on all receipt totals (including previously analyzed ones)
+    const { data: allMetadata, error: allMetadataError } = await supabase
+      .from('receipt_metadata')
+      .select('receipt_total')
+      .eq('expense_id', expenseId);
+
+    if (allMetadataError) {
+      throw allMetadataError;
+    }
+
+    const totalAmount = allMetadata.reduce((sum, meta) => 
+      sum + (meta.receipt_total ?? 0), 0);
 
     const { error: updateError } = await supabase
       .from('expenses')
-      .update({ amount: totalAmount })
+      .update({ 
+        amount: totalAmount,
+        status: 'analyzed'
+      })
       .eq('id', expenseId);
 
     if (updateError) {

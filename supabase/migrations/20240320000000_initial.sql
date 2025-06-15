@@ -49,7 +49,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user(); 
 
 -- Create expense status enum type
-create type public.expense_status as enum ('pending', 'approved', 'rejected');
+create type public.expense_status as enum ('pending', 'analyzed', 'approved', 'rejected');
 
 -- Create expenses table
 create table public.expenses (

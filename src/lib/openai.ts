@@ -12,7 +12,7 @@ interface ReceiptAnalysis {
   vendor_name: string;
   vendor_address?: string;
   receipt_date: string;
-  total_amount: number;
+  receipt_total: number;
   tax_amount?: number;
   line_items: {
     description: string;
