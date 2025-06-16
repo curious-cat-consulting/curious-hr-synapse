@@ -4,9 +4,8 @@ import Link from "next/link";
 
 import { AuthGuard } from "@components/auth/AuthGuard";
 import { Button } from "@components/ui/button";
-import { useAuthGuard } from "@hook/useAuthGuard";
+import { useAuthGuard } from "@hooks/useAuthGuard";
 import { createClient } from "@lib/supabase/client";
-
 
 export default function HomePage() {
   const { user } = useAuthGuard();
