@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@lib/supabase/server";
 import ExcelJS from "exceljs";
+import { NextResponse } from "next/server";
+
+import { createClient } from "@lib/supabase/server";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -29,10 +30,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // Get expense details
     const { data: expense, error: expenseError } = await supabase
       .from("expenses")
-      .select(`
+      .select(
+        `
         *,
         receipt_line_items (*)
-      `)
+      `
+      )
       .eq("id", params.id)
       .single();
 
@@ -55,8 +58,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     // Add line items
     worksheet.addRow(["Line Items"]);
-    worksheet.addRow(["Description", "Category", "Quantity", "Unit Price", "Total Amount", "AI Generated"]);
-    
+    worksheet.addRow([
+      "Description",
+      "Category",
+      "Quantity",
+      "Unit Price",
+      "Total Amount",
+      "AI Generated",
+    ]);
+
     expense.receipt_line_items.forEach((item: any) => {
       worksheet.addRow([
         item.description,
@@ -64,7 +74,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         item.quantity || "",
         item.unit_price || "",
         item.total_amount,
-        item.is_ai_generated ? "Yes" : "No"
+        item.is_ai_generated ? "Yes" : "No",
       ]);
     });
 
@@ -85,4 +95,4 @@ export async function GET(request: Request, { params }: { params: { id: string }
       { status: 500 }
     );
   }
-} 
+}

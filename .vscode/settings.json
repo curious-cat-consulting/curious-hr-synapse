@@ -16,9 +16,7 @@
     "http",
     "net"
   ],
-  "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
-  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "sonarlint.connectedMode.project": {
     "connectionId": "curious-cat-consulting",
     "projectKey": "curious-cat-consulting_curious-hr-synapse"

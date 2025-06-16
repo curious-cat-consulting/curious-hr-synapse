@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@components/ui/button";
-import { Card, CardContent } from "@components/ui/card";
 import { Plus } from "lucide-react";
-import { useToast } from "@components/ui/use-toast";
-import { Expense } from "@type/expense";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { AuthGuard } from "@components/auth/AuthGuard";
 import { ExpenseCard } from "@components/expenses/ExpenseCard";
 import { Badge } from "@components/ui/badge";
+import { Button } from "@components/ui/button";
+import { Card, CardContent } from "@components/ui/card";
 import { Checkbox } from "@components/ui/checkbox";
 import { Label } from "@components/ui/label";
-import { AuthGuard } from "@components/auth/AuthGuard";
+import { useToast } from "@components/ui/use-toast";
+import type { Expense } from "@type/expense";
 
 export default function ExpensesPage() {
   const router = useRouter();
@@ -104,7 +105,7 @@ export default function ExpensesPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
           </div>
         ) : filteredExpenses.length === 0 ? (
           <Card>

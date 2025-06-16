@@ -1,9 +1,10 @@
+import { Upload, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+
 import { Button } from "@components/ui/button";
-import { useToast } from "@components/ui/use-toast";
-import { Upload, X } from "lucide-react";
 import { LoadingScreen } from "@components/ui/loading-screen";
+import { useToast } from "@components/ui/use-toast";
 
 interface ReceiptFile {
   file: File;

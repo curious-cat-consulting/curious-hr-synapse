@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
-import { Button } from "@components/ui/button";
-import { useToast } from "@components/ui/use-toast";
-import { LineItemsList } from "@components/expenses/LineItemsList";
-import { ReceiptsSection } from "@components/expenses/ReceiptsSection";
-import { AddLineItemButton } from "@components/expenses/AddLineItemButton";
-import { ExpenseDetails } from "@type/expense";
-import { createClient } from "@lib/supabase/client";
 import { Download } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import { AuthGuard } from "@/src/components/auth/AuthGuard";
 import { useAuthGuard } from "@/src/hooks/useAuthGuard";
+import { AddLineItemButton } from "@components/expenses/AddLineItemButton";
+import { LineItemsList } from "@components/expenses/LineItemsList";
+import { ReceiptsSection } from "@components/expenses/ReceiptsSection";
+import { Button } from "@components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
+import { useToast } from "@components/ui/use-toast";
+import { createClient } from "@lib/supabase/client";
+import type { ExpenseDetails } from "@type/expense";
 
 export default function ExpenseDetailsPage() {
   const { user } = useAuthGuard();
@@ -22,7 +23,7 @@ export default function ExpenseDetailsPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
   const [isManager, setIsManager] = useState(false);
-  const hasReceipts = (expense?.receipt_metadata?.length ?? 0) > 0;
+  const hasReceipts = (expense?.receipt_metadata.length ?? 0) > 0;
   const [allLineItems, setAllLineItems] = useState<any[]>([]);
 
   useEffect(() => {
@@ -259,7 +260,7 @@ export default function ExpenseDetailsPage() {
               >
                 {isAnalyzing ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Analyzing...
                   </div>
                 ) : (
@@ -275,7 +276,7 @@ export default function ExpenseDetailsPage() {
               >
                 {isRequestingApproval ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Requesting...
                   </div>
                 ) : (

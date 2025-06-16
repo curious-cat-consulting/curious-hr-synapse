@@ -1,10 +1,12 @@
 "use client";
 
-import { Button } from "@components/ui/button";
-import { createClient } from "@lib/supabase/client";
-import { AuthGuard } from "@components/auth/AuthGuard";
-import { useAuthGuard } from "@hook/useAuthGuard";
 import Link from "next/link";
+
+import { AuthGuard } from "@components/auth/AuthGuard";
+import { Button } from "@components/ui/button";
+import { useAuthGuard } from "@hook/useAuthGuard";
+import { createClient } from "@lib/supabase/client";
+
 
 export default function HomePage() {
   const { user } = useAuthGuard();

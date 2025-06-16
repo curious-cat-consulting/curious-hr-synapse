@@ -1,5 +1,5 @@
-import { NextAuthOptions, DefaultSession } from "next-auth";
 import { SupabaseAdapter } from "@auth/supabase-adapter";
+import type { NextAuthOptions, DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(_credentials) {
         // Add your credentials validation logic here
         return null;
       },
@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async session({ session, token }) {
-      if (session?.user) {
+      if (session.user) {
         session.user.id = token.sub!;
         session.user.role = token.role as string;
       }

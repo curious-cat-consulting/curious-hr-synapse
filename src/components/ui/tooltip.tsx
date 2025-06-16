@@ -1,6 +1,6 @@
 "use client";
-import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import * as React from "react";
 
 export function TooltipProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   return <TooltipPrimitive.Provider>{children}</TooltipPrimitive.Provider>;

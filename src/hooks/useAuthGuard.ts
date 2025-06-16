@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { createClient } from "@lib/supabase/client";
+
 
 interface AuthGuardOptions {
   redirectTo?: string;
@@ -28,13 +30,13 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        
+
         setUser(user);
 
         // If auth is required but user is not authenticated, redirect
         if (requireAuth && !user) {
           const currentPath = window.location.pathname;
-          const redirectUrl = `${redirectTo}${currentPath !== '/' ? `?redirectTo=${currentPath}` : ''}`;
+          const redirectUrl = `${redirectTo}${currentPath !== "/" ? `?redirectTo=${currentPath}` : ""}`;
           router.push(redirectUrl);
         }
       } catch (error) {
@@ -58,7 +60,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
       // Handle auth state changes
       if (requireAuth && !currentUser) {
         const currentPath = window.location.pathname;
-        const redirectUrl = `${redirectTo}${currentPath !== '/' ? `?redirectTo=${currentPath}` : ''}`;
+        const redirectUrl = `${redirectTo}${currentPath !== "/" ? `?redirectTo=${currentPath}` : ""}`;
         router.push(redirectUrl);
       }
     });

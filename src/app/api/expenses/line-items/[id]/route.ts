@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
+
 import { createClient } from "@lib/supabase/server";
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient();
 
@@ -35,10 +33,7 @@ export async function PATCH(
 
     // Check if the expense is in a state that allows editing
     if (["APPROVED", "REJECTED"].includes(lineItem.expenses.status)) {
-      return NextResponse.json(
-        { error: "Cannot edit line items in this state" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Cannot edit line items in this state" }, { status: 400 });
     }
 
     const updates = await request.json();
@@ -68,10 +63,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient();
 
@@ -118,10 +110,7 @@ export async function DELETE(
       if (error) throw error;
     } else {
       // Hard delete for manual items
-      const { error } = await supabase
-        .from("receipt_line_items")
-        .delete()
-        .eq("id", params.id);
+      const { error } = await supabase.from("receipt_line_items").delete().eq("id", params.id);
 
       if (error) throw error;
     }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { createClient } from "@lib/supabase/server";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
@@ -48,7 +49,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // Add receipt names to the response
     const expenseWithReceipts = {
       ...expense,
-      receipts: receipts?.map((receipt) => receipt.name) || [],
+      receipts: receipts.map((receipt) => receipt.name) || [],
     };
 
     return NextResponse.json(expenseWithReceipts);

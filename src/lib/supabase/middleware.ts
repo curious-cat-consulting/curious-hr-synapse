@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
           supabaseResponse = NextResponse.next({
@@ -34,42 +34,37 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const url = request.nextUrl.clone();
-  
+
   // Define public routes that don't require authentication
-  const publicRoutes = [
-    '/login',
-    '/auth'
-  ];
+  const publicRoutes = ["/login", "/auth"];
 
   // Define protected route patterns
   const protectedRoutes = [
-    '/dashboard',
-    '/' // Protect the home page too
+    "/dashboard",
+    "/", // Protect the home page too
   ];
 
-  const isPublicRoute = publicRoutes.some(route => 
-    url.pathname.startsWith(route)
-  );
+  const isPublicRoute = publicRoutes.some((route) => url.pathname.startsWith(route));
 
-  const isProtectedRoute = protectedRoutes.some(route => {
-    if (route === '/') {
-      return url.pathname === '/';
+  const isProtectedRoute = protectedRoutes.some((route) => {
+    if (route === "/") {
+      return url.pathname === "/";
     }
     return url.pathname.startsWith(route);
   });
 
   // If user is not authenticated and trying to access protected route
   if (!user && isProtectedRoute) {
-    url.pathname = '/login';
-    url.searchParams.set('redirectTo', request.nextUrl.pathname);
+    url.pathname = "/login";
+    url.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
   // If user is authenticated and trying to access public route, redirect to dashboard
-  if (user && isPublicRoute && !url.pathname.startsWith('/auth')) {
-    const redirectTo = url.searchParams.get('redirectTo') || '/';
+  if (user && isPublicRoute && !url.pathname.startsWith("/auth")) {
+    const redirectTo = url.searchParams.get("redirectTo") || "/";
     url.pathname = redirectTo;
-    url.searchParams.delete('redirectTo');
+    url.searchParams.delete("redirectTo");
     return NextResponse.redirect(url);
   }
 

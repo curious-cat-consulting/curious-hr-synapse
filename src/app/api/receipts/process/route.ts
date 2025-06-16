@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { analyzeReceipt } from "@lib/openai";
 import { createClient } from "@lib/supabase/server";
 
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     // Create a set of already analyzed receipt names
-    const analyzedReceipts = new Set(existingMetadata?.map((meta) => meta.receipt_name) || []);
+    const analyzedReceipts = new Set(existingMetadata.map((meta) => meta.receipt_name) || []);
 
     // Filter out receipts that have already been analyzed
     const receiptsToProcess = receipts.filter((receipt) => !analyzedReceipts.has(receipt.name));

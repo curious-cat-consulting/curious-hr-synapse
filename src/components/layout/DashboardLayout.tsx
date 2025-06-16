@@ -1,17 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Button } from "@components/ui/button";
-import { createClient } from "@lib/supabase/client";
-import Link from "next/link";
-import { useTheme } from "next-themes";
 import { Moon, Sun, LogOut, Home, Receipt } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+
+import { Button } from "@components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/ui/dropdown-menu";
+import { createClient } from "@lib/supabase/client";
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

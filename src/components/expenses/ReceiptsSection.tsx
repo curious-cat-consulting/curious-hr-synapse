@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
-import { ReceiptMetadata, ReceiptLineItem } from "@type/expense";
+import type { ReceiptMetadata, ReceiptLineItem } from "@type/expense";
+
 import { ReceiptUploader } from "./ReceiptUploader";
 
 interface ReceiptsSectionProps {
@@ -50,7 +51,7 @@ export function ReceiptsSection({
                   </div>
                 </div>
                 {lineItems
-                  ?.filter((item) => item.receipt_name === receipt.receipt_name)
+                  .filter((item) => item.receipt_name === receipt.receipt_name)
                   .map((item) => (
                     <div key={item.id} className="flex items-center justify-between text-sm">
                       <div className="flex min-w-0 items-center gap-2">

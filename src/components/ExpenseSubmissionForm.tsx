@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { createClient } from "@lib/supabase/client";
 import { toast } from "react-hot-toast";
+
 import { LoadingScreen } from "@components/ui/loading-screen";
+import { createClient } from "@lib/supabase/client";
 
 interface ExpenseSubmissionFormProps {
   userId: string;

@@ -1,19 +1,11 @@
-import { Card, CardContent } from "@components/ui/card";
-import { ReceiptLineItem } from "@type/expense";
 import { Trash2, Pencil } from "lucide-react";
-import { Button } from "@components/ui/button";
-import { useToast } from "@components/ui/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@components/ui/dialog";
-import { Label } from "@components/ui/label";
-import { Input } from "@components/ui/input";
 import { useState } from "react";
+
+import { Button } from "@components/ui/button";
+import { Card, CardContent } from "@components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
 import {
   Select,
   SelectContent,
@@ -21,6 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@components/ui/tooltip";
+import { useToast } from "@components/ui/use-toast";
+import type { ReceiptLineItem } from "@type/expense";
 
 const EXPENSE_CATEGORIES = [
   "Travel",

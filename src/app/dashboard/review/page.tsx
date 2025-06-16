@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@components/ui/card";
-import { useToast } from "@components/ui/use-toast";
-import { Expense } from "@type/expense";
+
 import { ExpenseCard } from "@components/expenses/ExpenseCard";
 import { Badge } from "@components/ui/badge";
+import { Card, CardContent } from "@components/ui/card";
 import { Checkbox } from "@components/ui/checkbox";
 import { Label } from "@components/ui/label";
+import { useToast } from "@components/ui/use-toast";
+import type { Expense } from "@type/expense";
 
 export default function ReviewPage() {
   const { toast } = useToast();

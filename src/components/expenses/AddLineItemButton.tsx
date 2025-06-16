@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { Button } from "@components/ui/button";
 import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+
+import { Button } from "@components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@components/ui/dialog";
-import { Label } from "@components/ui/label";
 import { Input } from "@components/ui/input";
-import { useToast } from "@components/ui/use-toast";
+import { Label } from "@components/ui/label";
 import {
   Select,
   SelectContent,
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/ui/select";
+import { useToast } from "@components/ui/use-toast";
 
 const EXPENSE_CATEGORIES = [
   "Travel",
