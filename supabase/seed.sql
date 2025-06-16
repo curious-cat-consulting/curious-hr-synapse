@@ -82,7 +82,7 @@ INSERT INTO public.expenses (
     'Team Lunch',
     85.00,
     'Team building lunch at local restaurant',
-    'NEW',
+    'PENDING',
     now(),
     now()
   ),
@@ -171,6 +171,7 @@ INSERT INTO public.receipt_line_items (
   total_amount,
   category,
   is_ai_generated,
+  is_deleted,
   created_at
 ) VALUES 
   (
@@ -183,6 +184,7 @@ INSERT INTO public.receipt_line_items (
     600,
     'Tax',
     true,
+    false,
     '2025-06-15 22:15:47.134302'
   ),
   (
@@ -194,6 +196,7 @@ INSERT INTO public.receipt_line_items (
     50,
     150,
     'Category',
+    false,
     false,
     '2025-06-15 22:08:35.903554'
   ),
@@ -207,6 +210,7 @@ INSERT INTO public.receipt_line_items (
     5000,
     'Accommodation',
     true,
+    false,
     '2025-06-15 22:15:47.134302'
   ),
   (
@@ -219,6 +223,7 @@ INSERT INTO public.receipt_line_items (
     1040,
     'Airfare',
     true,
+    false,
     '2025-06-15 22:15:44.462024'
   ),
   (
@@ -230,6 +235,7 @@ INSERT INTO public.receipt_line_items (
     20,
     20,
     'You know',
+    false,
     false,
     '2025-06-15 23:21:04.014963'
   ),
@@ -243,6 +249,7 @@ INSERT INTO public.receipt_line_items (
     50,
     'Accommodation',
     true,
+    true,
     '2025-06-15 22:15:47.134302'
   ),
   (
@@ -255,6 +262,7 @@ INSERT INTO public.receipt_line_items (
     220,
     'Service',
     true,
+    false,
     '2025-06-15 22:15:47.134302'
   ),
   (
@@ -266,6 +274,7 @@ INSERT INTO public.receipt_line_items (
     600,
     600,
     'Tax',
+    true,
     true,
     '2025-06-15 22:15:47.134302'
   ),
@@ -279,6 +288,7 @@ INSERT INTO public.receipt_line_items (
     100,
     'cat',
     false,
+    false,
     '2025-06-15 22:15:23.292785'
   ),
   (
@@ -290,6 +300,7 @@ INSERT INTO public.receipt_line_items (
     20,
     20,
     'Category',
+    false,
     false,
     '2025-06-15 22:13:26.507186'
   ); 

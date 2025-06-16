@@ -1,19 +1,55 @@
 import { Card, CardContent } from "@components/ui/card";
 import { ReceiptLineItem } from "@type/expense";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@components/ui/button";
 import { useToast } from "@components/ui/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@components/ui/dialog";
+import { Label } from "@components/ui/label";
+import { Input } from "@components/ui/input";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@components/ui/select";
+
+const EXPENSE_CATEGORIES = [
+  "Travel",
+  "Meals",
+  "Office Supplies",
+  "Software",
+  "Hardware",
+  "Marketing",
+  "Training",
+  "Professional Services",
+  "Other",
+];
 
 interface LineItemsListProps {
   lineItems: ReceiptLineItem[];
   onLineItemDeleted?: () => void;
+  expenseStatus: string;
 }
 
-export function LineItemsList({ lineItems, onLineItemDeleted }: Readonly<LineItemsListProps>) {
+export function LineItemsList({
+  lineItems,
+  onLineItemDeleted,
+  expenseStatus,
+}: Readonly<LineItemsListProps>) {
   const { toast } = useToast();
+  const [editingItem, setEditingItem] = useState<ReceiptLineItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  if (!lineItems || lineItems.length === 0) return null;
+  const canEdit = !["APPROVED", "REJECTED"].includes(expenseStatus);
 
   const handleDelete = async (itemId: string) => {
     try {
@@ -39,12 +75,59 @@ export function LineItemsList({ lineItems, onLineItemDeleted }: Readonly<LineIte
     }
   };
 
+  const handleEdit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    const formData = new FormData(e.currentTarget);
+    const updatedItem = {
+      description: formData.get("description"),
+      quantity: Number(formData.get("quantity")),
+      unit_price: Number(formData.get("unit_price")),
+      total_amount: Number(formData.get("total_amount")),
+      category: formData.get("category"),
+    };
+
+    try {
+      const response = await fetch(`/api/expenses/line-items/${editingItem.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedItem),
+      });
+
+      if (!response.ok) throw new Error("Failed to update line item");
+
+      toast({
+        title: "Success",
+        description: "Line item updated successfully",
+      });
+
+      onLineItemDeleted?.();
+      setIsDialogOpen(false);
+      setEditingItem(null);
+    } catch (error) {
+      console.error("Error updating line item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update line item",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (!lineItems || lineItems.length === 0) return null;
+
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="space-y-4">
           {lineItems.map((item) => (
-            <div key={item.id} className="space-y-2 rounded-lg border p-4">
+            <div
+              key={item.id}
+              className={`space-y-2 rounded-lg border p-4 ${item.is_deleted ? "opacity-50" : ""}`}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex min-w-0 items-center gap-2">
@@ -66,35 +149,129 @@ export function LineItemsList({ lineItems, onLineItemDeleted }: Readonly<LineIte
                       </p>
                     )}
                   </div>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700"
-                            onClick={() => handleDelete(item.id)}
-                            disabled={item.is_ai_generated}
-                            tabIndex={item.is_ai_generated ? -1 : 0}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {item.is_ai_generated
-                          ? "Cannot delete AI-generated item"
-                          : "Delete line item"}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {canEdit && !item.is_deleted && (
+                    <div className="flex gap-2">
+                      {!item.is_ai_generated && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-500 hover:bg-blue-50 hover:text-blue-700"
+                                onClick={() => {
+                                  setEditingItem(item);
+                                  setIsDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit line item</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700"
+                              onClick={() => handleDelete(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {item.is_ai_generated
+                              ? "Soft delete AI-generated item"
+                              : "Delete line item"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
       </CardContent>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Line Item</DialogTitle>
+          </DialogHeader>
+          {editingItem && (
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    defaultValue={editingItem.description}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select name="category" defaultValue={editingItem.category || ""}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPENSE_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="quantity">Quantity</Label>
+                  <Input
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingItem.quantity || 1}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="unit_price">Unit Price</Label>
+                  <Input
+                    id="unit_price"
+                    name="unit_price"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingItem.unit_price || 0}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="total_amount">Total Amount</Label>
+                  <Input
+                    id="total_amount"
+                    name="total_amount"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingItem.total_amount}
+                    required
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full">
+                Update Line Item
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

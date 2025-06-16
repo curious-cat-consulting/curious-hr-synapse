@@ -23,6 +23,7 @@ CREATE TABLE receipt_line_items (
   total_amount DECIMAL NOT NULL,
   category VARCHAR(100),
   is_ai_generated BOOLEAN DEFAULT true,
+  is_deleted BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -111,3 +112,28 @@ CREATE TRIGGER update_expense_amount_on_delete
   AFTER DELETE ON receipt_line_items
   FOR EACH ROW
   EXECUTE FUNCTION update_expense_amount();
+
+-- Create a trigger to update expense amount when a line item is soft deleted
+CREATE OR REPLACE FUNCTION public.handle_line_item_soft_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.is_deleted = TRUE AND OLD.is_deleted = FALSE THEN
+    -- Subtract the line item amount from the expense total
+    UPDATE public.expenses
+    SET amount = amount - OLD.total_amount
+    WHERE id = OLD.expense_id;
+  ELSIF NEW.is_deleted = FALSE AND OLD.is_deleted = TRUE THEN
+    -- Add the line item amount back to the expense total
+    UPDATE public.expenses
+    SET amount = amount + NEW.total_amount
+    WHERE id = NEW.expense_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER on_line_item_soft_delete
+  AFTER UPDATE ON public.receipt_line_items
+  FOR EACH ROW
+  WHEN (OLD.is_deleted IS DISTINCT FROM NEW.is_deleted)
+  EXECUTE FUNCTION public.handle_line_item_soft_delete(); 

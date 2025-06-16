@@ -29,6 +29,7 @@ export interface ReceiptLineItem {
   total_amount: number;
   category?: string;
   is_ai_generated: boolean;
+  is_deleted?: boolean;
   created_at: string;
 }
 

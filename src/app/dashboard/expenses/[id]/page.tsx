@@ -10,6 +10,7 @@ import { ReceiptsSection } from "@components/expenses/ReceiptsSection";
 import { AddLineItemButton } from "@components/expenses/AddLineItemButton";
 import { ExpenseDetails } from "@type/expense";
 import { createClient } from "@lib/supabase/client";
+import { Download } from "lucide-react";
 
 export default function ExpenseDetailsPage() {
   const params = useParams();
@@ -180,6 +181,35 @@ export default function ExpenseDetailsPage() {
     }
   };
 
+  const handleExport = async () => {
+    if (!expense) return;
+
+    try {
+      const response = await fetch(`/api/expenses/${params.id}/export`, {
+        method: "GET",
+      });
+
+      if (!response.ok) throw new Error("Failed to export expense");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `expense-${expense.title}-${new Date().toISOString()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error exporting expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to export expense",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "APPROVED":
@@ -246,6 +276,12 @@ export default function ExpenseDetailsPage() {
               </Button>
             </>
           )}
+          {isManager && expense.status === "APPROVED" && (
+            <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+          )}
         </div>
       </div>
 
@@ -305,6 +341,7 @@ export default function ExpenseDetailsPage() {
       <LineItemsList
         lineItems={expense.receipt_line_items}
         onLineItemDeleted={fetchExpenseDetails}
+        expenseStatus={expense.status}
       />
     </div>
   );
