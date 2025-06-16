@@ -15,6 +15,7 @@
 !*.js
 !*.md
 !.prettierrc
+!*.properties
 
 # Ignore folders.
 node_modules

@@ -47,19 +47,12 @@ export default function ExpenseDetailsPage() {
       const data = await response.json();
       setExpense(data);
 
-      // Fetch both types of line items
-      const [receiptRes, mileageRes] = await Promise.all([
-        fetch(`/api/expenses/${data.id}/line-items`),
-        fetch(`/api/expenses/${data.id}/mileage-line-items`),
-      ]);
-      const receiptLineItems = (await receiptRes.json()).data || [];
-      const mileageLineItems = (await mileageRes.json()).data || [];
-      // Add a type property for display
-      const receiptWithType = (receiptLineItems as any[]).map((item: any) => ({
+      // Add type property for display
+      const receiptWithType = (data.receipt_line_items || []).map((item: any) => ({
         ...item,
         _type: "regular",
       }));
-      const mileageWithType = (mileageLineItems as any[]).map((item: any) => ({
+      const mileageWithType = (data.mileage_line_items || []).map((item: any) => ({
         ...item,
         _type: "miles",
       }));

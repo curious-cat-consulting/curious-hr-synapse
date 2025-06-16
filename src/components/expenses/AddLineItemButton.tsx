@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@components/ui/button";
 import { Plus } from "lucide-react";
 import {
@@ -39,20 +39,6 @@ interface AddLineItemButtonProps {
   expenseStatus: string;
 }
 
-// Simple address autocomplete stub (replace with real API later)
-const ADDRESS_SUGGESTIONS = [
-  "123 Main St, Springfield",
-  "456 Oak Ave, Metropolis",
-  "789 Elm Rd, Gotham",
-  "Airport Blvd, Cityville",
-  "1 Infinite Loop, Cupertino",
-];
-
-function useAddressAutocomplete(query: string) {
-  if (!query) return [];
-  return ADDRESS_SUGGESTIONS.filter((addr) => addr.toLowerCase().includes(query.toLowerCase()));
-}
-
 export function AddLineItemButton({
   expenseId,
   onLineItemAdded,
@@ -81,14 +67,10 @@ export function AddLineItemButton({
   const { toast } = useToast();
   const canAddLineItem = ["ANALYZED", "NEW", "PENDING"].includes(expenseStatus);
 
-  // Google Places Autocomplete refs
-  const fromInputRef = useRef<HTMLInputElement>(null);
-  const toInputRef = useRef<HTMLInputElement>(null);
-
-  // Simulate miles calculation (replace with real API later)
+  // Simulate miles calculation
   useEffect(() => {
     if (type === "miles" && fromAddress && toAddress) {
-      // Fake calculation: 10 miles if addresses are different, 0 if same
+      // Simple calculation: 10 miles if addresses are different, 0 if same
       const miles = fromAddress !== toAddress ? 10 : 0;
       setCalculatedMiles(miles.toString());
       setMilesDriven(miles.toString());
@@ -114,44 +96,6 @@ export function AddLineItemButton({
       }
     }
   }, [type, customMiles, milesDriven]);
-
-  // Address autocomplete
-  const fromSuggestions = useAddressAutocomplete(fromAddress);
-  const toSuggestions = useAddressAutocomplete(toAddress);
-
-  useEffect(() => {
-    if (
-      type === "miles" &&
-      typeof window !== "undefined" &&
-      (window as any).google &&
-      (window as any).google.maps
-    ) {
-      if (fromInputRef.current) {
-        const autocomplete = new (window as any).google.maps.places.Autocomplete(
-          fromInputRef.current,
-          {
-            types: ["address"],
-          }
-        );
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          setFromAddress(place.formatted_address || fromInputRef.current!.value);
-        });
-      }
-      if (toInputRef.current) {
-        const autocomplete = new (window as any).google.maps.places.Autocomplete(
-          toInputRef.current,
-          {
-            types: ["address"],
-          }
-        );
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          setToAddress(place.formatted_address || toInputRef.current!.value);
-        });
-      }
-    }
-  }, [type]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -269,6 +213,7 @@ export function AddLineItemButton({
               required
             />
           </div>
+
           {type === "regular" && (
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -344,10 +289,8 @@ export function AddLineItemButton({
                 <Input
                   id="from_address"
                   name="from_address"
-                  ref={fromInputRef}
                   value={fromAddress}
                   onChange={(e) => setFromAddress(e.target.value)}
-                  autoComplete="off"
                   required
                 />
               </div>
@@ -356,10 +299,8 @@ export function AddLineItemButton({
                 <Input
                   id="to_address"
                   name="to_address"
-                  ref={toInputRef}
                   value={toAddress}
                   onChange={(e) => setToAddress(e.target.value)}
-                  autoComplete="off"
                   required
                 />
               </div>
@@ -406,18 +347,6 @@ export function AddLineItemButton({
                 />
                 <div className="mt-1 text-xs text-gray-500">Rate: $0.655/mi</div>
               </div>
-              {fromAddress && toAddress && (
-                <div className="col-span-2 mt-2">
-                  <iframe
-                    title="Google Maps Directions"
-                    width="100%"
-                    height="200"
-                    style={{ border: 0 }}
-                    src={`https://www.google.com/maps/embed/v1/directions?key=YOUR_GOOGLE_API_KEY&origin=${encodeURIComponent(fromAddress)}&destination=${encodeURIComponent(toAddress)}`}
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              )}
             </div>
           )}
 

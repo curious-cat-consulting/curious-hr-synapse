@@ -21,7 +21,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
         `
         *,
         receipt_metadata (*),
-        receipt_line_items (*)
+        receipt_line_items (*),
+        mileage_line_items (*)
       `
       )
       .eq("id", params.id)

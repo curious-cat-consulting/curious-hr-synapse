@@ -18,5 +18,9 @@
   ],
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "sonarlint.connectedMode.project": {
+    "connectionId": "curious-cat-consulting",
+    "projectKey": "curious-cat-consulting_curious-hr-synapse"
   }
 }
