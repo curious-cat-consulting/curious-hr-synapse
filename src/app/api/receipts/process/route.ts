@@ -172,26 +172,10 @@ export async function POST(request: Request) {
     });
 
     const results = await Promise.all(receiptPromises);
-
-    // Update expense amount based on all receipt totals (including previously analyzed ones)
-    const { data: allMetadata, error: allMetadataError } = await supabase
-      .from('receipt_metadata')
-      .select('receipt_total')
-      .eq('expense_id', expenseId);
-
-    if (allMetadataError) {
-      throw allMetadataError;
-    }
-
-    const totalAmount = allMetadata.reduce((sum, meta) => 
-      sum + (meta.receipt_total ?? 0), 0);
-
-    console.log(`Updating expense total to $${totalAmount}`);
-
+    
     const { error: updateError } = await supabase
       .from('expenses')
       .update({ 
-        amount: totalAmount,
         status: 'analyzed'
       })
       .eq('id', expenseId);

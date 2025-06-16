@@ -55,28 +55,6 @@ export async function POST(
       throw error;
     }
 
-    // Update the expense total
-    const { data: lineItems, error: lineItemsError } = await supabase
-      .from('receipt_line_items')
-      .select('total_amount')
-      .eq('expense_id', params.id);
-
-    if (lineItemsError) {
-      throw lineItemsError;
-    }
-
-    const totalAmount = lineItems.reduce((sum, item) => 
-      sum + (item.total_amount ?? 0), 0);
-
-    const { error: updateError } = await supabase
-      .from('expenses')
-      .update({ amount: totalAmount })
-      .eq('id', params.id);
-
-    if (updateError) {
-      throw updateError;
-    }
-
     return NextResponse.json({
       success: true,
       data

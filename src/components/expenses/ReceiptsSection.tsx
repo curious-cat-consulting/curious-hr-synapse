@@ -7,6 +7,7 @@ interface ReceiptsSectionProps {
   receiptMetadata: ReceiptMetadata[];
   lineItems: ReceiptLineItem[];
   onReceiptsUploaded: () => void;
+  expenseStatus: string;
 }
 
 export function ReceiptsSection({
@@ -14,17 +15,23 @@ export function ReceiptsSection({
   receiptMetadata,
   lineItems,
   onReceiptsUploaded,
+  expenseStatus,
 }: Readonly<ReceiptsSectionProps>) {
+  const canUploadReceipts =
+    expenseStatus === "pending" || expenseStatus === "analyzed";
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Receipts & Analysis</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <ReceiptUploader
-          expenseId={expenseId}
-          onUploadComplete={onReceiptsUploaded}
-        />
+        {canUploadReceipts && (
+          <ReceiptUploader
+            expenseId={expenseId}
+            onUploadComplete={onReceiptsUploaded}
+          />
+        )}
 
         {receiptMetadata && receiptMetadata.length > 0 && (
           <div className="space-y-4">

@@ -83,3 +83,31 @@ CREATE POLICY "Users can delete their own non-AI line items"
     )
     AND is_ai_generated = false
   ); 
+
+-- Create function to update expense amount
+CREATE OR REPLACE FUNCTION update_expense_amount()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Update the expense amount based on all line items
+  UPDATE expenses
+  SET amount = (
+    SELECT COALESCE(SUM(total_amount), 0)
+    FROM receipt_line_items
+    WHERE expense_id = COALESCE(NEW.expense_id, OLD.expense_id)
+  )
+  WHERE id = COALESCE(NEW.expense_id, OLD.expense_id);
+  
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create triggers for line items
+CREATE TRIGGER update_expense_amount_on_insert
+  AFTER INSERT ON receipt_line_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_expense_amount();
+
+CREATE TRIGGER update_expense_amount_on_delete
+  AFTER DELETE ON receipt_line_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_expense_amount();

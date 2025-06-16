@@ -50,6 +50,10 @@ CREATE TRIGGER on_auth_user_created
 
 -- Create expense status enum type
 create type public.expense_status as enum ('pending', 'analyzed', 'approved', 'rejected');
+-- Add status check constraint to expenses
+ALTER TABLE expenses
+ADD CONSTRAINT valid_expense_status
+CHECK (status IN ('pending', 'analyzed', 'approved', 'rejected')); 
 
 -- Create expenses table
 create table public.expenses (

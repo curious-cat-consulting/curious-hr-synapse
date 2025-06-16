@@ -123,7 +123,7 @@ INSERT INTO public.receipt_metadata (
     null,
     245,
     0.95,
-    'USD',
+    'AED',
     '2025-06-15 22:15:44.451906'
   ),
   (

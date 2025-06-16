@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@components/ui/button";
 import { Plus } from "lucide-react";
 import {
@@ -34,15 +34,30 @@ const EXPENSE_CATEGORIES = [
 interface AddLineItemButtonProps {
   expenseId: string;
   onLineItemAdded: () => void;
+  expenseStatus: string;
 }
 
 export function AddLineItemButton({
   expenseId,
   onLineItemAdded,
+  expenseStatus,
 }: Readonly<AddLineItemButtonProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [category, setCategory] = useState<string>("");
+  const [quantity, setQuantity] = useState<string>("1");
+  const [unitPrice, setUnitPrice] = useState<string>("");
+  const [totalAmount, setTotalAmount] = useState<string>("");
   const { toast } = useToast();
+
+  const canAddLineItem =
+    expenseStatus === "pending" || expenseStatus === "analyzed";
+
+  useEffect(() => {
+    if (quantity && unitPrice) {
+      const total = Number(quantity) * Number(unitPrice);
+      setTotalAmount(total.toFixed(2));
+    }
+  }, [quantity, unitPrice]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,9 +65,9 @@ export function AddLineItemButton({
     const lineItem = {
       expense_id: expenseId,
       description: formData.get("description"),
-      quantity: Number(formData.get("quantity")),
-      unit_price: Number(formData.get("unit_price")),
-      total_amount: Number(formData.get("total_amount")),
+      quantity: Number(quantity),
+      unit_price: Number(unitPrice),
+      total_amount: Number(totalAmount),
       category: category || formData.get("category"),
       is_ai_generated: false,
     };
@@ -76,6 +91,9 @@ export function AddLineItemButton({
       onLineItemAdded();
       setIsOpen(false);
       setCategory("");
+      setQuantity("1");
+      setUnitPrice("");
+      setTotalAmount("");
       (e.target as HTMLFormElement).reset();
     } catch (error) {
       console.error("Error adding line item:", error);
@@ -86,6 +104,10 @@ export function AddLineItemButton({
       });
     }
   };
+
+  if (!canAddLineItem) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -134,6 +156,8 @@ export function AddLineItemButton({
                 name="quantity"
                 type="number"
                 step="0.01"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
                 required
               />
             </div>
@@ -144,6 +168,8 @@ export function AddLineItemButton({
                 name="unit_price"
                 type="number"
                 step="0.01"
+                value={unitPrice}
+                onChange={(e) => setUnitPrice(e.target.value)}
                 required
               />
             </div>
@@ -154,6 +180,8 @@ export function AddLineItemButton({
                 name="total_amount"
                 type="number"
                 step="0.01"
+                value={totalAmount}
+                readOnly
                 required
               />
             </div>

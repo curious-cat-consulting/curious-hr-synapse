@@ -146,6 +146,7 @@ export default function ExpenseDetailsPage() {
         receiptMetadata={expense.receipt_metadata}
         lineItems={expense.receipt_line_items}
         onReceiptsUploaded={fetchExpenseDetails}
+        expenseStatus={expense.status}
       />
 
       <div className="flex justify-between items-center">
@@ -153,6 +154,7 @@ export default function ExpenseDetailsPage() {
         <AddLineItemButton
           expenseId={expense.id}
           onLineItemAdded={fetchExpenseDetails}
+          expenseStatus={expense.status}
         />
       </div>
 
