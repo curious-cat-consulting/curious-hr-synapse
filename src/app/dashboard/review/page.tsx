@@ -53,18 +53,16 @@ export default function ReviewPage() {
     }));
   };
 
-  const filteredExpenses = expenses.filter(
-    (expense) => statusFilters[expense.status]
-  );
+  const filteredExpenses = expenses.filter((expense) => statusFilters[expense.status]);
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Expense Review</h1>
       </div>
 
       <div className="mb-6">
-        <h2 className="text-sm font-medium mb-2">Filter by Status</h2>
+        <h2 className="mb-2 text-sm font-medium">Filter by Status</h2>
         <div className="flex flex-wrap gap-4">
           {Object.entries(statusFilters).map(([status, isChecked]) => (
             <div key={status} className="flex items-center space-x-2">

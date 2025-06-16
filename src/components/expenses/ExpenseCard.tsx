@@ -24,9 +24,9 @@ export function ExpenseCard({ expense }: Readonly<ExpenseCardProps>) {
 
   return (
     <Link href={`/dashboard/expenses/${expense.id}`}>
-      <Card className="hover:bg-gray-50 transition-colors cursor-pointer">
+      <Card className="cursor-pointer transition-colors hover:bg-gray-50">
         <CardContent className="p-6">
-          <div className="flex justify-between items-start">
+          <div className="flex items-start justify-between">
             <div className="space-y-1">
               <h3 className="font-semibold">{expense.title}</h3>
               <p className="text-sm text-gray-500">{expense.description}</p>
@@ -36,7 +36,7 @@ export function ExpenseCard({ expense }: Readonly<ExpenseCardProps>) {
                 {expense.currency_code} {expense.amount.toFixed(2)}
               </p>
               <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
                   expense.status
                 )}`}
               >

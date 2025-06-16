@@ -58,4 +58,4 @@ export interface ExpenseDetails {
   receipt_line_items: ReceiptLineItem[];
   receipts: string[];
   currency_code: string;
-} 
+}

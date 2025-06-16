@@ -9,6 +9,7 @@ import { LineItemsList } from "@components/expenses/LineItemsList";
 import { ReceiptsSection } from "@components/expenses/ReceiptsSection";
 import { AddLineItemButton } from "@components/expenses/AddLineItemButton";
 import { ExpenseDetails } from "@type/expense";
+import { createClient } from "@lib/supabase/client";
 
 export default function ExpenseDetailsPage() {
   const params = useParams();
@@ -16,7 +17,26 @@ export default function ExpenseDetailsPage() {
   const [expense, setExpense] = useState<ExpenseDetails | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
+  const [isManager, setIsManager] = useState(false);
   const hasReceipts = (expense?.receipt_metadata?.length ?? 0) > 0;
+
+  useEffect(() => {
+    const checkManagerRole = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("roles")
+          .eq("id", user.id)
+          .single();
+        setIsManager(profile?.roles?.includes("MANAGER") ?? false);
+      }
+    };
+    checkManagerRole();
+  }, []);
 
   const fetchExpenseDetails = async () => {
     try {
@@ -102,6 +122,64 @@ export default function ExpenseDetailsPage() {
     }
   };
 
+  const handleApprove = async () => {
+    try {
+      const response = await fetch(`/api/expenses/${params.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "APPROVED" }),
+      });
+
+      if (!response.ok) throw new Error("Failed to approve expense");
+
+      toast({
+        title: "Success",
+        description: "Expense approved successfully",
+        variant: "success",
+      });
+
+      await fetchExpenseDetails();
+    } catch (error) {
+      console.error("Error approving expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve expense",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      const response = await fetch(`/api/expenses/${params.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "REJECTED" }),
+      });
+
+      if (!response.ok) throw new Error("Failed to reject expense");
+
+      toast({
+        title: "Success",
+        description: "Expense rejected successfully",
+        variant: "success",
+      });
+
+      await fetchExpenseDetails();
+    } catch (error) {
+      console.error("Error rejecting expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject expense",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "APPROVED":
@@ -123,40 +201,52 @@ export default function ExpenseDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{expense.title}</h1>
-        {expense.status === "NEW" && (
-          <Button
-            onClick={handleAnalyze}
-            disabled={!hasReceipts || isAnalyzing}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isAnalyzing ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                Analyzing...
-              </div>
-            ) : (
-              "Analyze Receipts"
-            )}
-          </Button>
-        )}
-        {expense.status === "ANALYZED" && (
-          <Button
-            onClick={handleRequestApproval}
-            disabled={isRequestingApproval}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {isRequestingApproval ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                Requesting...
-              </div>
-            ) : (
-              "Request Approval"
-            )}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {expense.status === "NEW" && (
+            <Button
+              onClick={handleAnalyze}
+              disabled={!hasReceipts || isAnalyzing}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isAnalyzing ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Analyzing...
+                </div>
+              ) : (
+                "Analyze Receipts"
+              )}
+            </Button>
+          )}
+          {expense.status === "ANALYZED" && (
+            <Button
+              onClick={handleRequestApproval}
+              disabled={isRequestingApproval}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isRequestingApproval ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Requesting...
+                </div>
+              ) : (
+                "Request Approval"
+              )}
+            </Button>
+          )}
+          {isManager && expense.status === "PENDING" && (
+            <>
+              <Button onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
+                Approve
+              </Button>
+              <Button onClick={handleReject} className="bg-red-600 hover:bg-red-700">
+                Reject
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -166,26 +256,20 @@ export default function ExpenseDetailsPage() {
         <CardContent>
           <dl className="grid grid-cols-2 gap-4">
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Description
-              </dt>
+              <dt className="text-sm font-medium text-muted-foreground">Description</dt>
               <dd className="mt-1">{expense.description}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Amount
-              </dt>
+              <dt className="text-sm font-medium text-muted-foreground">Amount</dt>
               <dd className="mt-1">
                 {expense.currency_code} {expense.amount.toFixed(2)}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Status
-              </dt>
+              <dt className="text-sm font-medium text-muted-foreground">Status</dt>
               <dd className="mt-1">
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
                     expense.status
                   )}`}
                 >
@@ -194,12 +278,8 @@ export default function ExpenseDetailsPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Created
-              </dt>
-              <dd className="mt-1">
-                {new Date(expense.created_at).toLocaleDateString()}
-              </dd>
+              <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+              <dd className="mt-1">{new Date(expense.created_at).toLocaleDateString()}</dd>
             </div>
           </dl>
         </CardContent>
@@ -213,7 +293,7 @@ export default function ExpenseDetailsPage() {
         expenseStatus={expense.status}
       />
 
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Line Items</h2>
         <AddLineItemButton
           expenseId={expense.id}

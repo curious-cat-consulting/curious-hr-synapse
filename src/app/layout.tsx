@@ -8,8 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Catalyst HR - AI-Powered HR & Employee Admin Assistant",
-  description:
-    "Streamline your HR and administrative tasks with AI-powered expense management.",
+  description: "Streamline your HR and administrative tasks with AI-powered expense management.",
 };
 
 export default function RootLayout({

@@ -98,9 +98,9 @@ export default function LoginPage() {
 
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
@@ -108,15 +108,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Welcome to Catalyst HR
-          </CardTitle>
-          <p className="text-center text-gray-500">
-            Sign in to access your dashboard
-          </p>
+          <CardTitle className="text-center text-2xl font-bold">Welcome to Catalyst HR</CardTitle>
+          <p className="text-center text-gray-500">Sign in to access your dashboard</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleEmailSignIn} className="space-y-4">
@@ -151,9 +147,7 @@ export default function LoginPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
 

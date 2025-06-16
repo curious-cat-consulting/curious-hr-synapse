@@ -3,6 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@components/ui/button";
 import { useToast } from "@components/ui/use-toast";
 import { Upload, X } from "lucide-react";
+import { LoadingScreen } from "@components/ui/loading-screen";
 
 interface ReceiptFile {
   file: File;
@@ -25,6 +26,7 @@ export function ReceiptUploader({
 }: Readonly<ReceiptUploaderProps>) {
   const { toast } = useToast();
   const [files, setFiles] = useState<ReceiptFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -51,6 +53,7 @@ export function ReceiptUploader({
         return;
       }
 
+      setIsUploading(true);
       const formData = new FormData();
       acceptedFiles.forEach((file) => {
         formData.append("receipts", file);
@@ -79,6 +82,8 @@ export function ReceiptUploader({
           description: "Failed to upload receipts",
           variant: "destructive",
         });
+      } finally {
+        setIsUploading(false);
       }
     },
     [expenseId, onUploadComplete, onFilesSelected, mode, files, toast]
@@ -101,50 +106,49 @@ export function ReceiptUploader({
   });
 
   return (
-    <div className="space-y-4">
-      <div
-        {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-          isDragActive ? "border-primary bg-primary/5" : "border-gray-300"
-        }`}
-      >
-        <input {...getInputProps()} />
-        <Upload className="mx-auto h-12 w-12 text-gray-400" />
-        <p className="mt-2 text-sm text-gray-600">
-          {isDragActive
-            ? "Drop the files here..."
-            : "Drag & drop receipts here, or click to select files"}
-        </p>
-        <p className="text-xs text-gray-500 mt-1">
-          Supports PNG, JPG, and PDF files
-        </p>
-      </div>
-
-      {files.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium">Selected Files:</h4>
-          <div className="space-y-2">
-            {files.map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-              >
-                <span className="text-sm truncate flex-1">
-                  {file.file.name}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeFile(file.id)}
-                  className="ml-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
+    <>
+      {isUploading && <LoadingScreen message="Uploading and analyzing receipts..." />}
+      <div className="space-y-4">
+        <div
+          {...getRootProps()}
+          className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+            isDragActive ? "border-primary bg-primary/5" : "border-gray-300"
+          }`}
+        >
+          <input {...getInputProps()} />
+          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+          <p className="mt-2 text-sm text-gray-600">
+            {isDragActive
+              ? "Drop the files here..."
+              : "Drag & drop receipts here, or click to select files"}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">Supports PNG, JPG, and PDF files</p>
         </div>
-      )}
-    </div>
+
+        {files.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Selected Files:</h4>
+            <div className="space-y-2">
+              {files.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between rounded-lg bg-gray-50 p-2"
+                >
+                  <span className="flex-1 truncate text-sm">{file.file.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(file.id)}
+                    className="ml-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

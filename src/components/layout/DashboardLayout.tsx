@@ -38,8 +38,8 @@ export function DashboardLayout({ children }: Readonly<DashboardLayoutProps>) {
   return (
     <div className="min-h-screen bg-background">
       <nav className="border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/" className="text-xl font-semibold">
                 Catalyst HR
@@ -47,13 +47,13 @@ export function DashboardLayout({ children }: Readonly<DashboardLayoutProps>) {
               <div className="flex items-center space-x-2">
                 <Link href="/">
                   <Button variant="ghost" size="sm">
-                    <Home className="h-4 w-4 mr-2" />
+                    <Home className="mr-2 h-4 w-4" />
                     Dashboard
                   </Button>
                 </Link>
                 <Link href="/dashboard/expenses">
                   <Button variant="ghost" size="sm">
-                    <Receipt className="h-4 w-4 mr-2" />
+                    <Receipt className="mr-2 h-4 w-4" />
                     Expenses
                   </Button>
                 </Link>
@@ -61,11 +61,7 @@ export function DashboardLayout({ children }: Readonly<DashboardLayoutProps>) {
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === "dark" ? (
-                  <Moon className="h-4 w-4" />
-                ) : (
-                  <Sun className="h-4 w-4" />
-                )}
+                {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -74,16 +70,14 @@ export function DashboardLayout({ children }: Readonly<DashboardLayoutProps>) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    Sign Out
-                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut}>Sign Out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }

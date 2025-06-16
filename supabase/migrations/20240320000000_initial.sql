@@ -20,12 +20,19 @@ using (
   auth.role() = 'authenticated'
 );
 
+-- Create expense status enum type
+create type public.expense_status as enum ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED');
+
+-- Create user role enum type
+create type public.user_role as enum ('USER', 'MANAGER');
+
 -- Create profiles table
 CREATE TABLE profiles (
   id uuid REFERENCES auth.users(id) PRIMARY KEY,
   email text,
   full_name text,
   avatar_url text,
+  roles user_role[] DEFAULT ARRAY['USER']::user_role[],
   created_at timestamptz DEFAULT now()
 );
 
@@ -47,9 +54,6 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user(); 
-
--- Create expense status enum type
-create type public.expense_status as enum ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED');
 
 -- Create expenses table
 create table public.expenses (

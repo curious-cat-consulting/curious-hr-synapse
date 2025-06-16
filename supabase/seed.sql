@@ -37,6 +37,10 @@ INSERT INTO auth.users (
   ''
 );
 
+UPDATE public.profiles
+SET roles = ARRAY['MANAGER']::user_role[]
+WHERE id = '00000000-0000-0000-0000-000000000000';
+
 -- Insert some sample expenses for the test user
 INSERT INTO public.expenses (
   id,
