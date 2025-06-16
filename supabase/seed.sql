@@ -39,6 +39,7 @@ INSERT INTO auth.users (
 
 -- Insert some sample expenses for the test user
 INSERT INTO public.expenses (
+  id,
   user_id,
   profile_id,
   title,
@@ -49,57 +50,73 @@ INSERT INTO public.expenses (
   updated_at
 ) VALUES 
   (
+    'a8456ad2-92c1-4af4-865f-ec35d73d1dc3',
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000000',
+    'Line Items',
+    7800.00,
+    'Good Description',
+    'ANALYZED',
+    now(),
+    now()
+  ),
+  (
+    uuid_generate_v4 (),
     '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000000',
     'Office Supplies',
     125.50,
     'Purchased notebooks, pens, and other office supplies',
-    'pending',
+    'NEW',
     now(),
     now()
   ),
   (
+    uuid_generate_v4 (),
     '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000000',
     'Team Lunch',
     85.00,
     'Team building lunch at local restaurant',
-    'approved',
+    'NEW',
     now(),
     now()
   ),
   (
+    uuid_generate_v4 (),
     '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000000',
     'Software Subscription',
     49.99,
     'Monthly subscription for design software',
-    'rejected',
+    'REJECTED',
     now(),
     now()
   );
 
-INSERT INTO public.expenses (
-  id,
-  user_id,
-  profile_id,
-  title,
-  amount,
-  description,
-  status,
-  created_at,
-  updated_at
-) VALUES (
-  'a8456ad2-92c1-4af4-865f-ec35d73d1dc3',
-  '00000000-0000-0000-0000-000000000000',
-  '00000000-0000-0000-0000-000000000000',
-  'line items',
-  7800.00,
-  'hmmm',
-  'analyzed',
-  '2025-06-15 22:07:52.211987+00',
-  '2025-06-15 23:21:04.025197+00'
-);
+INSERT INTO
+    public.expenses (
+    user_id,
+    profile_id,
+    title,
+    amount,
+    description,
+    status,
+    created_at,
+    updated_at
+  ) (
+        select
+            '00000000-0000-0000-0000-000000000000',
+            '00000000-0000-0000-0000-000000000000',
+            'Title ' || (ROW_NUMBER() OVER ()),
+            FLOOR(RANDOM() * (1000 - 1 + 1) + 1),
+            'Description ' || (ROW_NUMBER() OVER ()),
+            'APPROVED',
+            now(),
+            now()
+        FROM
+            generate_series(1, 10)
+    );
 
 -- Insert receipt metadata
 INSERT INTO public.receipt_metadata (

@@ -49,8 +49,7 @@ export function AddLineItemButton({
   const [totalAmount, setTotalAmount] = useState<string>("");
   const { toast } = useToast();
 
-  const canAddLineItem =
-    expenseStatus === "pending" || expenseStatus === "analyzed";
+  const canAddLineItem = ["ANALYZED", "NEW", "PENDING"].includes(expenseStatus);
 
   useEffect(() => {
     if (quantity && unitPrice) {

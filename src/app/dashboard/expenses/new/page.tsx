@@ -97,10 +97,7 @@ export default function NewExpensePage() {
 
             <div className="space-y-2">
               <Label>Receipts</Label>
-              <ReceiptUploader
-                onUpload={setReceipts}
-                existingReceipts={receipts.map((r) => r.file.name)}
-              />
+              <ReceiptUploader mode="manual" onFilesSelected={setReceipts} />
             </div>
 
             <div className="flex justify-end space-x-4">

@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@components/ui/button";
 import { Card, CardContent } from "@components/ui/card";
-import { Plus } from "lucide-react";
 import { useToast } from "@components/ui/use-toast";
 import { Expense } from "@type/expense";
 import { ExpenseCard } from "@components/expenses/ExpenseCard";
@@ -12,15 +10,14 @@ import { Badge } from "@components/ui/badge";
 import { Checkbox } from "@components/ui/checkbox";
 import { Label } from "@components/ui/label";
 
-export default function ExpensesPage() {
-  const router = useRouter();
+export default function ReviewPage() {
   const { toast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilters, setStatusFilters] = useState<Record<string, boolean>>({
-    NEW: true,
+    NEW: false,
     PENDING: true,
-    ANALYZED: true,
+    ANALYZED: false,
     APPROVED: false,
     REJECTED: false,
   });
@@ -49,20 +46,6 @@ export default function ExpensesPage() {
     }
   };
 
-  // Show success message if redirected from new expense submission
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get("success") === "true") {
-      toast({
-        title: "Success",
-        description: "Expense report submitted successfully",
-        variant: "success",
-      });
-      // Clean up the URL
-      router.replace("/dashboard/expenses");
-    }
-  }, [router, toast]);
-
   const toggleStatusFilter = (status: string) => {
     setStatusFilters((prev) => ({
       ...prev,
@@ -77,11 +60,7 @@ export default function ExpensesPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Expenses</h1>
-        <Button onClick={() => router.push("/dashboard/expenses/new")}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Expense
-        </Button>
+        <h1 className="text-2xl font-bold">Expense Review</h1>
       </div>
 
       <div className="mb-6">

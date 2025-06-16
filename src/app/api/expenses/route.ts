@@ -1,28 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@lib/supabase/server";
 
-interface SupabaseUser {
-  id: string;
-  full_name: string;
-  email: string;
-}
-
-interface SupabaseExpense {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string;
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-  updated_at: string;
-  profiles: {
-    id: string;
-    email: string;
-    full_name: string;
-  };
-}
-
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -57,6 +35,7 @@ export async function POST(request: Request) {
         title: title,
         description: description ?? title,
         amount: 0,
+        status: 'NEW',
       })
       .select()
       .single();
@@ -145,7 +124,7 @@ export async function GET() {
       description: expense.description,
       amount: expense.amount ?? 0,
       currency_code: 'USD', // Default currency
-      status: expense.status.toUpperCase(),
+      status: expense.status,
       submitted_by: {
         id: expense.profiles.id,
         name: expense.profiles.full_name ?? 'User',

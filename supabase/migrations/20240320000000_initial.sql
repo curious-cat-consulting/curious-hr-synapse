@@ -49,11 +49,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user(); 
 
 -- Create expense status enum type
-create type public.expense_status as enum ('pending', 'analyzed', 'approved', 'rejected');
--- Add status check constraint to expenses
-ALTER TABLE expenses
-ADD CONSTRAINT valid_expense_status
-CHECK (status IN ('pending', 'analyzed', 'approved', 'rejected')); 
+create type public.expense_status as enum ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED');
 
 -- Create expenses table
 create table public.expenses (
@@ -63,13 +59,19 @@ create table public.expenses (
   title text not null,
   amount decimal(10,2) not null,
   description text not null,
-  status expense_status not null default 'pending',
+  status expense_status not null default 'NEW',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- Enable Row Level Security
 alter table public.expenses enable row level security;
+
+-- Add status check constraint to expenses
+ALTER TABLE expenses
+ADD CONSTRAINT valid_expense_status
+CHECK (status IN ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED')); 
+
 
 -- Create policy to allow users to view their own expenses
 create policy "Users can view their own expenses"

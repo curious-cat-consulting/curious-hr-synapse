@@ -17,8 +17,9 @@ export function ReceiptsSection({
   onReceiptsUploaded,
   expenseStatus,
 }: Readonly<ReceiptsSectionProps>) {
-  const canUploadReceipts =
-    expenseStatus === "pending" || expenseStatus === "analyzed";
+  const canUploadReceipts = ["ANALYZED", "NEW", "PENDING"].includes(
+    expenseStatus
+  );
 
   return (
     <Card>

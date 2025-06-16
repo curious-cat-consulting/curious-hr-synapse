@@ -15,6 +15,8 @@ export default function ExpenseDetailsPage() {
   const { toast } = useToast();
   const [expense, setExpense] = useState<ExpenseDetails | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isRequestingApproval, setIsRequestingApproval] = useState(false);
+  const hasReceipts = (expense?.receipt_metadata?.length ?? 0) > 0;
 
   const fetchExpenseDetails = async () => {
     try {
@@ -52,6 +54,7 @@ export default function ExpenseDetailsPage() {
       toast({
         title: "Success",
         description: "Receipts analyzed successfully",
+        variant: "success",
       });
 
       await fetchExpenseDetails();
@@ -67,14 +70,48 @@ export default function ExpenseDetailsPage() {
     }
   };
 
+  const handleRequestApproval = async () => {
+    setIsRequestingApproval(true);
+    try {
+      const response = await fetch(`/api/expenses/${params.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "PENDING" }),
+      });
+
+      if (!response.ok) throw new Error("Failed to request approval");
+
+      toast({
+        title: "Success",
+        description: "Approval requested successfully",
+        variant: "success",
+      });
+
+      await fetchExpenseDetails();
+    } catch (error) {
+      console.error("Error requesting approval:", error);
+      toast({
+        title: "Error",
+        description: "Failed to request approval",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequestingApproval(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
+    switch (status) {
       case "APPROVED":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
       case "REJECTED":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
       case "ANALYZED":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
+      case "NEW":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
       default:
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
     }
@@ -88,9 +125,36 @@ export default function ExpenseDetailsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">{expense.title}</h1>
-        {expense.status === "pending" && (
-          <Button onClick={handleAnalyze} disabled={isAnalyzing}>
-            {isAnalyzing ? "Analyzing..." : "Analyze Receipts"}
+        {expense.status === "NEW" && (
+          <Button
+            onClick={handleAnalyze}
+            disabled={!hasReceipts || isAnalyzing}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isAnalyzing ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                Analyzing...
+              </div>
+            ) : (
+              "Analyze Receipts"
+            )}
+          </Button>
+        )}
+        {expense.status === "ANALYZED" && (
+          <Button
+            onClick={handleRequestApproval}
+            disabled={isRequestingApproval}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isRequestingApproval ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                Requesting...
+              </div>
+            ) : (
+              "Request Approval"
+            )}
           </Button>
         )}
       </div>
@@ -125,7 +189,7 @@ export default function ExpenseDetailsPage() {
                     expense.status
                   )}`}
                 >
-                  {expense.status.toUpperCase()}
+                  {expense.status}
                 </span>
               </dd>
             </div>

@@ -4,7 +4,7 @@ export interface Expense {
   description: string;
   amount: number;
   currency_code: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "NEW" | "PENDING" | "APPROVED" | "REJECTED" | "ANALYZED";
   submitted_by: {
     id: string;
     name: string;
