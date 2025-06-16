@@ -7,6 +7,8 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const { expenseId } = await request.json();
 
+    console.log(`Starting receipt processing for expense: ${expenseId}`);
+
     if (!expenseId) {
       return NextResponse.json(
         { error: 'Missing expense ID' },
@@ -22,6 +24,8 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    console.log(`Processing for user: ${user.id}`);
 
     // Fetch expense details to verify it exists and belongs to the user
     const { data: expense, error: expenseError } = await supabase
@@ -54,11 +58,14 @@ export async function POST(request: Request) {
     }
 
     if (!receipts || receipts.length === 0) {
+      console.log('No receipts found in storage');
       return NextResponse.json(
         { error: 'No receipts found for this expense' },
         { status: 404 }
       );
     }
+
+    console.log(`Found ${receipts.length} receipts in storage`);
 
     // Get existing receipt metadata to check which receipts have been analyzed
     const { data: existingMetadata, error: metadataError } = await supabase
@@ -81,6 +88,8 @@ export async function POST(request: Request) {
       receipt => !analyzedReceipts.has(receipt.name)
     );
 
+    console.log(`${receiptsToProcess.length} receipts need processing (${analyzedReceipts.size} already analyzed)`);
+
     if (receiptsToProcess.length === 0) {
       return NextResponse.json({
         success: true,
@@ -91,6 +100,8 @@ export async function POST(request: Request) {
 
     // Process each receipt that hasn't been analyzed yet
     const receiptPromises = receiptsToProcess.map(async (receipt) => {
+      console.log(`Processing receipt: ${receipt.name}`);
+      
       // Get the receipt file from storage
       const { data: receiptData, error: receiptError } = await supabase
         .storage
@@ -105,8 +116,12 @@ export async function POST(request: Request) {
       const buffer = await receiptData.arrayBuffer();
       const base64 = Buffer.from(buffer).toString('base64');
 
+      console.log(`Analyzing receipt ${receipt.name} with OpenAI`);
+      
       // Analyze receipt using OpenAI
       const analysis = await analyzeReceipt(base64);
+
+      console.log(`Analysis complete for ${receipt.name} - vendor: ${analysis.vendor_name}, total: $${analysis.receipt_total}`);
 
       // Store receipt metadata
       const { data: metadataData, error: metadataError } = await supabase
@@ -119,6 +134,7 @@ export async function POST(request: Request) {
           receipt_total: analysis.receipt_total,
           tax_amount: analysis.tax_amount,
           confidence_score: analysis.confidence_score,
+          currency: analysis.currency,
         })
         .select()
         .single();
@@ -135,7 +151,8 @@ export async function POST(request: Request) {
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_amount: item.total_amount,
-        category: item.category
+        category: item.category,
+        is_ai_generated: true
       }));
 
       const { error: lineItemsError } = await supabase
@@ -145,6 +162,8 @@ export async function POST(request: Request) {
       if (lineItemsError) {
         throw lineItemsError;
       }
+
+      console.log(`Stored ${lineItems.length} line items for ${receipt.name}`);
 
       return {
         metadata: metadataData,
@@ -167,6 +186,8 @@ export async function POST(request: Request) {
     const totalAmount = allMetadata.reduce((sum, meta) => 
       sum + (meta.receipt_total ?? 0), 0);
 
+    console.log(`Updating expense total to $${totalAmount}`);
+
     const { error: updateError } = await supabase
       .from('expenses')
       .update({ 
@@ -179,6 +200,8 @@ export async function POST(request: Request) {
       throw updateError;
     }
 
+    console.log(`Receipt processing complete for expense ${expenseId}`);
+
     return NextResponse.json({
       success: true,
       data: results
@@ -190,4 +213,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

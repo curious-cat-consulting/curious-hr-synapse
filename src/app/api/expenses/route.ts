@@ -144,7 +144,7 @@ export async function GET() {
       title: expense.title,
       description: expense.description,
       amount: expense.amount ?? 0,
-      currency: 'USD', // Default currency
+      currency_code: 'USD', // Default currency
       status: expense.status.toUpperCase(),
       submitted_by: {
         id: expense.profiles.id,

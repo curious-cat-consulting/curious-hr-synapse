@@ -8,6 +8,7 @@ CREATE TABLE receipt_metadata (
   receipt_total DECIMAL,
   tax_amount DECIMAL,
   confidence_score DECIMAL,
+  currency_code VARCHAR(3) DEFAULT 'USD',
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -21,6 +22,7 @@ CREATE TABLE receipt_line_items (
   unit_price DECIMAL,
   total_amount DECIMAL NOT NULL,
   category VARCHAR(100),
+  is_ai_generated BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW()
 );
 

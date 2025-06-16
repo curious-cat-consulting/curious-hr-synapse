@@ -1,5 +1,7 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import { Button } from "@components/ui/button";
+import { useToast } from "@components/ui/use-toast";
 import { Upload } from "lucide-react";
 
 interface ReceiptFile {
@@ -9,25 +11,51 @@ interface ReceiptFile {
 }
 
 interface ReceiptUploaderProps {
-  onUpload: (files: ReceiptFile[]) => void;
-  existingReceipts?: string[];
+  expenseId: string;
+  onUploadComplete: () => void;
 }
 
 export function ReceiptUploader({
-  onUpload,
-  existingReceipts = [],
+  expenseId,
+  onUploadComplete,
 }: Readonly<ReceiptUploaderProps>) {
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const newReceipts = acceptedFiles.map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-        id: `${file.name}-${Date.now()}-${Math.random()}`,
-      }));
+  const { toast } = useToast();
 
-      onUpload(newReceipts);
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
+
+      const formData = new FormData();
+      acceptedFiles.forEach((file) => {
+        formData.append("receipts", file);
+      });
+
+      try {
+        const response = await fetch(`/api/expenses/${expenseId}/receipts`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload receipts");
+        }
+
+        toast({
+          title: "Success",
+          description: "Receipts uploaded successfully",
+        });
+
+        onUploadComplete();
+      } catch (error) {
+        console.error("Error uploading receipts:", error);
+        toast({
+          title: "Error",
+          description: "Failed to upload receipts",
+          variant: "destructive",
+        });
+      }
     },
-    [onUpload]
+    [expenseId, onUploadComplete, toast]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -39,35 +67,22 @@ export function ReceiptUploader({
   });
 
   return (
-    <div className="space-y-4">
-      <div
-        {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-          ${isDragActive ? "border-primary bg-primary/5" : "border-gray-300"}`}
-      >
-        <input {...getInputProps()} />
-        <div className="text-center">
-          <Upload className="mx-auto h-8 w-8 text-gray-400" />
-          <p className="mt-2 text-sm text-gray-500">
-            {isDragActive
-              ? "Drop the files here..."
-              : "Drag and drop receipts here, or click to select files"}
-          </p>
-        </div>
-      </div>
-
-      {existingReceipts.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="font-medium">Existing Receipts:</h3>
-          <ul className="list-disc list-inside">
-            {existingReceipts.map((receipt) => (
-              <li key={receipt} className="text-sm text-gray-600">
-                {receipt}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+    <div
+      {...getRootProps()}
+      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        isDragActive ? "border-primary bg-primary/5" : "border-gray-300"
+      }`}
+    >
+      <input {...getInputProps()} />
+      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+      <p className="mt-2 text-sm text-gray-600">
+        {isDragActive
+          ? "Drop the files here..."
+          : "Drag & drop receipts here, or click to select files"}
+      </p>
+      <p className="text-xs text-gray-500 mt-1">
+        Supports PNG, JPG, and PDF files
+      </p>
     </div>
   );
 }

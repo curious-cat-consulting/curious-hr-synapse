@@ -77,7 +77,9 @@ export function ExpenseCard({ expense }: Readonly<ExpenseCardProps>) {
             <p className="text-sm text-gray-500">{expense.description}</p>
           </div>
           <div className="text-right">
-            <p className="font-semibold">${expense.amount.toFixed(2)}</p>
+            <p className="font-semibold">
+              {expense.currency_code} {expense.amount.toFixed(2)}
+            </p>
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                 expense.status
