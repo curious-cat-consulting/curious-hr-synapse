@@ -33,13 +33,43 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
+  const url = request.nextUrl.clone();
+  
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/login',
+    '/auth'
+  ];
+
+  // Define protected route patterns
+  const protectedRoutes = [
+    '/dashboard',
+    '/' // Protect the home page too
+  ];
+
+  const isPublicRoute = publicRoutes.some(route => 
+    url.pathname.startsWith(route)
+  );
+
+  const isProtectedRoute = protectedRoutes.some(route => {
+    if (route === '/') {
+      return url.pathname === '/';
+    }
+    return url.pathname.startsWith(route);
+  });
+
+  // If user is not authenticated and trying to access protected route
+  if (!user && isProtectedRoute) {
+    url.pathname = '/login';
+    url.searchParams.set('redirectTo', request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // If user is authenticated and trying to access public route, redirect to dashboard
+  if (user && isPublicRoute && !url.pathname.startsWith('/auth')) {
+    const redirectTo = url.searchParams.get('redirectTo') || '/';
+    url.pathname = redirectTo;
+    url.searchParams.delete('redirectTo');
     return NextResponse.redirect(url);
   }
 

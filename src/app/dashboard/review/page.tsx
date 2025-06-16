@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@components/ui/card";
 import { useToast } from "@components/ui/use-toast";
 import { Expense } from "@type/expense";
