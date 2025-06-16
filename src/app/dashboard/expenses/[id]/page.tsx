@@ -23,6 +23,7 @@ export default function ExpenseDetailsPage() {
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
   const [isManager, setIsManager] = useState(false);
   const hasReceipts = (expense?.receipt_metadata?.length ?? 0) > 0;
+  const [allLineItems, setAllLineItems] = useState<any[]>([]);
 
   useEffect(() => {
     const checkManagerRole = async () => {
@@ -45,6 +46,28 @@ export default function ExpenseDetailsPage() {
       if (!response.ok) throw new Error("Failed to fetch expense details");
       const data = await response.json();
       setExpense(data);
+
+      // Fetch both types of line items
+      const [receiptRes, mileageRes] = await Promise.all([
+        fetch(`/api/expenses/${data.id}/line-items`),
+        fetch(`/api/expenses/${data.id}/mileage-line-items`),
+      ]);
+      const receiptLineItems = (await receiptRes.json()).data || [];
+      const mileageLineItems = (await mileageRes.json()).data || [];
+      // Add a type property for display
+      const receiptWithType = (receiptLineItems as any[]).map((item: any) => ({
+        ...item,
+        _type: "regular",
+      }));
+      const mileageWithType = (mileageLineItems as any[]).map((item: any) => ({
+        ...item,
+        _type: "miles",
+      }));
+      // Merge and sort by date desc
+      const merged = [...receiptWithType, ...mileageWithType].sort(
+        (a, b) => new Date(b.line_item_date).getTime() - new Date(a.line_item_date).getTime()
+      );
+      setAllLineItems(merged);
     } catch (error) {
       console.error("Error fetching expense details:", error);
       toast({
@@ -340,7 +363,7 @@ export default function ExpenseDetailsPage() {
         </div>
 
         <LineItemsList
-          lineItems={expense.receipt_line_items}
+          lineItems={allLineItems}
           onLineItemDeleted={fetchExpenseDetails}
           expenseStatus={expense.status}
         />

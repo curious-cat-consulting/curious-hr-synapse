@@ -34,8 +34,24 @@ const EXPENSE_CATEGORIES = [
   "Other",
 ];
 
+interface LineItem {
+  id: string;
+  description: string;
+  total_amount: number;
+  category?: string;
+  is_ai_generated?: boolean;
+  is_deleted?: boolean;
+  quantity?: number;
+  unit_price?: number;
+  from_address?: string;
+  to_address?: string;
+  miles_driven?: number;
+  line_item_date?: string;
+  _type?: "regular" | "miles";
+}
+
 interface LineItemsListProps {
-  lineItems: ReceiptLineItem[];
+  lineItems: LineItem[];
   onLineItemDeleted?: () => void;
   expenseStatus: string;
 }
@@ -133,23 +149,33 @@ export function LineItemsList({
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="truncate font-medium">{item.description}</h3>
                     <span className="flex-shrink-0 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-600">
-                      {item.is_ai_generated ? "AI" : "MN"}
+                      {item.is_ai_generated ? "AI" : item._type === "miles" ? "Miles" : "MN"}
                     </span>
                   </div>
                   {item.category && (
                     <p className="text-sm text-gray-500">Category: {item.category}</p>
                   )}
+                  {item._type === "miles" && (
+                    <>
+                      <p className="text-sm text-gray-500">From: {item.from_address}</p>
+                      <p className="text-sm text-gray-500">To: {item.to_address}</p>
+                      <p className="text-sm text-gray-500">Miles: {item.miles_driven}</p>
+                    </>
+                  )}
+                  {item.line_item_date && (
+                    <p className="mt-1 text-xs text-gray-400">Date: {item.line_item_date}</p>
+                  )}
                 </div>
                 <div className="flex min-w-0 items-center gap-4">
                   <div className="text-right">
                     <p className="font-medium">${item.total_amount.toFixed(2)}</p>
-                    {item.quantity && item.unit_price && (
+                    {item._type !== "miles" && item.quantity && item.unit_price && (
                       <p className="text-sm text-gray-500">
                         {item.quantity} × ${item.unit_price.toFixed(2)}
                       </p>
                     )}
                   </div>
-                  {canEdit && !item.is_deleted && (
+                  {canEdit && !item.is_deleted && item._type !== "miles" && (
                     <div className="flex gap-2">
                       {!item.is_ai_generated && (
                         <TooltipProvider>
@@ -160,7 +186,7 @@ export function LineItemsList({
                                 size="icon"
                                 className="h-8 w-8 text-blue-500 hover:bg-blue-50 hover:text-blue-700"
                                 onClick={() => {
-                                  setEditingItem(item);
+                                  setEditingItem(item as any);
                                   setIsDialogOpen(true);
                                 }}
                               >

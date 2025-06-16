@@ -4,7 +4,7 @@ import { Button } from "@components/ui/button";
 import { createClient } from "@lib/supabase/client";
 import { AuthGuard } from "@components/auth/AuthGuard";
 import { useAuthGuard } from "@hook/useAuthGuard";
-import { Link } from "lucide-react";
+import Link from "next/link";
 
 export default function HomePage() {
   const { user } = useAuthGuard();
@@ -25,7 +25,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
               <div className="flex items-center">
-                <h1 className="text-xl font-semibold">Catalyst HR</h1>
+                <h1 className="text-xl font-semibold">Curious HR Synapse</h1>
               </div>
               <div className="flex items-center">
                 {user && (
@@ -44,7 +44,7 @@ export default function HomePage() {
         <main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mb-12 text-center">
-              <h2 className="mb-4 text-4xl font-bold">Welcome to Catalyst HR</h2>
+              <h2 className="mb-4 text-4xl font-bold">Welcome to Curious HR Synapse</h2>
               <p className="text-xl text-gray-600">
                 AI-Powered HR & Employee Admin Assistant for Small Businesses
               </p>

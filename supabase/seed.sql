@@ -23,7 +23,7 @@ INSERT INTO auth.users (
   'authenticated',
   'authenticated',
   'curious@cat.com',
-  crypt('curious', gen_salt('bf')),
+  crypt('H047cCHxg7oDhmp0O6*D', gen_salt('bf')),
   current_timestamp,
   current_timestamp,
   current_timestamp,

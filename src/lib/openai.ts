@@ -21,6 +21,7 @@ interface ReceiptAnalysis {
     unit_price?: number;
     total_amount: number;
     category?: string;
+    date?: string;
   }[];
   confidence_score: number;
 }
@@ -34,7 +35,34 @@ export async function analyzeReceipt(imageBase64: string): Promise<ReceiptAnalys
         content: [
           {
             type: "text",
-            text: "Analyze this receipt and extract the following information in JSON format: vendor name, vendor address (if available), receipt date, total amount (as a number without currency symbol), tax amount (as a number without currency symbol), currency code (e.g., USD, EUR, AED), and line items (including description, quantity, unit price, total amount as numbers without currency symbols, and category if possible). Also provide a confidence score between 0 and 1 for the overall analysis. Format the response as a valid JSON object. All monetary values should be numbers without currency symbols.",
+            text: `
+Please analyze this receipt and extract the following information in JSON format:
+
+{
+  "vendor_name": string, // The name of the vendor
+  "vendor_address": string, // The address of the vendor (if available)
+  "receipt_date": string, // The date of the receipt (YYYY-MM-DD)
+  "receipt_total": number, // The total amount (number, no currency symbol)
+  "tax_amount": number, // The tax amount (number, no currency symbol, if available)
+  "currency": string, // The currency code (e.g., USD, EUR, AED)
+  "line_items": [
+    {
+      "description": string, // Description of the item
+      "quantity": number, // Quantity (if available)
+      "unit_price": number, // Unit price (if available)
+      "total_amount": number, // Total amount for this item
+      "category": string, // Category (if possible)
+      "date": string // The date for this line item or receipt (YYYY-MM-DD, if available)
+    },
+    ...
+  ],
+  "confidence_score": number // Confidence score between 0 and 1
+}
+
+- All monetary values should be numbers without currency symbols.
+- If a line item has a specific date (e.g., for travel or mileage), include it in the "date" field for that item.
+- Format the response as a valid JSON object, and wrap it in triple backticks with the json language tag (\`\`\`json ... \`\`\`).
+`,
           },
           {
             type: "image_url",

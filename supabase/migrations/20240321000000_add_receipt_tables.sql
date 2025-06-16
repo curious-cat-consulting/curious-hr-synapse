@@ -24,7 +24,8 @@ CREATE TABLE receipt_line_items (
   category VARCHAR(100),
   is_ai_generated BOOLEAN DEFAULT true,
   is_deleted BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  line_item_date DATE DEFAULT CURRENT_DATE
 );
 
 -- Add indexes for better query performance

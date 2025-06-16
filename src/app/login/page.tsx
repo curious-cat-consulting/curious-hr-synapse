@@ -111,7 +111,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-center text-2xl font-bold">Welcome to Catalyst HR</CardTitle>
+          <CardTitle className="text-center text-2xl font-bold">
+            Welcome to Curious HR Synapse
+          </CardTitle>
           <p className="text-center text-gray-500">Sign in to access your dashboard</p>
         </CardHeader>
         <CardContent>

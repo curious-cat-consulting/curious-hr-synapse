@@ -42,7 +42,7 @@ export function DashboardLayout({ children }: Readonly<DashboardLayoutProps>) {
           <div className="flex h-16 justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/" className="text-xl font-semibold">
-                Catalyst HR
+                Curious HR Synapse
               </Link>
               <div className="flex items-center space-x-2">
                 <Link href="/">

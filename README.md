@@ -1,8 +1,8 @@
-# Catalyst HR - AI-Powered HR & Employee Admin Assistant
+# Curious HR Synapse - AI-Powered HR & Employee Admin Assistant
 
 ## Overview
 
-Catalyst HR is an AI-powered HR & Employee Admin Assistant designed for small businesses (10-100 employees). Our MVP focuses on an intelligent Expense Reporting and Audit module that streamlines administrative tasks through AI automation.
+Curious HR Synapse is an AI-powered HR & Employee Admin Assistant designed for small businesses (10-100 employees). Our MVP focuses on an intelligent Expense Reporting and Audit module that streamlines administrative tasks through AI automation.
 
 ## Core Features (MVP)
 
@@ -36,8 +36,8 @@ Catalyst HR is an AI-powered HR & Employee Admin Assistant designed for small bu
 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/catalyst-hr.git
-cd catalyst-hr
+git clone https://github.com/your-org/curious-hr-synapse.git
+cd curious-hr-synapse
 ```
 
 2. Install dependencies
@@ -74,7 +74,7 @@ npx supabase db reset
 ## Project Structure
 
 ```
-catalyst-hr/
+curious-hr-synapse/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
 │   ├── (auth)/           # Authentication pages
