@@ -11,6 +11,25 @@ import {
 import { Label } from "@components/ui/label";
 import { Input } from "@components/ui/input";
 import { useToast } from "@components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@components/ui/select";
+
+const EXPENSE_CATEGORIES = [
+  "Travel",
+  "Meals",
+  "Office Supplies",
+  "Software",
+  "Hardware",
+  "Marketing",
+  "Training",
+  "Professional Services",
+  "Other",
+];
 
 interface AddLineItemButtonProps {
   expenseId: string;
@@ -22,6 +41,7 @@ export function AddLineItemButton({
   onLineItemAdded,
 }: Readonly<AddLineItemButtonProps>) {
   const [isOpen, setIsOpen] = useState(false);
+  const [category, setCategory] = useState<string>("");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -33,7 +53,7 @@ export function AddLineItemButton({
       quantity: Number(formData.get("quantity")),
       unit_price: Number(formData.get("unit_price")),
       total_amount: Number(formData.get("total_amount")),
-      category: formData.get("category"),
+      category: category || formData.get("category"),
       is_ai_generated: false,
     };
 
@@ -55,6 +75,7 @@ export function AddLineItemButton({
 
       onLineItemAdded();
       setIsOpen(false);
+      setCategory("");
       (e.target as HTMLFormElement).reset();
     } catch (error) {
       console.error("Error adding line item:", error);
@@ -85,7 +106,26 @@ export function AddLineItemButton({
             </div>
             <div>
               <Label htmlFor="category">Category</Label>
-              <Input id="category" name="category" required />
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EXPENSE_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!category && (
+                <Input
+                  id="category"
+                  name="category"
+                  className="mt-2"
+                  placeholder="Or type your own category"
+                />
+              )}
             </div>
             <div>
               <Label htmlFor="quantity">Quantity</Label>

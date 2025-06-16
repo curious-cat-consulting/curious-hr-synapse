@@ -54,15 +54,15 @@ export function ReceiptsSection({
                       key={item.id}
                       className="flex justify-between items-center text-sm"
                     >
-                      <div className="flex items-center gap-2">
-                        <span>{item.description}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate">{item.description}</span>
                         {item.is_ai_generated && (
-                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                          <span className="flex-shrink-0 text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
                             AI
                           </span>
                         )}
                       </div>
-                      <span>
+                      <span className="flex-shrink-0 ml-2">
                         {receipt.currency_code} {item.total_amount.toFixed(2)}
                       </span>
                     </div>

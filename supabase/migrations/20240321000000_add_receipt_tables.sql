@@ -72,4 +72,14 @@ CREATE POLICY "Users can insert their own receipt line items"
       SELECT id FROM expenses
       WHERE user_id = auth.uid()
     )
+  );
+
+CREATE POLICY "Users can delete their own non-AI line items"
+  ON receipt_line_items FOR DELETE
+  USING (
+    expense_id IN (
+      SELECT id FROM expenses
+      WHERE user_id = auth.uid()
+    )
+    AND is_ai_generated = false
   ); 
