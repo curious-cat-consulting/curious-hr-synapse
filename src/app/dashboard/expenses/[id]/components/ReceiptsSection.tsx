@@ -1,7 +1,6 @@
+import { ReceiptUploader } from "@/src/components/expenses/ReceiptUploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import type { ReceiptMetadata, ReceiptLineItem } from "@type/expense";
-
-import { ReceiptUploader } from "./ReceiptUploader";
 
 interface ReceiptsSectionProps {
   expenseId: string;
@@ -30,7 +29,7 @@ export function ReceiptsSection({
           <ReceiptUploader expenseId={expenseId} onUploadComplete={onReceiptsUploaded} />
         )}
 
-        {receiptMetadata && receiptMetadata.length > 0 && (
+        {receiptMetadata.length > 0 && (
           <div className="space-y-4">
             {receiptMetadata.map((receipt) => (
               <div key={receipt.id} className="space-y-2 rounded-lg border p-4">

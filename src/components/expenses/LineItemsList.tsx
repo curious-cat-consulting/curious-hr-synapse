@@ -29,7 +29,7 @@ const EXPENSE_CATEGORIES = [
   "Other",
 ];
 
-interface LineItem {
+export interface LineItem {
   id: string;
   description: string;
   total_amount: number;

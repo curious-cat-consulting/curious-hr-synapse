@@ -1,12 +1,13 @@
 "use client";
 
 import { AuthGuard } from "@/src/components/auth/AuthGuard";
-import { ReceiptsSection } from "@/src/components/expenses/ReceiptsSection";
 import { useAuthGuard } from "@/src/hooks/useAuthGuard";
 import { AddLineItemButton } from "@components/expenses/AddLineItemButton";
+import type { LineItem } from "@components/expenses/LineItemsList";
 import { LineItemsList } from "@components/expenses/LineItemsList";
 
 import { ExpenseDetailsHeader, ExpenseDetailsCard } from "./components";
+import { ReceiptsSection } from "./components/ReceiptsSection";
 import { useExpenseDetails } from "./hooks";
 
 export default function ExpenseDetailsPage() {
@@ -67,7 +68,7 @@ export default function ExpenseDetailsPage() {
         </div>
 
         <LineItemsList
-          lineItems={allLineItems}
+          lineItems={allLineItems as LineItem[]}
           onLineItemDeleted={fetchExpenseDetails}
           expenseStatus={expense.status}
         />
