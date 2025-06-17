@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule: "Group related code together and hide implementation details."
+
+Guidance: "Use classes or modules to encapsulate functionality. Expose only necessary interfaces."

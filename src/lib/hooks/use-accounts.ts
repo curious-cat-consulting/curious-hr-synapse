@@ -1,20 +1,22 @@
-import useSWR, {SWRConfiguration} from "swr";
+import type { GetAccountsResponse } from "@usebasejump/shared";
+import type { SWRConfiguration } from "swr";
+import useSWR from "swr";
+
 import { createClient } from "../supabase/client";
-import { GetAccountsResponse } from "@usebasejump/shared";
 
 export const useAccounts = (options?: SWRConfiguration) => {
-    const supabaseClient = createClient();
-    return useSWR<GetAccountsResponse>(
-        !!supabaseClient && ["accounts"],
-        async () => {
-            const {data, error} = await supabaseClient.rpc("get_accounts");
+  const supabaseClient = createClient();
+  return useSWR<GetAccountsResponse>(
+    !!supabaseClient && ["accounts"],
+    async () => {
+      const { data, error } = await supabaseClient.rpc("get_accounts");
 
-            if (error) {
-                throw new Error(error.message);
-            }
+      if (error) {
+        throw new Error(error.message);
+      }
 
-            return data;
-        },
-        options
-    );
+      return data;
+    },
+    options
+  );
 };

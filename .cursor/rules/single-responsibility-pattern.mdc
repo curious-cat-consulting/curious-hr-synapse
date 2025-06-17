@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule: "Every function, class, or component should have one, and only one, reason to change."
+
+Guidance: "Break down complex tasks into smaller, highly focused functions. Each function should do one thing well."

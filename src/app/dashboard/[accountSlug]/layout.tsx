@@ -1,34 +1,40 @@
-import {createClient} from "@/lib/supabase/server";
-import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { redirect } from "next/navigation";
 
-export default async function PersonalAccountDashboard({children, params: {accountSlug}}: {children: React.ReactNode, params: {accountSlug: string}}) {
-    const supabaseClient = createClient();
+import DashboardHeader from "@/components/dashboard/dashboard-header";
+import { createClient } from "@/lib/supabase/server";
 
-    const {data: teamAccount, error} = await supabaseClient.rpc('get_account_by_slug', {
-        slug: accountSlug
-    });
+export default async function PersonalAccountDashboard({
+  children,
+  params: { accountSlug },
+}: {
+  children: React.ReactNode;
+  params: { accountSlug: string };
+}) {
+  const supabaseClient = createClient();
 
-    if (!teamAccount) {
-        redirect('/dashboard');
-    }
+  const { data: teamAccount, error } = await supabaseClient.rpc("get_account_by_slug", {
+    slug: accountSlug,
+  });
 
-    const navigation = [
-        {
-            name: 'Overview',
-            href: `/dashboard/${accountSlug}`,
-        },
-        {
-            name: 'Settings',
-            href: `/dashboard/${accountSlug}/settings`
-        }
-    ]
+  if (!teamAccount) {
+    redirect("/dashboard");
+  }
 
-    return (
-        <>
-            <DashboardHeader accountId={teamAccount.account_id} navigation={navigation}/>
-            <div className="w-full p-8">{children}</div>
-        </>
-    )
+  const navigation = [
+    {
+      name: "Overview",
+      href: `/dashboard/${accountSlug}`,
+    },
+    {
+      name: "Settings",
+      href: `/dashboard/${accountSlug}/settings`,
+    },
+  ];
 
+  return (
+    <>
+      <DashboardHeader accountId={teamAccount.account_id} navigation={navigation} />
+      <div className="w-full p-8">{children}</div>
+    </>
+  );
 }

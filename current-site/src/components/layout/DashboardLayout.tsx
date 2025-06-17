@@ -14,7 +14,6 @@ import {
 } from "@components/ui/dropdown-menu";
 import { createClient } from "@lib/supabase/client";
 
-
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
