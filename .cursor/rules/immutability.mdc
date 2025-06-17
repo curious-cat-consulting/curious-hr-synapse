@@ -1,8 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-Rule: "Functions should not cause side effects (e.g., modify global state or input parameters)."
-
-Guidance: "Return new data structures instead of modifying existing ones. Make functions predictable given the same inputs."
