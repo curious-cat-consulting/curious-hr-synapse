@@ -1,3 +1,21 @@
+/*
+===============================================================================
+                              CUSTOM TYPES & ENUMS
+===============================================================================
+*/
+
+-- Create expense status enum type
+create type public.expense_status as enum ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED');
+
+-- Create user role enum type
+create type public.user_role as enum ('USER', 'MANAGER');
+
+/*
+===============================================================================
+                              STORAGE CONFIGURATION
+===============================================================================
+*/
+
 -- Create storage bucket for receipts
 insert into storage.buckets (id, name, public)
 values ('receipts', 'receipts', false);
@@ -20,11 +38,11 @@ using (
   auth.role() = 'authenticated'
 );
 
--- Create expense status enum type
-create type public.expense_status as enum ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED');
-
--- Create user role enum type
-create type public.user_role as enum ('USER', 'MANAGER');
+/*
+===============================================================================
+                              PROFILES TABLE
+===============================================================================
+*/
 
 -- Create profiles table
 CREATE TABLE profiles (
@@ -55,6 +73,21 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user(); 
 
+-- Enable RLS on profiles table
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Allow users to view their own profile
+CREATE POLICY "Users can view their own profile"
+ON public.profiles FOR SELECT
+TO authenticated
+USING (auth.uid() = id);
+
+/*
+===============================================================================
+                              EXPENSES TABLE
+===============================================================================
+*/
+
 -- Create expenses table
 create table public.expenses (
   id uuid default gen_random_uuid() primary key,
@@ -76,7 +109,6 @@ ALTER TABLE expenses
 ADD CONSTRAINT valid_expense_status
 CHECK (status IN ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED')); 
 
-
 -- Create policy to allow users to view their own expenses
 create policy "Users can view their own expenses"
 on public.expenses for select
@@ -96,6 +128,12 @@ to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+/*
+===============================================================================
+                              UTILITY FUNCTIONS & TRIGGERS
+===============================================================================
+*/
+
 -- Create function to automatically update updated_at timestamp
 create or replace function public.handle_updated_at()
 returns trigger as $$
@@ -109,4 +147,4 @@ $$ language plpgsql;
 create trigger handle_updated_at
   before update on public.expenses
   for each row
-  execute function public.handle_updated_at(); 
+  execute function public.handle_updated_at();

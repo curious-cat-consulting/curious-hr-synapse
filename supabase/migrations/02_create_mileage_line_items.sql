@@ -1,3 +1,9 @@
+/*
+===============================================================================
+                            MILEAGE LINE ITEMS TABLE
+===============================================================================
+*/
+
 -- Create mileage line items table
 CREATE TABLE mileage_line_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,4 +41,4 @@ CREATE POLICY "Users can insert their own mileage line items"
       SELECT id FROM expenses
       WHERE user_id = auth.uid()
     )
-  ); 
+  );

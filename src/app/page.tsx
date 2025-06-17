@@ -29,7 +29,7 @@ export default function HomePage() {
                 <h1 className="text-xl font-semibold">Curious HR Synapse</h1>
               </div>
               <div className="flex items-center">
-                {user && (
+                {user !== null && (
                   <div className="flex items-center space-x-4">
                     <span className="text-sm text-gray-600">{user.email}</span>
                     <Button variant="outline" onClick={handleSignOut}>
@@ -141,6 +141,12 @@ export default function HomePage() {
                     className="block w-full rounded-md bg-secondary px-4 py-2 text-center text-secondary-foreground hover:opacity-90"
                   >
                     View Analytics
+                  </Link>
+                  <Link
+                    href="/dashboard/admin"
+                    className="block w-full rounded-md bg-blue-600 px-4 py-2 text-center text-white hover:opacity-90"
+                  >
+                    Admin Dashboard
                   </Link>
                 </div>
               </div>

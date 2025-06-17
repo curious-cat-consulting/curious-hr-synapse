@@ -1,3 +1,9 @@
+/*
+===============================================================================
+                            RECEIPT METADATA TABLE
+===============================================================================
+*/
+
 -- Create receipt metadata table
 CREATE TABLE receipt_metadata (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -12,31 +18,12 @@ CREATE TABLE receipt_metadata (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create receipt line items table
-CREATE TABLE receipt_line_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  expense_id UUID REFERENCES expenses(id),
-  receipt_name VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  quantity DECIMAL,
-  unit_price DECIMAL,
-  total_amount DECIMAL NOT NULL,
-  category VARCHAR(100),
-  is_ai_generated BOOLEAN DEFAULT true,
-  is_deleted BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  line_item_date DATE DEFAULT CURRENT_DATE
-);
-
 -- Add indexes for better query performance
 CREATE INDEX idx_receipt_metadata_expense_id ON receipt_metadata(expense_id);
-CREATE INDEX idx_receipt_line_items_expense_id ON receipt_line_items(expense_id);
 CREATE INDEX idx_receipt_metadata_receipt_name ON receipt_metadata(receipt_name);
-CREATE INDEX idx_receipt_line_items_receipt_name ON receipt_line_items(receipt_name);
 
 -- Add RLS policies
 ALTER TABLE receipt_metadata ENABLE ROW LEVEL SECURITY;
-ALTER TABLE receipt_line_items ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for receipt_metadata
 CREATE POLICY "Users can view their own receipt metadata"
@@ -56,6 +43,35 @@ CREATE POLICY "Users can insert their own receipt metadata"
       WHERE user_id = auth.uid()
     )
   );
+
+/*
+===============================================================================
+                           RECEIPT LINE ITEMS TABLE
+===============================================================================
+*/
+
+-- Create receipt line items table
+CREATE TABLE receipt_line_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  expense_id UUID REFERENCES expenses(id),
+  receipt_name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  quantity DECIMAL,
+  unit_price DECIMAL,
+  total_amount DECIMAL NOT NULL,
+  category VARCHAR(100),
+  is_ai_generated BOOLEAN DEFAULT true,
+  is_deleted BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
+  line_item_date DATE DEFAULT CURRENT_DATE
+);
+
+-- Add indexes for better query performance
+CREATE INDEX idx_receipt_line_items_expense_id ON receipt_line_items(expense_id);
+CREATE INDEX idx_receipt_line_items_receipt_name ON receipt_line_items(receipt_name);
+
+-- Add RLS policies
+ALTER TABLE receipt_line_items ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for receipt_line_items
 CREATE POLICY "Users can view their own receipt line items"
@@ -84,7 +100,13 @@ CREATE POLICY "Users can delete their own non-AI line items"
       WHERE user_id = auth.uid()
     )
     AND is_ai_generated = false
-  ); 
+  );
+
+/*
+===============================================================================
+                        EXPENSE AMOUNT CALCULATION FUNCTIONS
+===============================================================================
+*/
 
 -- Create function to update expense amount
 CREATE OR REPLACE FUNCTION update_expense_amount()
@@ -102,17 +124,6 @@ BEGIN
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
-
--- Create triggers for line items
-CREATE TRIGGER update_expense_amount_on_insert
-  AFTER INSERT ON receipt_line_items
-  FOR EACH ROW
-  EXECUTE FUNCTION update_expense_amount();
-
-CREATE TRIGGER update_expense_amount_on_delete
-  AFTER DELETE ON receipt_line_items
-  FOR EACH ROW
-  EXECUTE FUNCTION update_expense_amount();
 
 -- Create a trigger to update expense amount when a line item is soft deleted
 CREATE OR REPLACE FUNCTION public.handle_line_item_soft_delete()
@@ -133,8 +144,25 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+/*
+===============================================================================
+                            EXPENSE AMOUNT TRIGGERS
+===============================================================================
+*/
+
+-- Create triggers for line items
+CREATE TRIGGER update_expense_amount_on_insert
+  AFTER INSERT ON receipt_line_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_expense_amount();
+
+CREATE TRIGGER update_expense_amount_on_delete
+  AFTER DELETE ON receipt_line_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_expense_amount();
+
 CREATE TRIGGER on_line_item_soft_delete
   AFTER UPDATE ON public.receipt_line_items
   FOR EACH ROW
   WHEN (OLD.is_deleted IS DISTINCT FROM NEW.is_deleted)
-  EXECUTE FUNCTION public.handle_line_item_soft_delete(); 
+  EXECUTE FUNCTION public.handle_line_item_soft_delete();
