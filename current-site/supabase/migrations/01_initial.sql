@@ -4,9 +4,6 @@
 ===============================================================================
 */
 
--- Create expense status enum type
-create type public.expense_status as enum ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED');
-
 -- Create user role enum type
 create type public.user_role as enum ('USER', 'MANAGER');
 
@@ -82,51 +79,9 @@ ON public.profiles FOR SELECT
 TO authenticated
 USING (auth.uid() = id);
 
-/*
-===============================================================================
-                              EXPENSES TABLE
-===============================================================================
-*/
 
--- Create expenses table
-create table public.expenses (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users(id) not null,
-  profile_id uuid references profiles(id) not null,
-  title text not null,
-  amount decimal(10,2) not null,
-  description text not null,
-  status expense_status not null default 'NEW',
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
 
--- Enable Row Level Security
-alter table public.expenses enable row level security;
 
--- Add status check constraint to expenses
-ALTER TABLE expenses
-ADD CONSTRAINT valid_expense_status
-CHECK (status IN ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED')); 
-
--- Create policy to allow users to view their own expenses
-create policy "Users can view their own expenses"
-on public.expenses for select
-to authenticated
-using (auth.uid() = user_id);
-
--- Create policy to allow users to insert their own expenses
-create policy "Users can insert their own expenses"
-on public.expenses for insert
-to authenticated
-with check (auth.uid() = user_id);
-
--- Create policy to allow users to update their own expenses
-create policy "Users can update their own expenses"
-on public.expenses for update
-to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
 
 /*
 ===============================================================================

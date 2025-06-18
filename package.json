@@ -9,6 +9,7 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "db:reset": "npx supabase db reset",
+    "db:test": "npx supabase test db",
     "update": "npx npm-check-updates -u && npm i"
   },
   "dependencies": {

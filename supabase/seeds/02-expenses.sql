@@ -4,10 +4,9 @@
 -- User 3: curious+3@cat.com -> 33333333-3333-3333-3333-333333333333
 
 -- Insert some sample expenses for the test users
-INSERT INTO public.expenses (
+INSERT INTO synapse.expenses (
   id,
   user_id,
-  profile_id,
   title,
   amount,
   description,
@@ -17,7 +16,6 @@ INSERT INTO public.expenses (
 ) VALUES 
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid, -- Main test expense with line items
-    '11111111-1111-1111-1111-111111111111'::uuid,
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Line Items',
     7800.00,
@@ -29,7 +27,6 @@ INSERT INTO public.expenses (
   (
     uuid_generate_v4 (),
     '11111111-1111-1111-1111-111111111111'::uuid,
-    '11111111-1111-1111-1111-111111111111'::uuid,
     'Office Supplies',
     125.50,
     'Purchased notebooks, pens, and other office supplies',
@@ -39,7 +36,6 @@ INSERT INTO public.expenses (
   ),
   (
     uuid_generate_v4 (),
-    '11111111-1111-1111-1111-111111111111'::uuid,
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Team Lunch',
     85.00,
@@ -51,7 +47,6 @@ INSERT INTO public.expenses (
   (
     uuid_generate_v4 (),
     '11111111-1111-1111-1111-111111111111'::uuid,
-    '11111111-1111-1111-1111-111111111111'::uuid,
     'Software Subscription',
     49.99,
     'Monthly subscription for design software',
@@ -62,9 +57,8 @@ INSERT INTO public.expenses (
 
 -- Insert bulk expenses for all test users
 INSERT INTO
-    public.expenses (
+    synapse.expenses (
     user_id,
-    profile_id,
     title,
     amount,
     description,
@@ -73,7 +67,6 @@ INSERT INTO
     updated_at
   ) (
         select
-            users.user_id,
             users.user_id,
             CASE 
                 WHEN (ROW_NUMBER() OVER ()) % 10 = 1 THEN 'Office Supplies'
@@ -106,7 +99,7 @@ INSERT INTO
                 WHEN RANDOM() < 0.8 THEN 'APPROVED'
                 WHEN RANDOM() < 0.9 THEN 'ANALYZED'
                 ELSE 'REJECTED'
-            END::expense_status,
+            END::synapse.expense_status,
             now() - interval '1 day' * FLOOR(RANDOM() * 30),
             now() - interval '1 day' * FLOOR(RANDOM() * 30)
         FROM
