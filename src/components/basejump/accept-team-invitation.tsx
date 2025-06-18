@@ -1,9 +1,10 @@
-import { acceptInvitation } from "@/lib/actions/invitations";
-import { createClient } from "@/lib/supabase/server";
+import { acceptInvitation } from "@lib/actions/invitations";
+import { createClient } from "@lib/supabase/server";
 
 import { Alert } from "../ui/alert";
 import { Card, CardContent } from "../ui/card";
 import { SubmitButton } from "../ui/submit-button";
+
 
 type Props = {
   token: string;

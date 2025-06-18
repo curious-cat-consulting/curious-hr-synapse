@@ -4,8 +4,8 @@ import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
 import type { ComponentPropsWithoutRef } from "react";
 import { useMemo, useState } from "react";
 
-import NewTeamForm from "@/components/basejump/new-team-form";
-import { Button } from "@/components/ui/button";
+import NewTeamForm from "@components/basejump/new-team-form";
+import { Button } from "@components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -14,7 +14,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
+} from "@components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useAccounts } from "@/lib/hooks/use-accounts";
-import { cn } from "@/lib/utils";
+} from "@components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@components/ui/popover";
+import { useAccounts } from "@lib/hooks/use-accounts";
+import { cn } from "@lib/utils";
 
 type PopoverTriggerProps = ComponentPropsWithoutRef<typeof PopoverTrigger>;
 
@@ -42,7 +42,7 @@ export default function AccountSelector({
   accountId,
   onAccountSelected,
   placeholder = "Select an account...",
-}: AccountSelectorProps) {
+}: Readonly<AccountSelectorProps>) {
   const [open, setOpen] = useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false);
 
@@ -84,7 +84,7 @@ export default function AccountSelector({
                 <CommandItem
                   key={personalAccount?.account_id}
                   onSelect={() => {
-                    if (onAccountSelected) {
+                    if (onAccountSelected != null) {
                       onAccountSelected(personalAccount!);
                     }
                     setOpen(false);
@@ -108,7 +108,7 @@ export default function AccountSelector({
                     <CommandItem
                       key={team.account_id}
                       onSelect={() => {
-                        if (onAccountSelected) {
+                        if (onAccountSelected != null) {
                           onAccountSelected(team);
                         }
 

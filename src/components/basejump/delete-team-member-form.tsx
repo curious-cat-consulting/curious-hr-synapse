@@ -1,9 +1,10 @@
 import type { GetAccountMembersResponse } from "@usebasejump/shared";
 import { usePathname } from "next/navigation";
 
-import { removeTeamMember } from "@/lib/actions/members";
+import { removeTeamMember } from "@lib/actions/members";
 
 import { SubmitButton } from "../ui/submit-button";
+
 
 type Props = {
   accountId: string;

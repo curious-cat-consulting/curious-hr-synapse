@@ -1,5 +1,5 @@
-import AccountBillingStatus from "@/components/basejump/account-billing-status";
-import { createClient } from "@/lib/supabase/server";
+import AccountBillingStatus from "@components/basejump/account-billing-status";
+import { createClient } from "@lib/supabase/server";
 
 const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 

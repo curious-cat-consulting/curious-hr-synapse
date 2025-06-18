@@ -2,12 +2,13 @@
 
 import type { GetAccountResponse } from "@usebasejump/shared";
 
-import { Input } from "@/components/ui/input";
-import { editTeamSlug } from "@/lib/actions/teams";
+import { Input } from "@components/ui/input";
+import { editTeamSlug } from "@lib/actions/teams";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Label } from "../ui/label";
 import { SubmitButton } from "../ui/submit-button";
+
 
 type Props = {
   account: GetAccountResponse;

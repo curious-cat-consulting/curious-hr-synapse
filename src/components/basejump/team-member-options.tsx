@@ -13,8 +13,8 @@ import {
   DialogTrigger,
   DialogPortal,
   DialogOverlay,
-} from "@/components/ui/dialog";
-import { removeTeamMember as removeTeamMemberAction } from "@/lib/actions/members";
+} from "@components/ui/dialog";
+import { removeTeamMember as removeTeamMemberAction } from "@lib/actions/members";
 
 import { Button } from "../ui/button";
 import {
@@ -29,6 +29,7 @@ import { SubmitButton } from "../ui/submit-button";
 
 import DeleteTeamMemberForm from "./delete-team-member-form";
 import EditTeamMemberRoleForm from "./edit-team-member-role-form";
+
 
 type Props = {
   accountId: string;

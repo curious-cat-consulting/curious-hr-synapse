@@ -1,9 +1,10 @@
-import { manageSubscription, setupNewSubscription } from "@/lib/actions/billing";
-import { createClient } from "@/lib/supabase/server";
+import { manageSubscription, setupNewSubscription } from "@lib/actions/billing";
+import { createClient } from "@lib/supabase/server";
 
 import { Alert, AlertDescription } from "../ui/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { SubmitButton } from "../ui/submit-button";
+
 
 type Props = {
   accountId: string;

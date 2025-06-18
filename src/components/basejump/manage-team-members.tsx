@@ -1,10 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@lib/supabase/server";
 
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableRow, TableBody, TableCell } from "../ui/table";
 
 import TeamMemberOptions from "./team-member-options";
+
 
 type Props = {
   accountId: string;

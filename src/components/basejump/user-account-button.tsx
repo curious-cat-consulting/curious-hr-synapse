@@ -2,7 +2,7 @@ import { UserIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,8 +11,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { createClient } from "@/lib/supabase/server";
+} from "@components/ui/dropdown-menu";
+import { createClient } from "@lib/supabase/server";
 
 export default async function UserAccountButton() {
   const supabaseClient = createClient();

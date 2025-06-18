@@ -1,6 +1,6 @@
-import DashboardTitle from "@/components/dashboard/dashboard-title";
-import SettingsNavigation from "@/components/dashboard/settings-navigation";
-import { Separator } from "@/components/ui/separator";
+import DashboardTitle from "@components/dashboard/dashboard-title";
+import SettingsNavigation from "@components/dashboard/settings-navigation";
+import { Separator } from "@components/ui/separator";
 
 export default function TeamSettingsPage({
   children,

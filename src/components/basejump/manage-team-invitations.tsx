@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@lib/supabase/server";
 
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -8,6 +8,7 @@ import { Table, TableRow, TableBody, TableCell } from "../ui/table";
 
 import CreateTeamInvitationButton from "./create-team-invitation-button";
 import DeleteTeamInvitationButton from "./delete-team-invitation-button";
+
 
 type Props = {
   accountId: string;

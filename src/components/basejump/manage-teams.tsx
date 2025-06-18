@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@lib/supabase/server";
 
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableRow, TableBody, TableCell } from "../ui/table";
+
 
 export default async function ManageTeams() {
   const supabaseClient = createClient();

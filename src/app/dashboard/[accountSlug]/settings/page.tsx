@@ -1,6 +1,6 @@
-import EditTeamName from "@/components/basejump/edit-team-name";
-import EditTeamSlug from "@/components/basejump/edit-team-slug";
-import { createClient } from "@/lib/supabase/server";
+import EditTeamName from "@components/basejump/edit-team-name";
+import EditTeamSlug from "@components/basejump/edit-team-slug";
+import { createClient } from "@lib/supabase/server";
 
 export default async function TeamSettingsPage({
   params: { accountSlug },

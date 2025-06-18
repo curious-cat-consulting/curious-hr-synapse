@@ -10,12 +10,13 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { updateTeamMemberRole } from "@/lib/actions/members";
+} from "@components/ui/select";
+import { updateTeamMemberRole } from "@lib/actions/members";
 
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { SubmitButton } from "../ui/submit-button";
+
 
 type Props = {
   accountId: string;

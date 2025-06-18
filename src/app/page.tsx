@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import Header from "@/components/getting-started/header";
-import { Button } from "@/components/ui/button";
+import Header from "@components/getting-started/header";
+import { Button } from "@components/ui/button";
 
 export default async function Index() {
   return (

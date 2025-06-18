@@ -4,7 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { type ComponentProps } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@components/ui/button";
 
 import { Alert, AlertDescription } from "./alert";
 

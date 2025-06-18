@@ -9,12 +9,13 @@ import {
   SelectGroup,
   SelectLabel,
   SelectItem,
-} from "@/components/ui/select";
-import { createInvitation } from "@/lib/actions/invitations";
-import fullInvitationUrl from "@/lib/full-invitation-url";
+} from "@components/ui/select";
+import { createInvitation } from "@lib/actions/invitations";
+import fullInvitationUrl from "@lib/full-invitation-url";
 
 import { Label } from "../ui/label";
 import { SubmitButton } from "../ui/submit-button";
+
 
 type Props = {
   accountId: string;

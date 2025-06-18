@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import AcceptTeamInvitation from "@/components/basejump/accept-team-invitation";
+import AcceptTeamInvitation from "@components/basejump/accept-team-invitation";
 
 export default async function AcceptInvitationPage({
   searchParams,

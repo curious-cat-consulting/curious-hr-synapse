@@ -4,7 +4,7 @@ import { Trash } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { deleteInvitation } from "@/lib/actions/invitations";
+} from "@components/ui/dialog";
+import { deleteInvitation } from "@lib/actions/invitations";
 
 import { SubmitButton } from "../ui/submit-button";
+
 
 type Props = {
   invitationId: string;

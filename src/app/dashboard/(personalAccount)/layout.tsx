@@ -1,5 +1,5 @@
-import DashboardHeader from "@/components/dashboard/dashboard-header";
-import { createClient } from "@/lib/supabase/server";
+import DashboardHeader from "@components/dashboard/dashboard-header";
+import { createClient } from "@lib/supabase/server";
 
 export default async function PersonalAccountDashboard({
   children,
@@ -9,6 +9,10 @@ export default async function PersonalAccountDashboard({
   const supabaseClient = createClient();
 
   const { data: personalAccount, error } = await supabaseClient.rpc("get_personal_account");
+
+  if (error !== null) {
+    console.error(error);
+  }
 
   const navigation = [
     {

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import DashboardHeader from "@/components/dashboard/dashboard-header";
-import { createClient } from "@/lib/supabase/server";
+import DashboardHeader from "@components/dashboard/dashboard-header";
+import { createClient } from "@lib/supabase/server";
 
 export default async function PersonalAccountDashboard({
   children,
@@ -16,7 +16,11 @@ export default async function PersonalAccountDashboard({
     slug: accountSlug,
   });
 
-  if (!teamAccount) {
+  if (error !== null) {
+    console.error(error);
+  }
+
+  if (teamAccount === null) {
     redirect("/dashboard");
   }
 

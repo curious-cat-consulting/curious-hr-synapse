@@ -1,5 +1,5 @@
-import EditPersonalAccountName from "@/components/basejump/edit-personal-account-name";
-import { createClient } from "@/lib/supabase/server";
+import EditPersonalAccountName from "@components/basejump/edit-personal-account-name";
+import { createClient } from "@lib/supabase/server";
 
 export default async function PersonalAccountSettingsPage() {
   const supabaseClient = createClient();

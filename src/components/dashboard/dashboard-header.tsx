@@ -1,9 +1,9 @@
 import { Menu } from "lucide-react";
 import Link from "next/link";
 
-import UserAccountButton from "@/components/basejump/user-account-button";
-import NavigatingAccountSelector from "@/components/dashboard/navigation-account-selector";
-import BasejumpLogo from "@/components/getting-started/basejump-logo";
+import UserAccountButton from "@components/basejump/user-account-button";
+import NavigatingAccountSelector from "@components/dashboard/navigation-account-selector";
+import BasejumpLogo from "@components/getting-started/basejump-logo";
 
 import {
   Sheet,
