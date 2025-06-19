@@ -1,8 +1,5 @@
-import { Plus } from "lucide-react";
-import Link from "next/link";
-
 import { ExpensesWithFilters } from "@components/expenses/expenses-with-filters";
-import { Button } from "@components/ui/button";
+import { NewExpenseDialog } from "@components/expenses/new-expense-dialog";
 import { createClient } from "@lib/supabase/server";
 
 export default async function ExpensesPage() {
@@ -18,12 +15,7 @@ export default async function ExpensesPage() {
     <div className="container mx-auto py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Expenses</h1>
-        <Button asChild>
-          <Link href="/expenses/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Expense
-          </Link>
-        </Button>
+        <NewExpenseDialog />
       </div>
 
       <ExpensesWithFilters expenses={expenses ?? []} />

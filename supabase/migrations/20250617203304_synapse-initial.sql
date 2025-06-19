@@ -65,6 +65,12 @@ WITH CHECK (auth.uid() = user_id);
 -- Open up access to expenses
 GRANT SELECT, INSERT, UPDATE ON TABLE synapse.expenses TO authenticated, service_role;
 
+/*
+===============================================================================
+                              RPC FUNCTIONS
+===============================================================================
+*/
+
 /**
   Returns the current user's expenses
  */
@@ -81,10 +87,87 @@ SELECT COALESCE(json_agg(
     'amount', e.amount,
     'status', e.status,
     'created_at', e.created_at
-  )
+  ) ORDER BY e.created_at DESC
 ), '[]'::json)
 FROM synapse.expenses e
 WHERE e.user_id = auth.uid();
 $$;
 
+/**
+  Creates a new expense for the current user
+ */
+CREATE OR REPLACE FUNCTION public.create_expense(
+  expense_title text,
+  expense_description text DEFAULT NULL
+)
+  RETURNS json
+  LANGUAGE plpgsql
+AS
+$$
+DECLARE
+  new_expense synapse.expenses;
+BEGIN
+  -- Check authentication
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  -- Validate input
+  IF expense_title IS NULL OR trim(expense_title) = '' THEN
+    RAISE EXCEPTION 'Title is required';
+  END IF;
+
+  -- Create the expense
+  INSERT INTO synapse.expenses (
+    user_id,
+    title,
+    description,
+    amount
+  ) VALUES (
+    auth.uid(),
+    expense_title,
+    COALESCE(expense_description, expense_title),
+    0
+  )
+  RETURNING * INTO new_expense;
+
+  -- Return the created expense
+  RETURN json_build_object(
+    'id', new_expense.id,
+    'title', new_expense.title,
+    'description', new_expense.description,
+    'amount', new_expense.amount,
+    'status', new_expense.status,
+    'created_at', new_expense.created_at
+  );
+END;
+$$;
+
+-- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expenses() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_expense(text, text) TO authenticated;
+
+/*
+===============================================================================
+                              STORAGE CONFIGURATION
+===============================================================================
+*/
+
+-- Create storage bucket for receipts
+insert into storage.buckets (id, name, public)
+values ('receipts', 'receipts', false);
+
+-- Create policy to allow users to upload receipts for their own expenses
+CREATE POLICY "Users can upload receipts for their own expenses"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'receipts' AND
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+);
+
+-- Create policy to allow users to view receipts for their own expenses
+CREATE POLICY "Users can view receipts for their own expenses"
+ON storage.objects FOR SELECT
+TO authenticated
+USING ( (select auth.uid()) = owner );

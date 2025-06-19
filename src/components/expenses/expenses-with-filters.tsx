@@ -1,6 +1,5 @@
 "use client";
 
-import type { Expense } from "@type/expense";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -10,6 +9,7 @@ import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { Card, CardContent } from "@components/ui/card";
 import { Label } from "@components/ui/label";
+import type { Expense } from "@type/expense";
 
 import { Checkbox } from "../ui";
 

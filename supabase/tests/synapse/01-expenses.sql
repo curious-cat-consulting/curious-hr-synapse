@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(18);
+select plan(23);
 
 -- Test schema and table existence
 select has_schema('synapse', 'Synapse schema should exist');
@@ -114,6 +114,50 @@ select throws_ok(
     'permission denied for schema synapse',
     'Anonymous users should not be able to insert expenses'
 );
+
+-- Clean up test data before order-by and function tests
+select tests.authenticate_as('test1');
+
+-- Test get_expenses returns expenses in descending order by created_at
+insert into synapse.expenses (user_id, title, amount, description, status, created_at)
+values
+  (tests.get_supabase_uid('test1'), 'Expense 1', 10.00, 'Desc 1', 'NEW', now() - interval '2 days'),
+  (tests.get_supabase_uid('test1'), 'Expense 2', 20.00, 'Desc 2', 'NEW', now() - interval '1 day'),
+  (tests.get_supabase_uid('test1'), 'Expense 3', 30.00, 'Desc 3', 'NEW', now());
+
+select results_eq(
+  $$ select (json_array_elements(public.get_expenses())->>'title')::text $$,
+  ARRAY['Updated Expense', 'Expense 3', 'Expense 2', 'Expense 1'],
+  'get_expenses should return expenses in descending order by created_at'
+);
+
+-- Test create_expense function: success
+select lives_ok(
+  $$ select public.create_expense('API Expense', 'Created via API') $$,
+  'create_expense should succeed with valid input'
+);
+select is(
+  (select (public.create_expense('API Expense 2', null))->>'title'),
+  'API Expense 2',
+  'create_expense should use title if description is null'
+);
+
+-- Test create_expense function: validation
+select throws_ok(
+  $$ select public.create_expense('', 'No title') $$,
+  'Title is required',
+  'create_expense should fail if title is empty'
+);
+
+-- Test create_expense function: RLS (should not allow unauthenticated)
+select tests.clear_authentication();
+select throws_ok(
+  $$ select public.create_expense('Should Fail', 'No auth') $$,
+  'permission denied for function create_expense',
+  'create_expense should not allow unauthenticated users'
+);
+
+-- (Receipts storage and policy tests moved to 02-receipts.sql)
 
 SELECT *
 FROM finish();

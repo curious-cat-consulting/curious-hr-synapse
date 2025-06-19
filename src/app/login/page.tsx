@@ -23,19 +23,20 @@ export default function Login({
       password,
     });
 
-    if (error) {
+    if (error !== null) {
       return redirect(
         `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`
       );
     }
 
-    return redirect(searchParams.returnUrl || "/dashboard");
+    return redirect(searchParams.returnUrl ?? "/dashboard");
   };
 
   const signUp = async (_prevState: any, formData: FormData) => {
     "use server";
 
-    const origin = headers().get("origin");
+    const headersList = await headers();
+    const origin = headersList.get("origin");
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const supabase = createClient();
@@ -48,7 +49,7 @@ export default function Login({
       },
     });
 
-    if (error) {
+    if (error !== null) {
       return redirect(
         `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`
       );
@@ -97,7 +98,8 @@ export default function Login({
         <SubmitButton formAction={signUp} variant="outline" pendingText="Signing Up...">
           Sign Up
         </SubmitButton>
-        {searchParams?.message && (
+        {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
+        {searchParams.message?.length > 0 && (
           <p className="mt-4 bg-foreground/10 p-4 text-center text-foreground">
             {searchParams.message}
           </p>

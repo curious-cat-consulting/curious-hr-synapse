@@ -7,33 +7,7 @@
 -- Create user role enum type
 create type public.user_role as enum ('USER', 'MANAGER');
 
-/*
-===============================================================================
-                              STORAGE CONFIGURATION
-===============================================================================
-*/
 
--- Create storage bucket for receipts
-insert into storage.buckets (id, name, public)
-values ('receipts', 'receipts', false);
-
--- Create policy to allow authenticated users to upload receipts
-create policy "Allow authenticated users to upload receipts"
-on storage.objects for insert
-to authenticated
-with check (
-  bucket_id = 'receipts' AND
-  auth.role() = 'authenticated'
-);
-
--- Create policy to allow users to view their own receipts
-create policy "Allow users to view their own receipts"
-on storage.objects for select
-to authenticated
-using (
-  bucket_id = 'receipts' AND
-  auth.role() = 'authenticated'
-);
 
 /*
 ===============================================================================
