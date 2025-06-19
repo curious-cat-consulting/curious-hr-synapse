@@ -1,16 +1,10 @@
 "use client";
 
-import type { FilePondFile, FilePondInitialFile } from "filepond";
-import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { FilePond, registerPlugin } from "react-filepond";
 import { toast } from "react-toastify";
 
-// Import FilePond styles
-import "filepond/dist/filepond.min.css";
-import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
-
+import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
 import { Button } from "@components/ui/button";
 import {
   Dialog,
@@ -24,14 +18,10 @@ import {
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
 
-// Register FilePond plugins
-registerPlugin(FilePondPluginImagePreview);
-
 export function NewExpenseDialog() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<(FilePondInitialFile | FilePondFile)[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,13 +32,6 @@ export function NewExpenseDialog() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-
-      // Append all receipt files
-      files.forEach((file) => {
-        if ("file" in file) {
-          formData.append("receipts", file.file);
-        }
-      });
 
       const response = await fetch("/api/expenses", {
         method: "POST",
@@ -68,12 +51,17 @@ export function NewExpenseDialog() {
       // Reset form
       setTitle("");
       setDescription("");
-      setFiles([]);
     } catch {
       toast.error("Failed to create expense report");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReceiptUpload = async (_files: File[]) => {
+    // This will be handled by the ReceiptUploader component itself
+    // We just need to provide the callback for the dialog context
+    return Promise.resolve();
   };
 
   return (
@@ -84,7 +72,7 @@ export function NewExpenseDialog() {
           New Expense
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>New Expense Report</DialogTitle>
           <DialogDescription>
@@ -115,19 +103,12 @@ export function NewExpenseDialog() {
 
           <div className="space-y-2">
             <Label>Receipts</Label>
-            <FilePond
-              // @ts-ignore
-              files={files}
-              onupdatefiles={setFiles}
-              allowMultiple={true}
-              maxFiles={5}
-              name="files"
-              labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
-              acceptedFileTypes={["image/*", "application/pdf"]}
-              allowImagePreview={true}
-              imagePreviewMaxHeight={200}
-              imagePreviewMinHeight={100}
-              imagePreviewMaxFileSize="10MB"
+            <ReceiptUploader
+              onUpload={handleReceiptUpload}
+              title=""
+              description=""
+              className="border-0 shadow-none"
+              showUploadButton={false}
             />
           </div>
 

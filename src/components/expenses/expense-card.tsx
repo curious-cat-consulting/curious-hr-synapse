@@ -1,7 +1,7 @@
-import type { Expense } from "@type/expense";
 import Link from "next/link";
 
 import { Card, CardContent } from "@components/ui/card";
+import type { Expense } from "@type/expense";
 
 interface ExpenseCardProps {
   expense: Expense;

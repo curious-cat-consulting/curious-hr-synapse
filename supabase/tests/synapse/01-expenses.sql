@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(23);
+select plan(28);
 
 -- Test schema and table existence
 select has_schema('synapse', 'Synapse schema should exist');
@@ -21,6 +21,9 @@ select columns_are('synapse', 'expenses',
 -- Test function existence
 select function_returns('public', 'get_expenses', ARRAY[]::text[], 'json',
     'get_expenses function should exist and return json');
+
+select function_returns('public', 'get_expense_details', ARRAY['uuid'], 'json',
+    'get_expense_details function should exist and return json');
 
 -- Test RLS is enabled
 select tests.rls_enabled('synapse', 'expenses');
@@ -131,7 +134,40 @@ select results_eq(
   'get_expenses should return expenses in descending order by created_at'
 );
 
+-- Test get_expense_details function: success case - check all fields
+select results_eq(
+  $$ select 
+       (public.get_expense_details((select id from synapse.expenses where title = 'Updated Expense')))->>'title',
+       (public.get_expense_details((select id from synapse.expenses where title = 'Updated Expense')))->>'amount',
+       (public.get_expense_details((select id from synapse.expenses where title = 'Updated Expense')))->>'status',
+       (public.get_expense_details((select id from synapse.expenses where title = 'Updated Expense')))->>'description' $$,
+  $$ select 'Updated Expense', '100.00', 'NEW', 'Test Description' $$,
+  'get_expense_details should return correct expense data for all fields'
+);
+
+-- Test get_expense_details function: non-existent expense
+select ok(
+  public.get_expense_details('11111111-1111-1111-1111-111111111111'::uuid) IS NULL,
+  'get_expense_details should return null for non-existent expense'
+);
+
+-- Test get_expense_details function: cross-user access (should be denied)
+select tests.authenticate_as('test2');
+select ok(
+  public.get_expense_details('11111111-1111-1111-1111-111111111111'::uuid) IS NULL,
+  'get_expense_details should return null when accessing another user expense'
+);
+
+-- Test get_expense_details function: unauthenticated access
+select tests.clear_authentication();
+select throws_ok(
+  $$ select public.get_expense_details('11111111-1111-1111-1111-111111111111'::uuid) $$,
+  'permission denied for function get_expense_details',
+  'get_expense_details should not allow unauthenticated users'
+);
+
 -- Test create_expense function: success
+select tests.authenticate_as('test1');
 select lives_ok(
   $$ select public.create_expense('API Expense', 'Created via API') $$,
   'create_expense should succeed with valid input'
