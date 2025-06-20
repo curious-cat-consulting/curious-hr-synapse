@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { processReceiptsForExpense } from "@lib/analysis/receipt-processing";
 import { createClient } from "@lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -59,6 +60,10 @@ export async function POST(request: Request) {
 
       await Promise.all(uploadPromises);
       console.log(`Successfully uploaded ${receipts.length} receipts`);
+
+      // Process receipts with AI analysis
+      console.log("Starting receipt analysis...");
+      await processReceiptsForExpense(supabase, expense.id);
     }
 
     console.log(`Expense creation complete: ${expense.id}`);
@@ -70,7 +75,6 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error("Error creating expense:", error);
 
-    const message = error instanceof Error ? error.message : "Failed to create expense";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Error creating expense" }, { status: 500 });
   }
 }

@@ -7,7 +7,6 @@
 -- Create synapse schema
 CREATE SCHEMA IF NOT EXISTS synapse;
 GRANT USAGE ON SCHEMA synapse TO authenticated;
-GRANT USAGE ON SCHEMA synapse TO service_role;
 
 
 /*
@@ -63,7 +62,7 @@ USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
 -- Open up access to expenses
-GRANT SELECT, INSERT, UPDATE ON TABLE synapse.expenses TO authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE ON TABLE synapse.expenses TO authenticated;
 
 /*
 ===============================================================================
@@ -192,4 +191,4 @@ WITH CHECK (
 CREATE POLICY "Users can view receipts for their own expenses"
 ON storage.objects FOR SELECT
 TO authenticated
-USING ( (select auth.uid()) = owner );
+USING ( (select auth.uid()) = owner_id::uuid );

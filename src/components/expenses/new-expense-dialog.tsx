@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
@@ -23,6 +23,7 @@ export function NewExpenseDialog() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [receiptFiles, setReceiptFiles] = useState<File[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +33,11 @@ export function NewExpenseDialog() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
+
+      // Add receipt files to form data
+      receiptFiles.forEach((file) => {
+        formData.append("receipts", file);
+      });
 
       const response = await fetch("/api/expenses", {
         method: "POST",
@@ -51,6 +57,7 @@ export function NewExpenseDialog() {
       // Reset form
       setTitle("");
       setDescription("");
+      setReceiptFiles([]);
     } catch {
       toast.error("Failed to create expense report");
     } finally {
@@ -58,11 +65,9 @@ export function NewExpenseDialog() {
     }
   };
 
-  const handleReceiptUpload = async (_files: File[]) => {
-    // This will be handled by the ReceiptUploader component itself
-    // We just need to provide the callback for the dialog context
-    return Promise.resolve();
-  };
+  const handleFilesChange = useCallback((files: File[]) => {
+    setReceiptFiles(files);
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -104,7 +109,7 @@ export function NewExpenseDialog() {
           <div className="space-y-2">
             <Label>Receipts</Label>
             <ReceiptUploader
-              onUpload={handleReceiptUpload}
+              onFilesChange={handleFilesChange}
               title=""
               description=""
               className="border-0 shadow-none"

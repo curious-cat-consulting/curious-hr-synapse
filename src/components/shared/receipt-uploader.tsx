@@ -3,7 +3,7 @@
 import type { FilePondFile, FilePondInitialFile } from "filepond";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FilePond, registerPlugin } from "react-filepond";
 import { toast } from "react-toastify";
 
@@ -20,6 +20,7 @@ registerPlugin(FilePondPluginImagePreview);
 interface ReceiptUploaderProps {
   expenseId?: string;
   onUpload?: (files: File[]) => Promise<void>;
+  onFilesChange?: (files: File[]) => void;
   className?: string;
   title?: string;
   description?: string;
@@ -29,6 +30,7 @@ interface ReceiptUploaderProps {
 export function ReceiptUploader({
   expenseId,
   onUpload,
+  onFilesChange,
   className = "",
   title = "Upload Receipts",
   description = "Drag and drop your receipt files here or click to browse",
@@ -36,6 +38,20 @@ export function ReceiptUploader({
 }: Readonly<ReceiptUploaderProps>) {
   const [files, setFiles] = useState<(FilePondInitialFile | FilePondFile)[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Memoize the file objects to prevent unnecessary re-renders
+  const fileObjects = useCallback(() => {
+    return files
+      .filter((file): file is FilePondFile => "file" in file)
+      .map((file) => file.file as File);
+  }, [files]);
+
+  // Notify parent when files change (for cases where showUploadButton is false)
+  useEffect(() => {
+    if (onFilesChange !== undefined && !showUploadButton) {
+      onFilesChange(fileObjects());
+    }
+  }, [fileObjects, onFilesChange, showUploadButton]);
 
   const handleUpload = async () => {
     if (files.length === 0) {
@@ -48,10 +64,7 @@ export function ReceiptUploader({
     try {
       if (onUpload !== undefined) {
         // Use custom upload handler if provided
-        const fileObjects = files
-          .filter((file): file is FilePondFile => "file" in file)
-          .map((file) => file.file as File);
-        await onUpload(fileObjects);
+        await onUpload(fileObjects());
       } else if (expenseId !== undefined && expenseId !== "") {
         // Default upload behavior
         const formData = new FormData();

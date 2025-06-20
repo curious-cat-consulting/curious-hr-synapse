@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-if (!process.env.OPENAI_API_KEY) {
+if (process.env.OPENAI_API_KEY == null || process.env.OPENAI_API_KEY === "") {
   throw new Error("Missing OPENAI_API_KEY environment variable");
 }
 
@@ -8,7 +8,7 @@ export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface ReceiptAnalysis {
+export interface ReceiptAnalysis {
   vendor_name: string;
   vendor_address?: string;
   receipt_date: string;
@@ -78,7 +78,7 @@ Please analyze this receipt and extract the following information in JSON format
   });
 
   const content = response.choices[0]?.message?.content;
-  if (!content) {
+  if (content == null || content === "") {
     throw new Error("No response from OpenAI");
   }
 

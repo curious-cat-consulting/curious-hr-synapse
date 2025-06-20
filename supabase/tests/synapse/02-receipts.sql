@@ -17,14 +17,14 @@ select tests.create_supabase_user('test2', 'test2@test.com');
 -- Authenticated user can insert into receipts bucket for their own user id
 select tests.authenticate_as('test1');
 select lives_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
+  $$ insert into storage.objects (bucket_id, name, owner_id)
      values ('receipts', concat(tests.get_supabase_uid('test1'), '/expenseid/receipt1.png'), tests.get_supabase_uid('test1')) $$,
   'User can upload receipt for their own expense'
 );
 
 -- Authenticated user cannot insert into receipts bucket for another user
 select throws_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
+  $$ insert into storage.objects (bucket_id, name, owner_id)
      values ('receipts', concat(tests.get_supabase_uid('test2'), '/expenseid/receipt2.png'), tests.get_supabase_uid('test1')) $$,
   'new row violates row-level security policy for table "objects"',
   'User cannot upload receipt for another user'

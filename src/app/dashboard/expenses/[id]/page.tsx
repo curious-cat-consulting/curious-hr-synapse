@@ -1,6 +1,5 @@
 import { format } from "date-fns";
-import { Plus, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Plus } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
@@ -46,7 +45,8 @@ function getStatusColor(status: string) {
 }
 
 export default async function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPageProps>) {
-  const expense = await getExpenseDetails(params.id);
+  const { id } = await params;
+  const expense = await getExpenseDetails(id);
 
   if (expense === null) {
     notFound();
@@ -56,18 +56,6 @@ export default async function ExpenseDetailsPage({ params }: Readonly<ExpenseDet
 
   return (
     <div className="space-y-8">
-      {/* Back Button and Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/dashboard/expenses">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Expenses
-            </Button>
-          </Link>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="space-y-6">
         {/* Header Card with Dates */}
