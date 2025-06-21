@@ -18,6 +18,7 @@ interface ReceiptsAndLineItemsProps {
   onReceiptsUploaded: () => void;
   onLineItemAdded: () => void;
   onLineItemDeleted: () => void;
+  isExpenseOwner: boolean;
 }
 
 export function ReceiptsAndLineItems({
@@ -25,6 +26,7 @@ export function ReceiptsAndLineItems({
   onReceiptsUploaded,
   onLineItemAdded,
   onLineItemDeleted,
+  isExpenseOwner,
 }: Readonly<ReceiptsAndLineItemsProps>) {
   const [activeTab, setActiveTab] = useState("receipts");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -69,7 +71,7 @@ export function ReceiptsAndLineItems({
           </TabsList>
 
           <TabsContent value="receipts" className="space-y-6">
-            {canUploadReceipts && (
+            {canUploadReceipts && isExpenseOwner && (
               <ReceiptUploader
                 expenseId={expense.id}
                 onUploadSuccess={() => {
@@ -144,7 +146,7 @@ export function ReceiptsAndLineItems({
                             Confidence: {(receipt.confidence_score * 100).toFixed(1)}%
                           </p>
                         </div>
-                        {canEdit && (
+                        {canEdit && isExpenseOwner && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -212,7 +214,7 @@ export function ReceiptsAndLineItems({
                 <Receipt className="mx-auto mb-4 h-12 w-12 text-gray-300" />
                 <p className="mb-2 text-lg font-medium">No receipts yet</p>
                 <p className="text-sm">
-                  {canUploadReceipts
+                  {canUploadReceipts && isExpenseOwner
                     ? "Upload receipts to get started with expense tracking"
                     : "Receipts will appear here once uploaded"}
                 </p>
@@ -229,6 +231,7 @@ export function ReceiptsAndLineItems({
               onLineItemDeleted={onLineItemDeleted}
               receipts={expense.receipt_metadata}
               selectedReceiptId={selectedReceiptId}
+              isExpenseOwner={isExpenseOwner}
             />
           </TabsContent>
         </Tabs>

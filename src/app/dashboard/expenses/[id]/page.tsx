@@ -3,9 +3,11 @@
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 
+import { ExpenseApprovalButtons } from "@/src/components/expenses/expense-approval-buttons";
 import { ReceiptsAndLineItems } from "@/src/components/expenses/receipts-and-line-items";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
+import { useCurrentUser } from "@lib/hooks/use-accounts";
 import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
 
@@ -35,6 +37,7 @@ function getStatusColor(status: string) {
 export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPageProps>) {
   const [expense, setExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
+  const { data: currentUser } = useCurrentUser();
 
   const fetchExpenseDetails = async () => {
     try {
@@ -77,6 +80,9 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
     );
   }
 
+  // Check if current user is the expense owner
+  const isExpenseOwner = currentUser?.id === expense.user_id;
+
   return (
     <div className="space-y-8">
       {/* Main Content */}
@@ -98,6 +104,17 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
                 </Badge>
               </div>
             </div>
+
+            {/* Approval Buttons for Team Owners */}
+            {!isExpenseOwner && (
+              <div className="mb-6">
+                <ExpenseApprovalButtons
+                  expense={expense}
+                  onStatusUpdated={fetchExpenseDetails}
+                  isOwner={true}
+                />
+              </div>
+            )}
 
             {/* Dates */}
             <div className="grid grid-cols-1 gap-6 border-t pt-6 md:grid-cols-2">
@@ -127,6 +144,7 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
           onReceiptsUploaded={fetchExpenseDetails}
           onLineItemAdded={fetchExpenseDetails}
           onLineItemDeleted={fetchExpenseDetails}
+          isExpenseOwner={isExpenseOwner}
         />
       </div>
     </div>

@@ -7,6 +7,7 @@ export interface Expense {
   status: "NEW" | "PENDING" | "APPROVED" | "REJECTED" | "ANALYZED";
   created_at: string;
   updated_at: string;
+  user_id: string;
   receipt_metadata: ReceiptMetadata[];
   receipt_line_items: ReceiptLineItem[];
   mileage_line_items: MileageLineItem[];

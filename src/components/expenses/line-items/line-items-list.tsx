@@ -18,6 +18,7 @@ interface LineItemsListProps {
   expenseId: string;
   receipts?: ReceiptMetadata[];
   selectedReceiptId?: string;
+  isExpenseOwner: boolean;
 }
 
 export function LineItemsList({
@@ -28,9 +29,10 @@ export function LineItemsList({
   expenseId,
   receipts = [],
   selectedReceiptId,
+  isExpenseOwner,
 }: Readonly<LineItemsListProps>) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const canEdit = !["APPROVED", "REJECTED"].includes(expenseStatus);
+  const canEdit = !["APPROVED", "REJECTED"].includes(expenseStatus) && isExpenseOwner;
 
   const handleDelete = async (itemId: string, itemType: "regular" | "miles") => {
     const supabase = createClient();

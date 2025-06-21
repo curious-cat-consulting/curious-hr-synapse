@@ -49,6 +49,7 @@ SELECT json_build_object(
   'status', e.status,
   'created_at', e.created_at,
   'updated_at', e.updated_at,
+  'user_id', e.user_id,
   'currency_code', 'USD',
   'receipt_metadata', COALESCE(
     (SELECT json_agg(
