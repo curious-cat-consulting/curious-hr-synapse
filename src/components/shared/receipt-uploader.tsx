@@ -20,6 +20,7 @@ interface ReceiptUploaderProps {
   expenseId?: string;
   onUpload?: (files: File[]) => Promise<void>;
   onFilesChange?: (files: File[]) => void;
+  onUploadSuccess?: () => void;
   className?: string;
   title?: string;
   description?: string;
@@ -30,6 +31,7 @@ export function ReceiptUploader({
   expenseId,
   onUpload,
   onFilesChange,
+  onUploadSuccess,
   className = "",
   title = "Upload Receipts",
   description = "Drag and drop your receipt files here or click to browse",
@@ -85,11 +87,15 @@ export function ReceiptUploader({
         if (!response.ok) {
           throw new Error(data.error ?? "Failed to upload receipts");
         }
-      }
 
-      // Show success toast and reset files
-      toast.success("Receipts uploaded successfully");
-      setFiles([]);
+        // Show success toast and reset files
+        toast.success("Receipts uploaded successfully");
+        setFiles([]);
+
+        if (onUploadSuccess !== undefined) {
+          onUploadSuccess();
+        }
+      }
     } catch {
       toast.error("Failed to upload receipts");
     } finally {

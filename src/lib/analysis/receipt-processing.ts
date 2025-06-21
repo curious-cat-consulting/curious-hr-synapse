@@ -4,9 +4,35 @@ import { runReceiptAnalysis } from "./receipt-analyze";
 
 export async function processReceiptsForExpense(
   supabase: SupabaseClient,
-  expenseId: string
+  expenseId: string,
+  userId?: string,
+  receipts?: File[]
 ): Promise<void> {
   console.log(`Starting receipt processing for expense: ${expenseId}`);
+
+  // If receipts are provided, upload them first
+  if (receipts != null && receipts.length > 0 && userId != null && userId !== "") {
+    console.log(`Processing ${receipts.length} receipts`);
+
+    // Upload each receipt to Supabase Storage
+    const uploadPromises = receipts.map(async (receipt) => {
+      const fileName = `${Date.now()}-${receipt.name}`;
+      const filePath = `${userId}/${expenseId}/${fileName}`;
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from("receipts")
+        .upload(filePath, receipt);
+
+      if (uploadError !== null) {
+        console.error("Error uploading receipt:", uploadError);
+        throw uploadError;
+      }
+    });
+
+    await Promise.all(uploadPromises);
+    console.log(`Successfully uploaded ${receipts.length} receipts`);
+  }
 
   // Use the RPC function to get receipts that need processing
   const { data: receiptsData, error: rpcError } = await supabase.rpc("get_receipts_to_process", {

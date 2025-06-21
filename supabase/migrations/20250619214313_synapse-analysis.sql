@@ -34,6 +34,85 @@ WHERE obj.bucket_id = 'receipts'
 $$;
 
 /**
+  Updated get_expense_details function to include unprocessed receipts
+ */
+CREATE OR REPLACE FUNCTION public.get_expense_details(expense_id uuid)
+  RETURNS json
+  LANGUAGE sql
+AS
+$$
+SELECT json_build_object(
+  'id', e.id,
+  'title', e.title,
+  'description', e.description,
+  'amount', e.amount,
+  'status', e.status,
+  'created_at', e.created_at,
+  'updated_at', e.updated_at,
+  'currency_code', 'USD',
+  'receipt_metadata', COALESCE(
+    (SELECT json_agg(
+      json_build_object(
+        'id', rm.id,
+        'receipt_id', rm.receipt_id,
+        'vendor_name', rm.vendor_name,
+        'receipt_date', rm.receipt_date,
+        'receipt_total', rm.receipt_total,
+        'tax_amount', rm.tax_amount,
+        'confidence_score', rm.confidence_score,
+        'currency_code', rm.currency_code,
+        'created_at', rm.created_at
+      ) ORDER BY rm.created_at
+    ) FROM synapse.receipt_metadata rm 
+    WHERE rm.expense_id = e.id),
+    '[]'::json
+  ),
+  'unprocessed_receipts', public.get_receipts_to_process(e.id),
+  'receipt_line_items', COALESCE(
+    (SELECT json_agg(
+      json_build_object(
+        'id', rli.id,
+        'receipt_id', rli.receipt_id,
+        'description', rli.description,
+        'quantity', rli.quantity,
+        'unit_price', rli.unit_price,
+        'total_amount', rli.total_amount,
+        'category', rli.category,
+        'is_ai_generated', rli.is_ai_generated,
+        'is_deleted', rli.is_deleted,
+        'line_item_date', rli.line_item_date,
+        'created_at', rli.created_at,
+        '_type', 'regular'
+      ) ORDER BY rli.created_at
+    ) FROM synapse.receipt_line_items rli 
+    WHERE rli.expense_id = e.id),
+    '[]'::json
+  ),
+  'mileage_line_items', COALESCE(
+    (SELECT json_agg(
+      json_build_object(
+        'id', mli.id,
+        'from_address', mli.from_address,
+        'to_address', mli.to_address,
+        'category', mli.category,
+        'miles_driven', mli.miles_driven,
+        'calculated_miles', mli.calculated_miles,
+        'custom_miles', mli.custom_miles,
+        'total_amount', mli.total_amount,
+        'line_item_date', mli.line_item_date,
+        'created_at', mli.created_at,
+        '_type', 'miles'
+      ) ORDER BY mli.created_at
+    ) FROM synapse.mileage_line_items mli 
+    WHERE mli.expense_id = e.id),
+    '[]'::json
+  )
+)
+FROM synapse.expenses e
+WHERE e.id = expense_id AND e.user_id = auth.uid()
+$$;
+
+/**
   Stores receipt analysis data including metadata and line items.
   Takes an analysis object and receipt information, then creates the corresponding
   metadata and line item records.
@@ -174,5 +253,6 @@ END;
 $$;
 
 -- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.get_expense_details(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_receipts_to_process(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.store_receipt_analyses(uuid, jsonb) TO authenticated; 

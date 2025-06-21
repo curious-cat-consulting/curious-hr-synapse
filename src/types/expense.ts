@@ -7,12 +7,15 @@ export interface Expense {
   status: "NEW" | "PENDING" | "APPROVED" | "REJECTED" | "ANALYZED";
   created_at: string;
   updated_at: string;
+  receipt_metadata: ReceiptMetadata[];
   receipt_line_items: ReceiptLineItem[];
   mileage_line_items: MileageLineItem[];
+  unprocessed_receipts: UnprocessedReceipt[];
 }
 
 export interface ReceiptLineItem {
   id: string;
+  receipt_id: string;
   description: string;
   quantity?: number;
   unit_price?: number;
@@ -41,3 +44,23 @@ export interface MileageLineItem {
 }
 
 export type LineItem = ReceiptLineItem | MileageLineItem;
+
+export interface ReceiptMetadata {
+  id: string;
+  expense_id: string;
+  receipt_id: string;
+  vendor_name: string;
+  receipt_date: string;
+  receipt_total?: number;
+  tax_amount?: number;
+  confidence_score: number;
+  currency_code: string;
+  created_at: string;
+}
+
+export interface UnprocessedReceipt {
+  id: string;
+  name: string;
+  path: string;
+  created_at: string;
+}

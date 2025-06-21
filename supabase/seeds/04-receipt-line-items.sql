@@ -1,6 +1,27 @@
 -- Seed Receipt Line Items
 -- Generate random line items for all receipts
 
+-- First, create a storage object for manual entries
+INSERT INTO storage.objects (
+  id,
+  bucket_id,
+  name,
+  owner_id,
+  created_at,
+  updated_at,
+  last_accessed_at,
+  metadata
+) VALUES (
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  'receipts',
+  'manual-entry',
+  '11111111-1111-1111-1111-111111111111',
+  now(),
+  now(),
+  now(),
+  '{"mimetype": "application/json", "size": 0}'::jsonb
+) ON CONFLICT (id) DO NOTHING;
+
 -- Generate line items for each receipt (2-6 line items per receipt)
 INSERT INTO synapse.receipt_line_items (
   expense_id,

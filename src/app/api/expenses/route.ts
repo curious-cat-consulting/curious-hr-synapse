@@ -42,28 +42,9 @@ export async function POST(request: Request) {
     if (receipts.length > 0) {
       console.log(`Processing ${receipts.length} receipts`);
 
-      // Upload each receipt to Supabase Storage
-      const uploadPromises = receipts.map(async (receipt) => {
-        const fileName = `${Date.now()}-${receipt.name}`;
-        const filePath = `${user.id}/${expense.id}/${fileName}`;
-
-        // Upload file to storage
-        const { error: uploadError } = await supabase.storage
-          .from("receipts")
-          .upload(filePath, receipt);
-
-        if (uploadError !== null) {
-          console.error("Error uploading receipt:", uploadError);
-          throw uploadError;
-        }
-      });
-
-      await Promise.all(uploadPromises);
-      console.log(`Successfully uploaded ${receipts.length} receipts`);
-
-      // Process receipts with AI analysis
+      // Process receipts with AI analysis (including upload)
       console.log("Starting receipt analysis...");
-      await processReceiptsForExpense(supabase, expense.id);
+      await processReceiptsForExpense(supabase, expense.id, user.id, receipts);
     }
 
     console.log(`Expense creation complete: ${expense.id}`);

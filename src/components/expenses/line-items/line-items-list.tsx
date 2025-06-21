@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { createClient } from "@lib/supabase/client";
-import type { LineItem } from "@type/expense";
+import type { LineItem, ReceiptMetadata } from "@type/expense";
 
 import { AddLineItemDialog } from "./add-line-item-dialog";
 import { LineItemCard } from "./line-item-card";
@@ -16,6 +16,8 @@ interface LineItemsListProps {
   onLineItemDeleted?: () => void;
   expenseStatus: string;
   expenseId: string;
+  receipts?: ReceiptMetadata[];
+  selectedReceiptId?: string;
 }
 
 export function LineItemsList({
@@ -24,6 +26,8 @@ export function LineItemsList({
   onLineItemDeleted,
   expenseStatus,
   expenseId,
+  receipts = [],
+  selectedReceiptId,
 }: Readonly<LineItemsListProps>) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const canEdit = !["APPROVED", "REJECTED"].includes(expenseStatus);
@@ -75,6 +79,8 @@ export function LineItemsList({
           onOpenChange={setIsAddDialogOpen}
           expenseId={expenseId}
           onLineItemAdded={onLineItemAdded}
+          receipts={receipts}
+          selectedReceiptId={selectedReceiptId}
         />
       </Card>
     );
@@ -106,6 +112,8 @@ export function LineItemsList({
         onOpenChange={setIsAddDialogOpen}
         expenseId={expenseId}
         onLineItemAdded={onLineItemAdded}
+        receipts={receipts}
+        selectedReceiptId={selectedReceiptId}
       />
     </Card>
   );

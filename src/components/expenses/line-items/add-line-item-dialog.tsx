@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@components/ui/select";
 import { createClient } from "@lib/supabase/client";
+import type { ReceiptMetadata } from "@type/expense";
 
 const EXPENSE_CATEGORIES = [
   "Travel",
@@ -33,6 +34,8 @@ interface AddLineItemDialogProps {
   onOpenChange: (open: boolean) => void;
   expenseId: string;
   onLineItemAdded?: () => void;
+  receipts?: ReceiptMetadata[];
+  selectedReceiptId?: string;
 }
 
 export function AddLineItemDialog({
@@ -40,6 +43,8 @@ export function AddLineItemDialog({
   onOpenChange,
   expenseId,
   onLineItemAdded,
+  receipts = [],
+  selectedReceiptId,
 }: Readonly<AddLineItemDialogProps>) {
   const [type, setType] = useState<"regular" | "miles">("regular");
 
@@ -49,6 +54,7 @@ export function AddLineItemDialog({
   const [quantity, setQuantity] = useState("1");
   const [unitPrice, setUnitPrice] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
+  const [receiptId, setReceiptId] = useState("");
 
   // Miles fields
   const [fromAddress, setFromAddress] = useState("");
@@ -83,6 +89,25 @@ export function AddLineItemDialog({
     }
   }, [milesDriven]);
 
+  // Auto-select the most recent receipt when dialog opens or receipts change
+  useEffect(() => {
+    if (receipts.length > 0 && type === "regular") {
+      if (
+        selectedReceiptId !== undefined &&
+        selectedReceiptId !== "" &&
+        receipts.some((r) => r.receipt_id === selectedReceiptId)
+      ) {
+        setReceiptId(selectedReceiptId);
+      } else {
+        // Auto-select the most recent receipt
+        const mostRecent = receipts.reduce((latest, current) =>
+          new Date(current.created_at) > new Date(latest.created_at) ? current : latest
+        );
+        setReceiptId(mostRecent.receipt_id);
+      }
+    }
+  }, [receipts, selectedReceiptId, type]);
+
   // Get the current total for display in title
   const getCurrentTotal = () => {
     if (type === "regular" && totalAmount !== "") {
@@ -104,9 +129,15 @@ export function AddLineItemDialog({
     const supabase = createClient();
 
     if (type === "regular") {
+      if (receiptId === "") {
+        toast.error("Please select a receipt");
+        return;
+      }
+
       try {
         const { error } = await supabase.rpc("add_receipt_line_item", {
           expense_id: expenseId,
+          receipt_id: receiptId,
           description,
           quantity: Number(quantity),
           unit_price: Number(unitPrice),
@@ -156,6 +187,7 @@ export function AddLineItemDialog({
     setQuantity("1");
     setUnitPrice("");
     setTotalAmount("");
+    setReceiptId("");
     setFromAddress("");
     setToAddress("");
     setMilesCategory("");
@@ -214,6 +246,22 @@ export function AddLineItemDialog({
 
           {type === "regular" && (
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="receipt">Receipt</Label>
+                <Select value={receiptId} onValueChange={setReceiptId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a receipt" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {receipts.map((receipt) => (
+                      <SelectItem key={receipt.receipt_id} value={receipt.receipt_id}>
+                        {receipt.vendor_name} -{" "}
+                        {new Date(receipt.receipt_date).toLocaleDateString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Input

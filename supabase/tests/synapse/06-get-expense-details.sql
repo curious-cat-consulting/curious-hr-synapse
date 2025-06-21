@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(26);
+select plan(34);
 
 -- Test function existence
 select function_returns('public', 'get_expense_details', ARRAY['uuid'], 'json',
@@ -146,6 +146,13 @@ select lives_ok(
     'User should be able to insert receipt line items'
 );
 
+-- Add receipt metadata to make the receipt "processed"
+select lives_ok(
+    $$ insert into synapse.receipt_metadata (expense_id, receipt_id, vendor_name, receipt_date, receipt_total, confidence_score, currency_code)
+       values (current_setting('test.expense1_id')::uuid, current_setting('test.receipt_obj_id')::uuid, 'Test Vendor', '2024-01-15', 55.00, 0.95, 'USD') $$,
+    'User should be able to insert receipt metadata'
+);
+
 -- Test that receipt line items are included in response
 select is(
   (json_array_length((public.get_expense_details(current_setting('test.expense1_id')::uuid))->'receipt_line_items'))::text,
@@ -184,6 +191,50 @@ select is(
   (json_array_length((public.get_expense_details(current_setting('test.expense1_id')::uuid))->'mileage_line_items'))::text,
   '2',
   'get_expense_details should include mileage line items in response'
+);
+
+-- Test that unprocessed_receipts field is included in response
+select ok(
+  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'unprocessed_receipts' IS NOT NULL,
+  'get_expense_details should include unprocessed_receipts field'
+);
+
+-- Test that unprocessed_receipts returns empty array when no unprocessed receipts exist
+select is(
+  json_array_length((public.get_expense_details(current_setting('test.expense1_id')::uuid))->'unprocessed_receipts'),
+  0,
+  'get_expense_details should return empty unprocessed_receipts array when no unprocessed receipts exist'
+);
+
+-- Test that unprocessed_receipts includes receipts that exist in storage but not in metadata
+-- Create another storage object for an unprocessed receipt
+select lives_ok(
+    $$ insert into storage.objects (bucket_id, name, owner_id)
+       values ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense1_id'), '/unprocessed-receipt.png'), tests.get_supabase_uid('test1')) $$,
+    'User should be able to create storage object for unprocessed receipt'
+);
+
+-- Test that unprocessed_receipts now includes the new receipt
+select is(
+  json_array_length((public.get_expense_details(current_setting('test.expense1_id')::uuid))->'unprocessed_receipts'),
+  1,
+  'get_expense_details should include unprocessed receipts in unprocessed_receipts field'
+);
+
+-- Test that unprocessed_receipts has the correct structure
+select ok(
+  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'unprocessed_receipts'->0->>'id' IS NOT NULL,
+  'Unprocessed receipts should have id field'
+);
+
+select ok(
+  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'unprocessed_receipts'->0->>'name' IS NOT NULL,
+  'Unprocessed receipts should have name field'
+);
+
+select ok(
+  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'unprocessed_receipts'->0->>'path' IS NOT NULL,
+  'Unprocessed receipts should have path field'
 );
 
 -- Test mileage line item structure

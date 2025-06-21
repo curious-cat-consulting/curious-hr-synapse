@@ -16,7 +16,7 @@ INSERT INTO storage.objects (
 SELECT 
   gen_random_uuid() as id,
   'receipts' as bucket_id,
-  expense_id::text || '/' || 
+  user_id::text || '/' || expense_id::text || '/' || 
   CASE 
     WHEN receipt_num = 1 THEN 'receipt-' || expense_id::text || '-1.jpg'
     WHEN receipt_num = 2 THEN 'receipt-' || expense_id::text || '-2.png'
@@ -43,27 +43,6 @@ FROM (
   WHERE e.status IN ('ANALYZED', 'PENDING', 'APPROVED')
 ) expense_receipts;
 
--- Create the special manual entry storage object
-INSERT INTO storage.objects (
-  id,
-  bucket_id,
-  name,
-  owner_id,
-  created_at,
-  updated_at,
-  last_accessed_at,
-  metadata
-) VALUES (
-  'dddddddd-dddd-dddd-dddd-dddddddddddd', -- Special UUID for manual entries (no actual file)
-  'receipts',
-  'manual-entry',
-  '11111111-1111-1111-1111-111111111111',
-  '2025-06-15 22:00:00.000000',
-  '2025-06-15 22:00:00.000000',
-  '2025-06-15 22:00:00.000000',
-  '{"mimetype": "application/octet-stream", "size": 0}'::jsonb
-);
-
 -- Then create receipt metadata using the storage object IDs
 INSERT INTO synapse.receipt_metadata (
   expense_id,
@@ -77,7 +56,7 @@ INSERT INTO synapse.receipt_metadata (
   created_at
 )
 SELECT 
-  (string_to_array(obj.name, '/'))[1]::uuid as expense_id,
+  (string_to_array(obj.name, '/'))[2]::uuid as expense_id,
   obj.id as receipt_id,
   CASE 
     WHEN obj.name LIKE '%-1.jpg' THEN 'Office Depot'
@@ -104,4 +83,4 @@ SELECT
 FROM storage.objects obj
 WHERE obj.bucket_id = 'receipts' 
   AND obj.name != 'manual-entry'
-  AND obj.name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/';
+  AND obj.name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/';

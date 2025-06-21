@@ -3,8 +3,7 @@
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 
-import { LineItemsList } from "@/src/components/expenses/line-items/line-items-list";
-import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
+import { ReceiptsAndLineItems } from "@/src/components/expenses/receipts-and-line-items";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
 import { createClient } from "@lib/supabase/client";
@@ -78,16 +77,11 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
     );
   }
 
-  const canUploadReceipts = expense.status === "NEW" || expense.status === "ANALYZED";
-
-  // Combine all line items
-  const allLineItems = [...expense.receipt_line_items, ...expense.mileage_line_items];
-
   return (
     <div className="space-y-8">
       {/* Main Content */}
       <div className="space-y-6">
-        {/* Header Card with Dates and Receipt Upload */}
+        {/* Header Card with Dates */}
         <Card>
           <CardContent className="p-6">
             <div className="mb-6 flex items-start justify-between">
@@ -124,27 +118,13 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
                 </p>
               </div>
             </div>
-
-            {/* Receipt Upload - Integrated into main card */}
-            {canUploadReceipts && (
-              <div className="mt-6 border-t pt-2">
-                <ReceiptUploader
-                  expenseId={expense.id}
-                  title=""
-                  description=""
-                  onUpload={fetchExpenseDetails}
-                  className="p-0"
-                />
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Line Items Section */}
-        <LineItemsList
-          lineItems={allLineItems}
-          expenseStatus={expense.status}
-          expenseId={expense.id}
+        {/* Receipts & Line Items with Tabs */}
+        <ReceiptsAndLineItems
+          expense={expense}
+          onReceiptsUploaded={fetchExpenseDetails}
           onLineItemAdded={fetchExpenseDetails}
           onLineItemDeleted={fetchExpenseDetails}
         />
