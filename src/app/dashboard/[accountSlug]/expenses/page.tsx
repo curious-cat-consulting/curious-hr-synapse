@@ -133,7 +133,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         <NewExpenseDialog onExpenseCreated={handleExpenseCreated} />
       </div>
 
-      <TeamExpensesWithFilters expenses={expenses} />
+      <TeamExpensesWithFilters expenses={expenses} accountSlug={accountSlug ?? undefined} />
     </div>
   );
 }

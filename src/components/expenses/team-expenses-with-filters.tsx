@@ -23,9 +23,13 @@ import { Checkbox } from "../ui";
 
 interface TeamExpensesWithFiltersProps {
   expenses: TeamExpense[];
+  accountSlug?: string;
 }
 
-export function TeamExpensesWithFilters({ expenses }: Readonly<TeamExpensesWithFiltersProps>) {
+export function TeamExpensesWithFilters({
+  expenses,
+  accountSlug,
+}: Readonly<TeamExpensesWithFiltersProps>) {
   const [statusFilters, setStatusFilters] = useState<Record<string, boolean>>({
     NEW: true,
     PENDING: true,
@@ -154,7 +158,12 @@ export function TeamExpensesWithFilters({ expenses }: Readonly<TeamExpensesWithF
           <TabsContent value="chronological" className="mt-0">
             <div className="grid gap-4">
               {filteredExpenses.map((expense) => (
-                <TeamExpenseCard key={expense.id} expense={expense} showUserName />
+                <TeamExpenseCard
+                  key={expense.id}
+                  expense={expense}
+                  showUserName
+                  accountSlug={accountSlug}
+                />
               ))}
             </div>
           </TabsContent>
@@ -171,7 +180,11 @@ export function TeamExpensesWithFilters({ expenses }: Readonly<TeamExpensesWithF
                     </div>
                     <div className="grid gap-4">
                       {userExpenses.map((expense) => (
-                        <TeamExpenseCard key={expense.id} expense={expense} />
+                        <TeamExpenseCard
+                          key={expense.id}
+                          expense={expense}
+                          accountSlug={accountSlug}
+                        />
                       ))}
                     </div>
                   </div>

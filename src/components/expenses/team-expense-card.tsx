@@ -8,9 +8,14 @@ import { Badge } from "../ui/badge";
 interface TeamExpenseCardProps {
   expense: TeamExpense;
   showUserName?: boolean;
+  accountSlug?: string;
 }
 
-export function TeamExpenseCard({ expense, showUserName }: Readonly<TeamExpenseCardProps>) {
+export function TeamExpenseCard({
+  expense,
+  showUserName,
+  accountSlug,
+}: Readonly<TeamExpenseCardProps>) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "APPROVED":
@@ -26,8 +31,14 @@ export function TeamExpenseCard({ expense, showUserName }: Readonly<TeamExpenseC
     }
   };
 
+  // Use team-specific route if accountSlug is provided, otherwise fall back to personal route
+  const expenseDetailUrl =
+    (accountSlug ?? "") !== ""
+      ? `/dashboard/${accountSlug}/expenses/${expense.id}`
+      : `/dashboard/expenses/${expense.id}`;
+
   return (
-    <Link href={`/dashboard/expenses/${expense.id}`}>
+    <Link href={expenseDetailUrl}>
       <Card className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
