@@ -1,4 +1,5 @@
 import { Inter as FontSans } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -23,10 +24,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html
       lang="en"
       className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}
+      suppressHydrationWarning
     >
       <body className="bg-background text-foreground">
-        <main className="flex min-h-screen flex-col items-center">{children}</main>
-        <ToastContainer />
+        <ThemeProvider attribute="class">
+          <main className="flex min-h-screen flex-col items-center">{children}</main>
+          <ToastContainer />
+        </ThemeProvider>
       </body>
     </html>
   );

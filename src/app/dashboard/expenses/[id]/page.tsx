@@ -19,17 +19,17 @@ interface ExpenseDetailsPageProps {
 function getStatusColor(status: string) {
   switch (status) {
     case "APPROVED":
-      return "bg-green-100 text-green-800";
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
     case "REJECTED":
-      return "bg-red-100 text-red-800";
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
     case "ANALYZED":
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
     case "NEW":
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
     case "PENDING":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
   }
 }
 
@@ -87,16 +87,16 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
     <div className="space-y-8">
       {/* Main Content */}
       <div className="space-y-6">
-        {/* Header Card with Dates */}
+        {/* Header Card with Dates and Receipt Upload */}
         <Card>
           <CardContent className="p-6">
             <div className="mb-6 flex items-start justify-between">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold">{expense.title}</h1>
-                <p className="text-lg text-gray-600">{expense.description}</p>
+                <p className="text-lg text-gray-600 dark:text-gray-400">{expense.description}</p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                   {expense.currency_code} {expense.amount.toFixed(2)}
                 </p>
                 <Badge className={`mt-3 px-3 py-1 text-sm ${getStatusColor(expense.status)}`}>
@@ -108,29 +108,37 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
             {/* Dates */}
             <div className="grid grid-cols-1 gap-6 border-t pt-6 md:grid-cols-2">
               <div>
-                <p className="mb-1 text-sm font-medium text-gray-500">Created Date</p>
+                <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Created Date
+                </p>
                 <p className="text-sm font-semibold">
                   {format(new Date(expense.created_at), "PPP")}
                 </p>
               </div>
               <div>
-                <p className="mb-1 text-sm font-medium text-gray-500">Last Updated</p>
+                <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Last Updated
+                </p>
                 <p className="text-sm font-semibold">
                   {format(new Date(expense.updated_at), "PPP")}
                 </p>
               </div>
             </div>
+
+            {/* Receipt Upload - Integrated into main card */}
+            {canUploadReceipts && (
+              <div className="mt-6 border-t pt-2">
+                <ReceiptUploader
+                  expenseId={expense.id}
+                  title=""
+                  description=""
+                  onUpload={fetchExpenseDetails}
+                  className="p-0"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        {/* Receipt Upload Section - Only show when needed */}
-        {canUploadReceipts && (
-          <ReceiptUploader
-            expenseId={expense.id}
-            title="Upload Receipts"
-            description="Upload receipt images or PDFs to process this expense"
-          />
-        )}
 
         {/* Line Items Section */}
         <LineItemsList

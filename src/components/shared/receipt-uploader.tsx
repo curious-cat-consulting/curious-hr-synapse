@@ -12,7 +12,6 @@ import "filepond/dist/filepond.min.css";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 
 import { Button } from "@components/ui/button";
-import { Card, CardContent } from "@components/ui/card";
 
 // Register FilePond plugins
 registerPlugin(FilePondPluginImagePreview);
@@ -98,25 +97,23 @@ export function ReceiptUploader({
     }
   };
 
-  const clearFiles = () => {
-    setFiles([]);
-  };
+  const showHeader = title !== "" || description !== "";
 
   return (
-    <Card className={`overflow-hidden ${className}`}>
-      <CardContent className="p-0">
-        <div className="border-b bg-gray-50/50 p-6">
+    <div className={`overflow-hidden ${className}`}>
+      {showHeader && (
+        <div className="border-b bg-gray-50/50 p-6 dark:bg-gray-900/50">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">{title}</h3>
-              <p className="mt-1 text-sm text-gray-600">{description}</p>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{description}</p>
             </div>
             {files.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={clearFiles}
-                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setFiles([])}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <X className="mr-1 h-4 w-4" />
                 Clear
@@ -124,39 +121,39 @@ export function ReceiptUploader({
             )}
           </div>
         </div>
+      )}
 
-        <div className="p-6">
-          <FilePond
-            // @ts-ignore
-            files={files}
-            onupdatefiles={setFiles}
-            allowMultiple={true}
-            maxFiles={5}
-            name="files"
-            labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
-            acceptedFileTypes={["image/*", "application/pdf"]}
-            allowImagePreview={true}
-            imagePreviewMaxFileSize="10MB"
-          />
+      <div className="p-6">
+        <FilePond
+          // @ts-ignore
+          files={files}
+          onupdatefiles={setFiles}
+          allowMultiple={true}
+          maxFiles={5}
+          name="receipts"
+          labelIdle='Drag & drop to add receipts or <span class="filepond--label-action">Browse</span>'
+          acceptedFileTypes={["image/*", "application/pdf"]}
+          allowImagePreview={true}
+          imagePreviewMaxFileSize="10MB"
+        />
 
-          {files.length > 0 && (
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                {files.length} file{files.length !== 1 ? "s" : ""} selected
-              </p>
-              {showUploadButton && (
-                <Button
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {isUploading ? "Uploading..." : "Upload Receipts"}
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {files.length > 0 && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {files.length} receipt{files.length !== 1 ? "s" : ""} selected
+            </p>
+            {showUploadButton && (
+              <Button
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isUploading ? "Uploading..." : "Upload Receipts"}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
