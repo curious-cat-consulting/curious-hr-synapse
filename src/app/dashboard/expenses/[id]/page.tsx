@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 
-import { LineItemsList } from "@/src/components/expenses/line-items-list";
+import { LineItemsList } from "@/src/components/expenses/line-items/line-items-list";
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";

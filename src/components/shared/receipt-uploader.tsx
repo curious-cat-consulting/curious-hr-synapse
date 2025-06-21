@@ -138,7 +138,7 @@ export function ReceiptUploader({
         />
 
         {files.length > 0 && (
-          <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center justify-between pt-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {files.length} receipt{files.length !== 1 ? "s" : ""} selected
             </p>
