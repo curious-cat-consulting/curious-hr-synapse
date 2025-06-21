@@ -1,127 +1,59 @@
-# Curious HR Synapse - AI-Powered HR & Employee Admin Assistant
+# Basejump Nextjs Starter
 
-## Overview
+Adds a Nextjs starter app on top of [Basejump core](https://github.com/usebasejump/basejump). This is a complete interface with support for personal accounts, team accounts, invitations, managing members/permissions and subscription billing.
 
-Curious HR Synapse is an AI-powered HR & Employee Admin Assistant designed for small businesses (10-100 employees). Our MVP focuses on an intelligent Expense Reporting and Audit module that streamlines administrative tasks through AI automation.
+[Learn more at usebasejump.com](https://usebasejump.com). Ask questions [on X / Twitter](https://twitter.com/tiniscule)
 
-## Core Features (MVP)
+![Image Description](./public/images/basejump-team-page.png)
 
-- AI-powered receipt processing and data extraction
-- Automated expense categorization
-- Anomaly detection for expense auditing
-- Real-time expense tracking and reporting
-- Manager approval workflows
-- Export capabilities for accounting systems
+## Basejump Core Features
 
-## Tech Stack
+- **Personal accounts**: Every user that signs up using Supabase auth automatically gets their own personal account.
+  Billing on personal accounts can be enabled/disabled.
+- **Team accounts**: Team accounts are billable accounts that can be shared by multiple users. Team accounts can be
+  disabled if you only wish to allow personal accounts. Billing on team accounts can also be disabled.
+- **Permissions**: Permissions are handled using RLS, just like you're used to with Supabase. Basejump provides
+  convenience methods that let you restrict access to rows based on a user's account access and role within an account
+- **Billing**: Basejump provides out of the box billing support for Stripe, but you can add your own providers easily.
+  If you do, please consider contributing them so others can benefit!
+- **Testing**: Basejump is fully tested itself, but also provides a suite of testing tools that make it easier to test
+  your own Supabase functions and schema. You can check it out
+  at [database.dev/basejump/supabase_test_helpers](https://database.dev/basejump/supabase_test_helpers). You do not need
+  to be using Basejump to use the testing tools.
 
-- **Frontend**: Next.js 14 with TypeScript
-- **Backend**: Next.js API Routes
-- **Database**: PostgreSQL with Supabase
-- **AI/ML**: OpenAI GPT-4 for intelligent processing
-- **Storage**: Supabase Storage for receipt storage
-- **Authentication**: NextAuth.js with Supabase Adapter
-- **UI Framework**: Tailwind CSS + Shadcn/ui
+## Next Frontend Features
 
-## Getting Started
+- **Basic Dashboard**: A basic dashboard implementation restricted to authenticated users
+- **User Authentication**: Support for email/password - but add any auth provider supported by Supabase
+- **Personal accounts**: Every user that signs up using Supabase auth automatically gets their own personal account.
+  Billing on personal accounts can be enabled/disabled.
+- **Team accounts**: Team accounts are billable accounts that can be shared by multiple users. Team accounts can be
+  disabled if you only wish to allow personal accounts. Billing on team accounts can also be disabled.
+- **Billing**: Basejump provides out of the box billing support for Stripe, but you can add your own providers easily.
+  If you do, please consider contributing them so others can benefit!
 
-### Prerequisites
+## Quick Start
 
-- Node.js 18+
-- Supabase Account
-- OpenAI API Key
+1. Run `yarn install`
+2. Run `supabase start`
+3. Create a `.env.local` copy of the `.env.example` file with the correct values for Supabase
+4. Run `yarn dev`
 
-### Installation
+When you're ready to work on billing, you'll need to set up a Stripe account and add your Stripe keys to your `supabase/functions/.env` file. There's an example file you can copy.
 
-1. Clone the repository
+## Helpful Links
 
-```bash
-git clone https://github.com/your-org/curious-hr-synapse.git
-cd curious-hr-synapse
-```
-
-2. Install dependencies
-
-```bash
-npm install
-```
-
-3. Set up environment variables
-
-```bash
-cp .env.example .env.local
-```
-
-4. Run local database (requires docker)
-
-```bash
-npx supabase init
-npx supabase start
-```
-
-5. Run the development server
-
-```bash
-npm run dev
-```
-
-To reset the migration from scratch after changes, use
-
-```bash
-npx supabase db reset
-```
-
-## Project Structure
-
-```
-curious-hr-synapse/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   ├── (auth)/           # Authentication pages
-│   ├── dashboard/        # Main application pages
-│   └── layout.tsx        # Root layout
-├── components/            # Reusable components
-├── lib/                   # Utility functions
-├── supabase/             # Supabase migrations and config
-├── public/               # Static assets
-└── types/                # TypeScript type definitions
-```
-
-## Development Roadmap
-
-### Phase 1: Foundation (Week 1-2)
-
-- [ ] Project setup and configuration
-- [ ] Authentication system
-- [ ] Basic UI components
-- [ ] Database schema design
-
-### Phase 2: Core Features (Week 3-4)
-
-- [ ] Receipt upload and processing
-- [ ] AI-powered data extraction
-- [ ] Expense submission flow
-- [ ] Basic expense listing
-
-### Phase 3: Admin Features (Week 5-6)
-
-- [ ] Manager approval workflow
-- [ ] Anomaly detection
-- [ ] Basic reporting
-- [ ] Export functionality
-
-### Phase 4: Polish & Launch (Week 7-8)
-
-- [ ] UI/UX improvements
-- [ ] Performance optimization
-- [ ] Testing and bug fixes
-- [ ] Documentation
-- [ ] Production deployment
+- [Basejump Docs](https://usebasejump.com/docs)
+- [Creating new protected tables](https://usebasejump.com/docs/example-schema)
+- [Testing your Supabase functions](https://usebasejump.com/docs/testing)
 
 ## Contributing
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+Yes please! Please submit a PR with your changes to [the basejump-next github repo](https://github.com/usebasejump/basejump-next).
 
-## License
+You can contribute in the following places:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- [Basejump core](https://github.com/usebasejump/basejump)
+- [Basejump Nextjs](https://github.com/usebasejump/basejump-next)
+- [Basejump edge functions / billing functions](https://github.com/usebasejump/basejump-deno-packages)
+- [Supabase Test Helpers](https://github.com/usebasejump/supabase-test-helpers)

@@ -1,78 +1,134 @@
 "use client";
 
-import { AuthGuard } from "@/src/components/auth/AuthGuard";
-import { useAuthGuard } from "@/src/hooks/useAuthGuard";
-import { AddLineItemButton } from "@components/expenses/AddLineItemButton";
-import type { LineItem } from "@components/expenses/LineItemsList";
-import { LineItemsList } from "@components/expenses/LineItemsList";
+import { format } from "date-fns";
+import { useEffect, useState } from "react";
 
-import { ExpenseDetailsHeader, ExpenseDetailsCard } from "./components";
-import { ReceiptsSection } from "./components/ReceiptsSection";
-import { useExpenseDetails } from "./hooks";
+import { ReceiptsAndLineItems } from "@/src/components/expenses/receipts-and-line-items";
+import { Badge } from "@components/ui/badge";
+import { Card, CardContent } from "@components/ui/card";
+import { createClient } from "@lib/supabase/client";
+import type { Expense } from "@type/expense";
 
-export default function ExpenseDetailsPage() {
-  const { user } = useAuthGuard();
-  const {
-    expense,
-    allLineItems,
-    isAnalyzing,
-    isRequestingApproval,
-    isManager,
-    hasReceipts,
-    fetchExpenseDetails,
-    handleAnalyze,
-    handleRequestApproval,
-    handleApprove,
-    handleReject,
-    handleExport,
-  } = useExpenseDetails(user);
+interface ExpenseDetailsPageProps {
+  params: {
+    id: string;
+  };
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case "APPROVED":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+    case "REJECTED":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
+    case "ANALYZED":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
+    case "NEW":
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
+    case "PENDING":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
+  }
+}
+
+export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPageProps>) {
+  const [expense, setExpense] = useState<Expense | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchExpenseDetails = async () => {
+    try {
+      const { id } = await params;
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("get_expense_details", {
+        expense_id: id,
+      });
+
+      if (error !== null) {
+        console.error("Error fetching expense:", error);
+        return;
+      }
+
+      setExpense(data as Expense);
+    } catch (error) {
+      console.error("Error fetching expense:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenseDetails();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   if (expense === null) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg">Expense not found</div>
+      </div>
+    );
   }
 
   return (
-    <AuthGuard>
+    <div className="space-y-8">
+      {/* Main Content */}
       <div className="space-y-6">
-        <ExpenseDetailsHeader
-          title={expense.title}
-          status={expense.status}
-          hasReceipts={hasReceipts}
-          isAnalyzing={isAnalyzing}
-          isRequestingApproval={isRequestingApproval}
-          isManager={isManager}
-          onAnalyze={handleAnalyze}
-          onRequestApproval={handleRequestApproval}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          onExport={handleExport}
-        />
+        {/* Header Card with Dates */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="mb-6 flex items-start justify-between">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold">{expense.title}</h1>
+                <p className="text-lg text-gray-600 dark:text-gray-400">{expense.description}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {expense.currency_code} {expense.amount.toFixed(2)}
+                </p>
+                <Badge className={`mt-3 px-3 py-1 text-sm ${getStatusColor(expense.status)}`}>
+                  {expense.status}
+                </Badge>
+              </div>
+            </div>
 
-        <ExpenseDetailsCard expense={expense} />
+            {/* Dates */}
+            <div className="grid grid-cols-1 gap-6 border-t pt-6 md:grid-cols-2">
+              <div>
+                <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Created Date
+                </p>
+                <p className="text-sm font-semibold">
+                  {format(new Date(expense.created_at), "PPP")}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Last Updated
+                </p>
+                <p className="text-sm font-semibold">
+                  {format(new Date(expense.updated_at), "PPP")}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <ReceiptsSection
-          expenseId={expense.id}
-          receiptMetadata={expense.receipt_metadata}
-          lineItems={expense.receipt_line_items}
+        {/* Receipts & Line Items with Tabs */}
+        <ReceiptsAndLineItems
+          expense={expense}
           onReceiptsUploaded={fetchExpenseDetails}
-          expenseStatus={expense.status}
-        />
-
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Line Items</h2>
-          <AddLineItemButton
-            expenseId={expense.id}
-            onLineItemAdded={fetchExpenseDetails}
-            expenseStatus={expense.status}
-          />
-        </div>
-
-        <LineItemsList
-          lineItems={allLineItems as LineItem[]}
+          onLineItemAdded={fetchExpenseDetails}
           onLineItemDeleted={fetchExpenseDetails}
-          expenseStatus={expense.status}
         />
       </div>
-    </AuthGuard>
+    </div>
   );
 }

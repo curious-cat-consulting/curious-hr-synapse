@@ -1,130 +1,118 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { AuthGuard } from "@components/auth/AuthGuard";
-import { ExpenseCard } from "@components/expenses/ExpenseCard";
-import { Badge } from "@components/ui/badge";
-import { Button } from "@components/ui/button";
-import { Card, CardContent } from "@components/ui/card";
-import { Checkbox } from "@components/ui/checkbox";
-import { Label } from "@components/ui/label";
-import { useToast } from "@components/ui/use-toast";
+import { ExpensesWithFilters } from "@components/expenses/expenses-with-filters";
+import { NewExpenseDialog } from "@components/expenses/new-expense-dialog";
+import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
 
 export default function ExpensesPage() {
-  const router = useRouter();
-  const { toast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilters, setStatusFilters] = useState<Record<string, boolean>>({
-    NEW: true,
-    PENDING: true,
-    ANALYZED: true,
-    APPROVED: false,
-    REJECTED: false,
-  });
-
-  useEffect(() => {
-    fetchExpenses();
-  }, []);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingExpenseId, setProcessingExpenseId] = useState<string | null>(null);
 
   const fetchExpenses = async () => {
     try {
-      const response = await fetch("/api/expenses");
-      if (!response.ok) {
-        throw new Error("Failed to fetch expenses");
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("get_expenses");
+
+      if (error !== null) {
+        console.error("Error fetching expenses:", error);
+        return;
       }
-      const data = await response.json();
-      setExpenses(data);
+
+      setExpenses(data ?? []);
     } catch (error) {
       console.error("Error fetching expenses:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch expenses",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Show success message if redirected from new expense submission
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get("success") === "true") {
-      toast({
-        title: "Success",
-        description: "Expense report submitted successfully",
-        variant: "success",
-      });
-      // Clean up the URL
-      router.replace("/dashboard/expenses");
-    }
-  }, [router, toast]);
+  // Poll for expense status updates
+  const pollExpenseStatus = async (expenseId: string) => {
+    const supabase = createClient();
 
-  const toggleStatusFilter = (status: string) => {
-    setStatusFilters((prev) => ({
-      ...prev,
-      [status]: !prev[status],
-    }));
+    try {
+      const { data, error } = await supabase.rpc("get_expense_details", {
+        expense_id: expenseId,
+      });
+
+      if (error !== null) {
+        console.error("Error polling expense status:", error);
+        return false;
+      }
+
+      // Check if processing is complete
+      const expense = data as Expense;
+      const isComplete = expense.status === "ANALYZED" || expense.status === "PENDING";
+
+      if (isComplete) {
+        console.log(`Expense ${expenseId} processing complete, status: ${expense.status}`);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Error polling expense status:", error);
+      return false;
+    }
   };
 
-  const filteredExpenses = expenses.filter((expense) => statusFilters[expense.status]);
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
 
-  return (
-    <AuthGuard>
+  // Poll for expense status when processing
+  useEffect(() => {
+    if (!isProcessing || processingExpenseId === null) return;
+
+    const pollInterval = setInterval(async () => {
+      const isComplete = await pollExpenseStatus(processingExpenseId);
+
+      if (isComplete) {
+        setIsProcessing(false);
+        setProcessingExpenseId(null);
+        fetchExpenses(); // Refresh the list
+        clearInterval(pollInterval);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [isProcessing, processingExpenseId]);
+
+  const handleExpenseCreated = (expenseId: string) => {
+    // Close dialog immediately and show loading indicator
+    setIsProcessing(true);
+    setProcessingExpenseId(expenseId);
+  };
+
+  if (isLoading) {
+    return (
       <div className="container mx-auto py-8">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Expenses</h1>
-          <Button onClick={() => router.push("/dashboard/expenses/new")}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Expense
-          </Button>
         </div>
-
-        <div className="mb-6">
-          <h2 className="mb-2 text-sm font-medium">Filter by Status</h2>
-          <div className="flex flex-wrap gap-4">
-            {Object.entries(statusFilters).map(([status, checked]) => (
-              <div key={status} className="flex items-center space-x-2">
-                <Checkbox
-                  id={status}
-                  checked={checked}
-                  onCheckedChange={() => toggleStatusFilter(status)}
-                />
-                <Label htmlFor={status} className="text-sm">
-                  <Badge variant={checked ? "default" : "outline"}>{status}</Badge>
-                </Label>
-              </div>
-            ))}
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+            <p className="text-gray-600">Loading expenses...</p>
           </div>
         </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
-          </div>
-        ) : filteredExpenses.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <p className="mb-4 text-muted-foreground">No expenses found</p>
-              <Button onClick={() => router.push("/dashboard/expenses/new")}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create your first expense
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {filteredExpenses.map((expense) => (
-              <ExpenseCard key={expense.id} expense={expense} />
-            ))}
-          </div>
-        )}
       </div>
-    </AuthGuard>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Expenses</h1>
+        <NewExpenseDialog onExpenseCreated={handleExpenseCreated} />
+      </div>
+
+      <ExpensesWithFilters expenses={expenses} />
+    </div>
   );
 }

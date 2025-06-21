@@ -5,24 +5,17 @@ export interface Expense {
   amount: number;
   currency_code: string;
   status: "NEW" | "PENDING" | "APPROVED" | "REJECTED" | "ANALYZED";
-  submitted_by: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  approved_by?: {
-    id: string;
-    name: string;
-    email: string;
-  };
   created_at: string;
   updated_at: string;
+  receipt_metadata: ReceiptMetadata[];
+  receipt_line_items: ReceiptLineItem[];
+  mileage_line_items: MileageLineItem[];
+  unprocessed_receipts: UnprocessedReceipt[];
 }
 
 export interface ReceiptLineItem {
   id: string;
-  expense_id: string;
-  receipt_name: string;
+  receipt_id: string;
   description: string;
   quantity?: number;
   unit_price?: number;
@@ -30,13 +23,32 @@ export interface ReceiptLineItem {
   category?: string;
   is_ai_generated: boolean;
   is_deleted?: boolean;
+  line_item_date?: string;
   created_at: string;
+  _type: "regular";
 }
+
+export interface MileageLineItem {
+  id: string;
+  from_address: string;
+  to_address: string;
+  category?: string;
+  miles_driven: number;
+  calculated_miles?: number;
+  custom_miles?: number;
+  total_amount: number;
+  line_item_date?: string;
+  created_at: string;
+  is_deleted?: boolean;
+  _type: "miles";
+}
+
+export type LineItem = ReceiptLineItem | MileageLineItem;
 
 export interface ReceiptMetadata {
   id: string;
   expense_id: string;
-  receipt_name: string;
+  receipt_id: string;
   vendor_name: string;
   receipt_date: string;
   receipt_total?: number;
@@ -46,17 +58,9 @@ export interface ReceiptMetadata {
   created_at: string;
 }
 
-export interface ExpenseDetails {
+export interface UnprocessedReceipt {
   id: string;
-  user_id: string;
-  title: string;
-  description: string;
-  amount: number;
-  status: string;
+  name: string;
+  path: string;
   created_at: string;
-  updated_at: string;
-  receipt_metadata: ReceiptMetadata[];
-  receipt_line_items: ReceiptLineItem[];
-  receipts: string[];
-  currency_code: string;
 }

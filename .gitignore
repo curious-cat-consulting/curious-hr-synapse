@@ -1,22 +1,41 @@
-# Example .gitignore file for custom card.
-# An * ensures that everything will be ignored.
-*
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Don't ignore directories (so we can look inside them, for other files)
-!*/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
 
-# You can whitelist files/folders with !, these will not be ignored.
-!src/**
-!supabase/**
-!prisma/**
-!scripts/**
-!*.json
-!*.ts
-!*.js
-!*.md
-!.prettierrc
-!*.properties
+# testing
+/coverage
 
-# Ignore folders.
-node_modules
-.next
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# supabase for testing
+supabase/.branches
+supabase/.temp
+supabase/**/*.env

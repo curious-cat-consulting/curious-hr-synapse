@@ -8,3 +8,5 @@ Rule: "Follow the project's existing style guide and conventions."
 Guidance: "Maintain consistent formatting, naming conventions, and architectural patterns throughout the codebase.
 Make props ReadOnly.  
 Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`)"
+
+Strive for using existing frameworks when possible vs inventing the wheel or making new components.

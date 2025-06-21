@@ -1,33 +1,35 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter as FontSans } from "next/font/google";
+import { ThemeProvider } from "next-themes";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import "./globals.css";
-import { ThemeProvider } from "@components/theme-provider";
-import { Toaster } from "@components/ui/toaster";
+import { cn } from "@lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
+const defaultUrl = process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
 
-export const metadata: Metadata = {
+const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+export const metadata = {
+  metadataBase: new URL(defaultUrl),
   title: "Curious HR Synapse - AI-Powered HR & Employee Admin Assistant",
   description: "Streamline your HR and administrative tasks with AI-powered expense management.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
+    <html
+      lang="en"
+      className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}
+      suppressHydrationWarning
+    >
+      <body className="bg-background text-foreground">
+        <ThemeProvider attribute="class">
+          <main className="flex min-h-screen flex-col items-center">{children}</main>
+          <ToastContainer />
         </ThemeProvider>
       </body>
     </html>
