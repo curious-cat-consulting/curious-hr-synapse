@@ -8,7 +8,6 @@ INSERT INTO synapse.expenses (
   id,
   user_id,
   title,
-  amount,
   description,
   status,
   created_at,
@@ -18,7 +17,6 @@ INSERT INTO synapse.expenses (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid, -- Main test expense with line items
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Line Items',
-    7800.00,
     'Good Description',
     'ANALYZED',
     now(),
@@ -28,7 +26,6 @@ INSERT INTO synapse.expenses (
     uuid_generate_v4 (),
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Office Supplies',
-    125.50,
     'Purchased notebooks, pens, and other office supplies',
     'NEW',
     now(),
@@ -38,7 +35,6 @@ INSERT INTO synapse.expenses (
     uuid_generate_v4 (),
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Team Lunch',
-    85.00,
     'Team building lunch at local restaurant',
     'PENDING',
     now(),
@@ -48,7 +44,6 @@ INSERT INTO synapse.expenses (
     uuid_generate_v4 (),
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Software Subscription',
-    49.99,
     'Monthly subscription for design software',
     'REJECTED',
     now(),
@@ -60,7 +55,6 @@ INSERT INTO
     synapse.expenses (
     user_id,
     title,
-    amount,
     description,
     status,
     created_at,
@@ -80,7 +74,6 @@ INSERT INTO
                 WHEN (ROW_NUMBER() OVER ()) % 10 = 9 THEN 'Taxi/Uber'
                 ELSE 'Miscellaneous'
             END,
-            ROUND((RANDOM() * 2000 + 50)::numeric, 2),
             CASE 
                 WHEN (ROW_NUMBER() OVER ()) % 10 = 1 THEN 'Purchased office supplies for team'
                 WHEN (ROW_NUMBER() OVER ()) % 10 = 2 THEN 'Business travel to client meeting'

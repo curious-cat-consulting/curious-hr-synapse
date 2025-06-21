@@ -160,24 +160,50 @@ export function ReceiptsAndLineItems({
                     {/* Show line items for this receipt */}
                     {expense.receipt_line_items
                       .filter((item) => item.receipt_id === receipt.receipt_id)
-                      .map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between rounded-md bg-gray-50 p-3 dark:bg-gray-800"
-                        >
-                          <div className="flex min-w-0 items-center gap-2">
-                            <span className="truncate text-sm">{item.description}</span>
-                            {item.is_ai_generated && (
-                              <Badge variant="secondary" className="text-xs">
-                                AI
-                              </Badge>
-                            )}
+                      .map((item) => {
+                        const isDeleted = item.is_deleted ?? false;
+                        return (
+                          <div
+                            key={item.id}
+                            className={`flex items-center justify-between rounded-md p-3 ${
+                              isDeleted
+                                ? "bg-gray-50/50 opacity-60 dark:bg-gray-800/30"
+                                : "bg-gray-50 dark:bg-gray-800"
+                            }`}
+                          >
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span
+                                className={`truncate text-sm ${
+                                  isDeleted ? "text-gray-400 line-through dark:text-gray-500" : ""
+                                }`}
+                              >
+                                {item.description}
+                              </span>
+                              <span
+                                className={`flex-shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
+                                  isDeleted
+                                    ? "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                    : "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-100"
+                                }`}
+                              >
+                                {item.is_ai_generated ? "AI" : "Manual"}
+                              </span>
+                              {isDeleted && (
+                                <span className="flex-shrink-0 rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-500 dark:bg-red-900/20 dark:text-red-400">
+                                  Deleted
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              className={`ml-2 flex-shrink-0 text-sm font-medium ${
+                                isDeleted ? "text-gray-400 dark:text-gray-500" : ""
+                              }`}
+                            >
+                              {receipt.currency_code} {item.total_amount.toFixed(2)}
+                            </span>
                           </div>
-                          <span className="ml-2 flex-shrink-0 text-sm font-medium">
-                            {receipt.currency_code} {item.total_amount.toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 ))}
               </div>
