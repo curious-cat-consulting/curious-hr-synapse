@@ -12,7 +12,7 @@ SELECT plan(11);
 -- Create test user (using a different ID to avoid conflicts)
 INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 VALUES (
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
   'test-triggers@example.com',
   crypt('password', gen_salt('bf')),
   NOW(),
@@ -25,7 +25,7 @@ INSERT INTO storage.buckets (id, name, owner, created_at, updated_at)
 VALUES (
   'test-bucket',
   'Test Bucket',
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
   NOW(),
   NOW()
 );
@@ -36,7 +36,7 @@ VALUES (
   'cccccccc-cccc-cccc-cccc-cccccccccccc',
   'test-bucket',
   'test-object',
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
   NOW(),
   NOW()
 );
@@ -45,7 +45,7 @@ VALUES (
 INSERT INTO synapse.expenses (id, user_id, title, description, status, amount)
 VALUES (
   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
   'Test Expense',
   'Test Description',
   'NEW',
@@ -191,7 +191,10 @@ DELETE FROM synapse.mileage_line_items WHERE expense_id = 'bbbbbbbb-bbbb-bbbb-bb
 DELETE FROM synapse.expenses WHERE id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 DELETE FROM storage.objects WHERE id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 DELETE FROM storage.buckets WHERE id = 'test-bucket';
-DELETE FROM auth.users WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+-- Clean up any accounts that might have been created for this user
+DELETE FROM basejump.account_user WHERE user_id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+DELETE FROM basejump.accounts WHERE primary_owner_user_id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+DELETE FROM auth.users WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 
 SELECT * FROM finish();
 

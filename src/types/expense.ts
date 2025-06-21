@@ -13,6 +13,20 @@ export interface Expense {
   unprocessed_receipts: UnprocessedReceipt[];
 }
 
+export interface TeamExpense
+  extends Omit<
+    Expense,
+    | "receipt_metadata"
+    | "receipt_line_items"
+    | "mileage_line_items"
+    | "unprocessed_receipts"
+    | "updated_at"
+    | "currency_code"
+  > {
+  user_id: string;
+  user_name: string;
+}
+
 export interface ReceiptLineItem {
   id: string;
   receipt_id: string;

@@ -109,7 +109,7 @@ SELECT json_build_object(
   )
 )
 FROM synapse.expenses e
-WHERE e.id = expense_id AND e.user_id = auth.uid()
+WHERE e.id = expense_id
 $$;
 
 /**

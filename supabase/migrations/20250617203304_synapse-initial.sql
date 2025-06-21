@@ -48,6 +48,20 @@ ON synapse.expenses FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
+-- Create policy for team owners to view member expenses
+CREATE POLICY "Team owners can view member expenses"
+ON synapse.expenses FOR SELECT
+TO authenticated
+USING (
+    user_id IN (
+        SELECT au.user_id
+        FROM basejump.account_user au
+        INNER JOIN basejump.accounts a ON a.id = au.account_id
+        WHERE a.personal_account = false
+        AND au.account_id IN (SELECT basejump.get_accounts_with_role('owner'))
+    )
+);
+
 -- Create policy to allow users to insert their own expenses
 CREATE POLICY "Users can insert their own expenses"
 ON synapse.expenses FOR INSERT

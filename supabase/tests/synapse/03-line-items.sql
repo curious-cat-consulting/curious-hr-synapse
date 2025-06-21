@@ -14,11 +14,11 @@ select tests.rls_enabled('synapse', 'receipt_line_items');
 
 -- Test that RLS policies exist
 select policies_are('synapse', 'receipt_metadata', 
-    ARRAY['Users can view their own receipt metadata', 'Users can insert their own receipt metadata'],
+    ARRAY['Users can view their own receipt metadata', 'Users can insert their own receipt metadata', 'Team owners can view member receipt metadata'],
     'Receipt metadata should have the correct RLS policies');
 
 select policies_are('synapse', 'receipt_line_items', 
-    ARRAY['Users can view their own receipt line items', 'Users can insert their own receipt line items', 'Users can update their own receipt line items', 'Users can delete their own non-AI line items'],
+    ARRAY['Users can view their own receipt line items', 'Users can insert their own receipt line items', 'Users can update their own receipt line items', 'Users can delete their own non-AI line items', 'Team owners can view member receipt line items'],
     'Receipt line items should have the correct RLS policies');
 
 -- Create test users
