@@ -1,30 +1,19 @@
-import { format } from "date-fns";
-import { Plus } from "lucide-react";
-import { notFound } from "next/navigation";
+"use client";
 
+import { format } from "date-fns";
+import { useEffect, useState } from "react";
+
+import { LineItemsList } from "@/src/components/expenses/line-items-list";
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
 import { Badge } from "@components/ui/badge";
-import { Button } from "@components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
-import { createClient } from "@lib/supabase/server";
+import { Card, CardContent } from "@components/ui/card";
+import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
 
 interface ExpenseDetailsPageProps {
   params: {
     id: string;
   };
-}
-
-async function getExpenseDetails(id: string): Promise<Expense | null> {
-  const supabase = createClient();
-
-  const { data, error } = await supabase.rpc("get_expense_details", { expense_id: id }).single();
-
-  if (error !== null || data === null || data === undefined) {
-    return null;
-  }
-
-  return data as Expense;
 }
 
 function getStatusColor(status: string) {
@@ -44,15 +33,55 @@ function getStatusColor(status: string) {
   }
 }
 
-export default async function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPageProps>) {
-  const { id } = await params;
-  const expense = await getExpenseDetails(id);
+export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPageProps>) {
+  const [expense, setExpense] = useState<Expense | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchExpenseDetails = async () => {
+    try {
+      const { id } = await params;
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("get_expense_details", {
+        expense_id: id,
+      });
+
+      if (error !== null) {
+        console.error("Error fetching expense:", error);
+        return;
+      }
+
+      setExpense(data as Expense);
+    } catch (error) {
+      console.error("Error fetching expense:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenseDetails();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   if (expense === null) {
-    notFound();
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg">Expense not found</div>
+      </div>
+    );
   }
 
   const canUploadReceipts = expense.status === "NEW" || expense.status === "ANALYZED";
+
+  // Combine all line items
+  const allLineItems = [...expense.receipt_line_items, ...expense.mileage_line_items];
 
   return (
     <div className="space-y-8">
@@ -104,26 +133,13 @@ export default async function ExpenseDetailsPage({ params }: Readonly<ExpenseDet
         )}
 
         {/* Line Items Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Line Items</CardTitle>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Line Item
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="py-12 text-center text-gray-500">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                <Plus className="h-8 w-8 text-gray-400" />
-              </div>
-              <p className="mb-2 text-lg font-medium">No line items yet</p>
-              <p className="text-sm">Click &quot;Add Line Item&quot; to get started</p>
-            </div>
-          </CardContent>
-        </Card>
+        <LineItemsList
+          lineItems={allLineItems}
+          expenseStatus={expense.status}
+          expenseId={expense.id}
+          onLineItemAdded={fetchExpenseDetails}
+          onLineItemDeleted={fetchExpenseDetails}
+        />
       </div>
     </div>
   );

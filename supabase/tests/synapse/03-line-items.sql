@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(18);
+select plan(21);
 
 -- Test schema and table existence
 select has_schema('synapse', 'Synapse schema should exist');
@@ -18,7 +18,7 @@ select policies_are('synapse', 'receipt_metadata',
     'Receipt metadata should have the correct RLS policies');
 
 select policies_are('synapse', 'receipt_line_items', 
-    ARRAY['Users can view their own receipt line items', 'Users can insert their own receipt line items', 'Users can delete their own non-AI line items'],
+    ARRAY['Users can view their own receipt line items', 'Users can insert their own receipt line items', 'Users can update their own receipt line items', 'Users can delete their own non-AI line items'],
     'Receipt line items should have the correct RLS policies');
 
 -- Create test users
@@ -117,6 +117,29 @@ select lives_ok(
        where expense_id = current_setting('test.expense1_id')::uuid 
        and is_ai_generated = false $$,
     'User should be able to delete their own non-AI line items'
+);
+
+-- Test UPDATE policy for line items
+select lives_ok(
+    $$ insert into synapse.receipt_line_items (expense_id, receipt_id, description, quantity, unit_price, total_amount, category, is_ai_generated)
+       values (current_setting('test.expense1_id')::uuid, current_setting('test.receipt_obj_id')::uuid, 'Update Test Item', 1, 30.00, 30.00, 'Office Supplies', false) $$,
+    'User should be able to insert line item for update test'
+);
+
+select lives_ok(
+    $$ update synapse.receipt_line_items 
+       set description = 'Updated Description', total_amount = 35.00
+       where expense_id = current_setting('test.expense1_id')::uuid 
+       and description = 'Update Test Item' $$,
+    'User should be able to update their own line items'
+);
+
+select is(
+    (select description from synapse.receipt_line_items 
+     where expense_id = current_setting('test.expense1_id')::uuid 
+     and description = 'Updated Description'),
+    'Updated Description',
+    'Line item should be updated successfully'
 );
 
 -- Test security isolation - user cannot access other user's data

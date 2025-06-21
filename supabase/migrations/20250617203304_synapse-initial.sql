@@ -93,27 +93,6 @@ WHERE e.user_id = auth.uid();
 $$;
 
 /**
-  Returns the current user's expenses
- */
-CREATE OR REPLACE FUNCTION public.get_expense_details(expense_id uuid)
-  RETURNS json
-  LANGUAGE sql
-AS
-$$
-SELECT json_build_object(
-  'id', e.id,
-  'title', e.title,
-  'description', e.description,
-  'amount', e.amount,
-  'status', e.status,
-  'created_at', e.created_at,
-  'updated_at', e.updated_at
-)
-FROM synapse.expenses e
-WHERE e.id = expense_id AND e.user_id = auth.uid()
-$$;
-
-/**
   Creates a new expense for the current user
  */
 CREATE OR REPLACE FUNCTION public.create_expense(
@@ -165,7 +144,6 @@ $$;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expenses() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_expense_details(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.create_expense(text, text) TO authenticated;
 
 /*

@@ -23,25 +23,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create a trigger to update expense amount when a line item is soft deleted
-CREATE OR REPLACE FUNCTION public.handle_line_item_soft_delete()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.is_deleted = TRUE AND OLD.is_deleted = FALSE THEN
-    -- Subtract the line item amount from the expense total
-    UPDATE public.expenses
-    SET amount = amount - OLD.total_amount
-    WHERE id = OLD.expense_id;
-  ELSIF NEW.is_deleted = FALSE AND OLD.is_deleted = TRUE THEN
-    -- Add the line item amount back to the expense total
-    UPDATE public.expenses
-    SET amount = amount + NEW.total_amount
-    WHERE id = NEW.expense_id;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
 /*
 ===============================================================================
                             EXPENSE AMOUNT TRIGGERS
