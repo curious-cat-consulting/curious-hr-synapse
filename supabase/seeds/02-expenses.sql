@@ -9,6 +9,7 @@ INSERT INTO synapse.expenses (
   user_id,
   title,
   description,
+  amount,
   status,
   created_at,
   updated_at
@@ -18,6 +19,7 @@ INSERT INTO synapse.expenses (
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Line Items',
     'Good Description',
+    0,
     'ANALYZED',
     now(),
     now()
@@ -27,6 +29,7 @@ INSERT INTO synapse.expenses (
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Office Supplies',
     'Purchased notebooks, pens, and other office supplies',
+    0,
     'NEW',
     now(),
     now()
@@ -36,6 +39,7 @@ INSERT INTO synapse.expenses (
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Team Lunch',
     'Team building lunch at local restaurant',
+    0,
     'PENDING',
     now(),
     now()
@@ -45,6 +49,7 @@ INSERT INTO synapse.expenses (
     '11111111-1111-1111-1111-111111111111'::uuid,
     'Software Subscription',
     'Monthly subscription for design software',
+    0,
     'REJECTED',
     now(),
     now()
@@ -56,6 +61,7 @@ INSERT INTO
     user_id,
     title,
     description,
+    amount,
     status,
     created_at,
     updated_at
@@ -86,6 +92,7 @@ INSERT INTO
                 WHEN (ROW_NUMBER() OVER ()) % 10 = 9 THEN 'Transportation to client site'
                 ELSE 'General business expense'
             END,
+            0,
             CASE 
                 WHEN RANDOM() < 0.3 THEN 'NEW'
                 WHEN RANDOM() < 0.6 THEN 'PENDING'
