@@ -42,7 +42,9 @@ export {
 } from "./dropdown-menu";
 export { Input } from "./input";
 export { Label } from "./label";
+export { LoadingIndicator } from "./loading-indicator";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
+export { Progress } from "./progress";
 export {
   Select,
   SelectContent,
@@ -75,3 +77,4 @@ export {
   TableHeader,
   TableRow,
 } from "./table";
+export { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";

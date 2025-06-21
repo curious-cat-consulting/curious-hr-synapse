@@ -89,6 +89,7 @@ Please analyze this receipt and extract the following information in JSON format
     return JSON.parse(jsonContent) as ReceiptAnalysis;
   } catch (error) {
     console.error("Failed to parse OpenAI response", error);
+    console.error("OpenAI response:", content);
     throw new Error("Failed to parse OpenAI response");
   }
 }
