@@ -21,6 +21,7 @@ import { LoadingIndicator } from "@components/ui/loading-indicator";
 
 interface NewExpenseDialogProps {
   onExpenseCreated?: (expenseId: string) => void;
+  accountId?: string; // Optional account_id for team expenses
 }
 
 interface ExpenseApiResponse {
@@ -32,10 +33,11 @@ interface ExpenseApiResponse {
     status: string;
     created_at: string;
     updated_at: string;
+    account_id: string;
   };
 }
 
-export function NewExpenseDialog({ onExpenseCreated }: Readonly<NewExpenseDialogProps>) {
+export function NewExpenseDialog({ onExpenseCreated, accountId }: Readonly<NewExpenseDialogProps>) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -53,6 +55,11 @@ export function NewExpenseDialog({ onExpenseCreated }: Readonly<NewExpenseDialog
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
+
+      // Add account_id if provided
+      if (accountId != null && accountId !== "") {
+        formData.append("account_id", accountId);
+      }
 
       // Add receipt files to form data
       receiptFiles.forEach((file) => {

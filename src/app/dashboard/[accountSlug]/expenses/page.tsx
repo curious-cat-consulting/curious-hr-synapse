@@ -19,6 +19,25 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingExpenseId, setProcessingExpenseId] = useState<string | null>(null);
   const [accountSlug, setAccountSlug] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(null);
+
+  const fetchAccountDetails = async (slug: string) => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("get_account_by_slug", {
+        slug: slug,
+      });
+
+      if (error !== null) {
+        console.error("Error fetching account details:", error);
+        return;
+      }
+
+      setAccountId(data.account_id);
+    } catch (error) {
+      console.error("Error fetching account details:", error);
+    }
+  };
 
   const fetchTeamExpenses = async (slug: string) => {
     try {
@@ -80,6 +99,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
 
   useEffect(() => {
     if (accountSlug !== null) {
+      fetchAccountDetails(accountSlug);
       fetchTeamExpenses(accountSlug);
     }
   }, [accountSlug]);
@@ -130,7 +150,10 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
     <div className="container mx-auto py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Team Expenses</h1>
-        <NewExpenseDialog onExpenseCreated={handleExpenseCreated} />
+        <NewExpenseDialog
+          onExpenseCreated={handleExpenseCreated}
+          accountId={accountId ?? undefined}
+        />
       </div>
 
       <TeamExpensesWithFilters expenses={expenses} accountSlug={accountSlug ?? undefined} />

@@ -66,7 +66,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE synapse.mileage_line_items TO auth
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expenses() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_expense(text, text) TO authenticated;
 
 /*
 ===============================================================================

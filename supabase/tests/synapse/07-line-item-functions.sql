@@ -13,12 +13,12 @@ select tests.create_supabase_user('test2', 'test2@test.com');
 
 -- Create test expenses for the users
 select tests.authenticate_as('test1');
-insert into synapse.expenses (user_id, title, amount, description, status)
-values (tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW');
+insert into synapse.expenses (user_id, account_id, title, amount, description, status)
+values (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW');
 
 select tests.authenticate_as('test2');
-insert into synapse.expenses (user_id, title, amount, description, status)
-values (tests.get_supabase_uid('test2'), 'Test Expense 2', 200.00, 'Test Description 2', 'NEW');
+insert into synapse.expenses (user_id, account_id, title, amount, description, status)
+values (tests.get_supabase_uid('test2'), tests.get_supabase_uid('test2'), 'Test Expense 2', 200.00, 'Test Description 2', 'NEW');
 
 -- Set expense2_id while authenticated as test2
 DO $$

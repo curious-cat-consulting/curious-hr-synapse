@@ -29,6 +29,7 @@ CREATE TYPE synapse.expense_status AS ENUM ('ANALYZED', 'APPROVED', 'NEW', 'PEND
 CREATE TABLE synapse.expenses (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id) NOT NULL,
+  account_id uuid REFERENCES basejump.accounts(id) NOT NULL,
   title text NOT NULL,
   amount decimal(10,2) NOT NULL,
   description text NOT NULL,
@@ -39,41 +40,38 @@ CREATE TABLE synapse.expenses (
   CONSTRAINT valid_expense_status CHECK (status IN ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED'))
 );
 
+-- Index for account_id
+CREATE INDEX idx_expenses_account_id ON synapse.expenses(account_id);
+
 -- Enable Row Level Security
 ALTER TABLE synapse.expenses ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow users to view their own expenses
-CREATE POLICY "Users can view their own expenses"
-ON synapse.expenses FOR SELECT
-TO authenticated
-USING (auth.uid() = user_id);
-
--- Create policy for team owners to view member expenses
-CREATE POLICY "Team owners can view member expenses"
+-- Policy: Users can view expenses for accounts they are a member of
+CREATE POLICY "Users can view their account expenses"
 ON synapse.expenses FOR SELECT
 TO authenticated
 USING (
-    user_id IN (
-        SELECT au.user_id
-        FROM basejump.account_user au
-        INNER JOIN basejump.accounts a ON a.id = au.account_id
-        WHERE a.personal_account = false
-        AND au.account_id IN (SELECT basejump.get_accounts_with_role('owner'))
-    )
+  account_id IN (SELECT basejump.get_accounts_with_role())
 );
 
--- Create policy to allow users to insert their own expenses
-CREATE POLICY "Users can insert their own expenses"
+-- Policy: Users can insert expenses for accounts they are a member of
+CREATE POLICY "Users can insert expenses for their account"
 ON synapse.expenses FOR INSERT
 TO authenticated
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (
+  user_id = auth.uid() AND account_id IN (SELECT basejump.get_accounts_with_role())
+);
 
--- Create policy to allow users to update their own expenses
-CREATE POLICY "Users can update their own expenses"
+-- Policy: Users can update expenses for accounts they are a member of
+CREATE POLICY "Users can update their account expenses"
 ON synapse.expenses FOR UPDATE
 TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING (
+  user_id = auth.uid() AND account_id IN (SELECT basejump.get_accounts_with_role())
+)
+WITH CHECK (
+  user_id = auth.uid() AND account_id IN (SELECT basejump.get_accounts_with_role())
+);
 
 -- Open up access to expenses
 GRANT SELECT, INSERT, UPDATE ON TABLE synapse.expenses TO authenticated;
@@ -85,7 +83,7 @@ GRANT SELECT, INSERT, UPDATE ON TABLE synapse.expenses TO authenticated;
 */
 
 /**
-  Returns the current user's expenses
+  Returns the current user's expenses for all their accounts
  */
 CREATE OR REPLACE FUNCTION public.get_expenses()
   RETURNS json
@@ -99,18 +97,20 @@ SELECT COALESCE(json_agg(
     'description', e.description,
     'amount', e.amount,
     'status', e.status,
-    'created_at', e.created_at
+    'created_at', e.created_at,
+    'account_id', e.account_id
   ) ORDER BY e.created_at DESC
 ), '[]'::json)
 FROM synapse.expenses e
-WHERE e.user_id = auth.uid();
+WHERE e.account_id IN (SELECT basejump.get_accounts_with_role());
 $$;
 
 /**
-  Creates a new expense for the current user
+  Creates a new expense for the current user in a given account
  */
 CREATE OR REPLACE FUNCTION public.create_expense(
   expense_title text,
+  expense_account_id uuid,
   expense_description text DEFAULT NULL
 )
   RETURNS json
@@ -129,15 +129,23 @@ BEGIN
   IF expense_title IS NULL OR trim(expense_title) = '' THEN
     RAISE EXCEPTION 'Title is required';
   END IF;
+  IF expense_account_id IS NULL THEN
+    RAISE EXCEPTION 'Account ID is required';
+  END IF;
+  IF NOT basejump.has_role_on_account(expense_account_id) THEN
+    RAISE EXCEPTION 'Access denied: you do not have access to this account';
+  END IF;
 
   -- Create the expense
   INSERT INTO synapse.expenses (
     user_id,
+    account_id,
     title,
     description,
     amount
   ) VALUES (
     auth.uid(),
+    expense_account_id,
     expense_title,
     COALESCE(expense_description, expense_title),
     0
@@ -151,14 +159,15 @@ BEGIN
     'description', new_expense.description,
     'amount', new_expense.amount,
     'status', new_expense.status,
-    'created_at', new_expense.created_at
+    'created_at', new_expense.created_at,
+    'account_id', new_expense.account_id
   );
 END;
 $$;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expenses() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_expense(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_expense(text, uuid, text) TO authenticated;
 
 /*
 ===============================================================================

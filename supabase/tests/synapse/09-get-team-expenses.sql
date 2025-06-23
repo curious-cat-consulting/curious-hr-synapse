@@ -36,11 +36,11 @@ values
   ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Member 2 Personal', NULL, true, tests.get_supabase_uid('team_member2'));
 
 -- Create test expenses for team members
-insert into synapse.expenses (user_id, title, amount, description, status, created_at)
+insert into synapse.expenses (user_id, account_id, title, amount, description, status, created_at)
 values 
-  (tests.get_supabase_uid('team_member1'), 'Member 1 Expense 1', 100.00, 'Test expense 1', 'NEW', now() - interval '2 days'),
-  (tests.get_supabase_uid('team_member1'), 'Member 1 Expense 2', 200.00, 'Test expense 2', 'PENDING', now() - interval '1 day'),
-  (tests.get_supabase_uid('team_member2'), 'Member 2 Expense 1', 150.00, 'Test expense 3', 'APPROVED', now());
+  (tests.get_supabase_uid('team_member1'), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Member 1 Expense 1', 100.00, 'Test expense 1', 'NEW', now() - interval '2 days'),
+  (tests.get_supabase_uid('team_member1'), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Member 1 Expense 2', 200.00, 'Test expense 2', 'PENDING', now() - interval '1 day'),
+  (tests.get_supabase_uid('team_member2'), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Member 2 Expense 1', 150.00, 'Test expense 3', 'APPROVED', now());
 
 -- Test as team owner - should be able to view all member expenses
 select tests.authenticate_as('team_owner');

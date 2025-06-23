@@ -42,9 +42,10 @@ VALUES (
 );
 
 -- Create test expense
-INSERT INTO synapse.expenses (id, user_id, title, description, status, amount)
+INSERT INTO synapse.expenses (id, user_id, account_id, title, description, status, amount)
 VALUES (
   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
   'dddddddd-dddd-dddd-dddd-dddddddddddd',
   'Test Expense',
   'Test Description',
