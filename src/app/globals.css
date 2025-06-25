@@ -74,3 +74,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Override vaul drawer's ::after pseudo-element that causes extra space */
+[data-vaul-drawer]:not([data-vaul-custom-container="true"])::after {
+  content: none !important;
+}

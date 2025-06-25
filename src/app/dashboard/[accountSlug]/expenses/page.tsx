@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { NewExpenseDialog } from "@components/expenses/new-expense-dialog";
+import { NewExpenseDrawer } from "@components/expenses/new-expense-drawer";
 import { TeamExpensesWithFilters } from "@components/expenses/team-expenses-with-filters";
 import { createClient } from "@lib/supabase/client";
 import type { TeamExpense } from "@type/expense";
@@ -152,7 +152,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
     <div className="container mx-auto py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Team Expenses</h1>
-        <NewExpenseDialog
+        <NewExpenseDrawer
           onExpenseCreated={handleExpenseCreated}
           accountId={accountId ?? undefined}
           accountName={accountName ?? undefined}

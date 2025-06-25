@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { ExpensesWithFilters } from "@components/expenses/expenses-with-filters";
-import { NewExpenseDialog } from "@components/expenses/new-expense-dialog";
+import { NewExpenseDrawer } from "@components/expenses/new-expense-drawer";
 import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
 
@@ -109,7 +109,7 @@ export default function ExpensesPage() {
     <div className="container mx-auto py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Expenses</h1>
-        <NewExpenseDialog onExpenseCreated={handleExpenseCreated} />
+        <NewExpenseDrawer onExpenseCreated={handleExpenseCreated} />
       </div>
 
       <ExpensesWithFilters expenses={expenses} />

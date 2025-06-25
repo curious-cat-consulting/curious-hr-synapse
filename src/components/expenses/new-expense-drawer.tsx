@@ -8,20 +8,20 @@ import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@components/ui/drawer";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
 import { LoadingIndicator } from "@components/ui/loading-indicator";
 import { createClient } from "@lib/supabase/client";
 
-interface NewExpenseDialogProps {
+interface NewExpenseDrawerProps {
   onExpenseCreated?: (expenseId: string) => void;
   accountId?: string; // Optional account_id for team expenses
   accountName?: string; // Optional account name to display
@@ -49,12 +49,12 @@ interface AccountData {
   };
 }
 
-export function NewExpenseDialog({
+export function NewExpenseDrawer({
   onExpenseCreated,
   accountId,
   accountName,
   fullWidth,
-}: Readonly<NewExpenseDialogProps>) {
+}: Readonly<NewExpenseDrawerProps>) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -199,29 +199,31 @@ export function NewExpenseDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
+      <Drawer open={open} onOpenChange={handleOpenChange}>
+        <DrawerTrigger asChild>
           <Button className={fullWidth === true ? "w-full" : ""}>
             <Plus className="mr-2 h-4 w-4" />
             New Expense
           </Button>
-        </DialogTrigger>
-        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>New Expense Report</DialogTitle>
-            <DialogDescription>
-              Create a new expense report and upload your receipts
-            </DialogDescription>
-            {resolvedAccountName != null && resolvedAccountName !== "" && (
-              <div className="flex items-center gap-2">
+        </DrawerTrigger>
+        <DrawerContent className="max-h-[85vh] overflow-y-auto">
+          <DrawerHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <DrawerTitle>New Expense Report</DrawerTitle>
+                <DrawerDescription>
+                  Create a new expense report and upload your receipts
+                </DrawerDescription>
+              </div>
+              {resolvedAccountName != null && resolvedAccountName !== "" && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Target className="h-3 w-3" />
                   {resolvedAccountName}
                 </Badge>
-              </div>
-            )}
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
+              )}
+            </div>
+          </DrawerHeader>
+          <form id="new-expense-form" onSubmit={handleSubmit} className="space-y-6 px-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
@@ -253,18 +255,29 @@ export function NewExpenseDialog({
                 showUploadButton={false}
               />
             </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+          </form>
+          <DrawerFooter>
+            <div className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                className="flex-1"
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || isLoadingAccount}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || isLoadingAccount}
+                form="new-expense-form"
+                className="flex-1"
+              >
                 {isSubmitting ? "Creating..." : "Create Expense Report"}
               </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       <LoadingIndicator isVisible={isSubmitting || isLoadingAccount} />
     </>
