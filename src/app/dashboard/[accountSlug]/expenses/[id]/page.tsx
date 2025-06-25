@@ -93,7 +93,15 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
           <CardContent className="p-6">
             <div className="mb-6 flex items-start justify-between">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold">{expense.title}</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold">{expense.title}</h1>
+                  <Badge
+                    variant={expense.account_personal ? "secondary" : "default"}
+                    className="text-xs"
+                  >
+                    {expense.account_name}
+                  </Badge>
+                </div>
                 <p className="text-lg text-gray-600 dark:text-gray-400">{expense.description}</p>
               </div>
               <div className="text-right">

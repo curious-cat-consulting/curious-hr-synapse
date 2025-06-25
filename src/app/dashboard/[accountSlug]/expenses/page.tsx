@@ -20,6 +20,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
   const [processingExpenseId, setProcessingExpenseId] = useState<string | null>(null);
   const [accountSlug, setAccountSlug] = useState<string | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [accountName, setAccountName] = useState<string | null>(null);
 
   const fetchAccountDetails = async (slug: string) => {
     try {
@@ -34,6 +35,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
       }
 
       setAccountId(data.account_id);
+      setAccountName(data.name);
     } catch (error) {
       console.error("Error fetching account details:", error);
     }
@@ -153,6 +155,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         <NewExpenseDialog
           onExpenseCreated={handleExpenseCreated}
           accountId={accountId ?? undefined}
+          accountName={accountName ?? undefined}
         />
       </div>
 

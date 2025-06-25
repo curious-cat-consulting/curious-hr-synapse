@@ -1,10 +1,11 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Plus, Target } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
+import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import {
   Dialog,
@@ -18,10 +19,12 @@ import {
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
 import { LoadingIndicator } from "@components/ui/loading-indicator";
+import { createClient } from "@lib/supabase/client";
 
 interface NewExpenseDialogProps {
   onExpenseCreated?: (expenseId: string) => void;
   accountId?: string; // Optional account_id for team expenses
+  accountName?: string; // Optional account name to display
 }
 
 interface ExpenseApiResponse {
@@ -37,12 +40,90 @@ interface ExpenseApiResponse {
   };
 }
 
-export function NewExpenseDialog({ onExpenseCreated, accountId }: Readonly<NewExpenseDialogProps>) {
+interface AccountData {
+  account_id: string;
+  name: string;
+  metadata?: {
+    posting_team_id?: string;
+  };
+}
+
+export function NewExpenseDialog({
+  onExpenseCreated,
+  accountId,
+  accountName,
+}: Readonly<NewExpenseDialogProps>) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptFiles, setReceiptFiles] = useState<File[]>([]);
+  const [resolvedAccountId, setResolvedAccountId] = useState<string | undefined>(accountId);
+  const [resolvedAccountName, setResolvedAccountName] = useState<string | undefined>(accountName);
+  const [isLoadingAccount, setIsLoadingAccount] = useState(false);
+
+  // Resolve account details when dialog opens or accountId changes
+  useEffect(() => {
+    const resolveAccountDetails = async () => {
+      // If accountId is provided, use it directly
+      if (accountId != null && accountId !== "") {
+        setResolvedAccountId(accountId);
+        setResolvedAccountName(accountName);
+        return;
+      }
+
+      // Otherwise, fetch personal account and check for posting team
+      setIsLoadingAccount(true);
+      try {
+        const supabase = createClient();
+
+        // Get personal account
+        const { data: personalAccount, error: personalError } =
+          await supabase.rpc("get_personal_account");
+
+        if (personalError !== null) {
+          console.error("Error fetching personal account:", personalError);
+          return;
+        }
+
+        const personal = personalAccount as AccountData;
+
+        // Check if personal account has a posting team
+        if (
+          personal.metadata?.posting_team_id != null &&
+          personal.metadata.posting_team_id !== ""
+        ) {
+          // Fetch the posting team details
+          const { data: teamAccount, error: teamError } = await supabase.rpc("get_account", {
+            account_id: personal.metadata.posting_team_id,
+          });
+
+          if (teamError !== null) {
+            console.error("Error fetching posting team:", teamError);
+            // Fall back to personal account
+            setResolvedAccountId(personal.account_id);
+            setResolvedAccountName(personal.name);
+          } else {
+            const team = teamAccount as AccountData;
+            setResolvedAccountId(team.account_id);
+            setResolvedAccountName(team.name);
+          }
+        } else {
+          // Use personal account
+          setResolvedAccountId(personal.account_id);
+          setResolvedAccountName(personal.name);
+        }
+      } catch (error) {
+        console.error("Error resolving account details:", error);
+      } finally {
+        setIsLoadingAccount(false);
+      }
+    };
+
+    if (open) {
+      resolveAccountDetails();
+    }
+  }, [open, accountId, accountName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,9 +137,9 @@ export function NewExpenseDialog({ onExpenseCreated, accountId }: Readonly<NewEx
       formData.append("title", title);
       formData.append("description", description);
 
-      // Add account_id if provided
-      if (accountId != null && accountId !== "") {
-        formData.append("account_id", accountId);
+      // Add resolved account_id
+      if (resolvedAccountId != null && resolvedAccountId !== "") {
+        formData.append("account_id", resolvedAccountId);
       }
 
       // Add receipt files to form data
@@ -118,7 +199,7 @@ export function NewExpenseDialog({ onExpenseCreated, accountId }: Readonly<NewEx
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button>
+          <Button className="w-full">
             <Plus className="mr-2 h-4 w-4" />
             New Expense
           </Button>
@@ -129,6 +210,14 @@ export function NewExpenseDialog({ onExpenseCreated, accountId }: Readonly<NewEx
             <DialogDescription>
               Create a new expense report and upload your receipts
             </DialogDescription>
+            {resolvedAccountName != null && resolvedAccountName !== "" && (
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Target className="h-3 w-3" />
+                  {resolvedAccountName}
+                </Badge>
+              </div>
+            )}
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -167,7 +256,7 @@ export function NewExpenseDialog({ onExpenseCreated, accountId }: Readonly<NewEx
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isLoadingAccount}>
                 {isSubmitting ? "Creating..." : "Create Expense Report"}
               </Button>
             </DialogFooter>
@@ -175,7 +264,7 @@ export function NewExpenseDialog({ onExpenseCreated, accountId }: Readonly<NewEx
         </DialogContent>
       </Dialog>
 
-      <LoadingIndicator isVisible={isSubmitting} />
+      <LoadingIndicator isVisible={isSubmitting || isLoadingAccount} />
     </>
   );
 }

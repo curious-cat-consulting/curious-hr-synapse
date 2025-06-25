@@ -1,7 +1,9 @@
 import { PartyPopper } from "lucide-react";
 import Link from "next/link";
 
-export default function PersonalAccountPage() {
+import { NewExpenseDialog } from "@/src/components/expenses/new-expense-dialog";
+
+export default async function PersonalAccountPage() {
   return (
     <div className="mx-auto flex h-full w-full max-w-screen-md flex-col content-center items-center justify-center gap-y-4 py-12 text-center">
       <PartyPopper className="h-12 w-12 text-gray-400" />
@@ -37,12 +39,7 @@ export default function PersonalAccountPage() {
           </li>
         </ul>
         <div className="mt-6 space-y-3">
-          <Link
-            href="/dashboard/expenses/new"
-            className="block w-full rounded-md bg-primary px-4 py-2 text-center text-primary-foreground hover:opacity-90"
-          >
-            Submit New Expense
-          </Link>
+          <NewExpenseDialog />
           <Link
             href="/dashboard/expenses"
             className="block w-full rounded-md bg-secondary px-4 py-2 text-center text-secondary-foreground hover:opacity-90"

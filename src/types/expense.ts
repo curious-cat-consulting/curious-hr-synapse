@@ -9,6 +9,8 @@ export interface Expense {
   updated_at: string;
   user_id: string;
   account_id: string;
+  account_name: string;
+  account_personal: boolean;
   receipt_metadata: ReceiptMetadata[];
   receipt_line_items: ReceiptLineItem[];
   mileage_line_items: MileageLineItem[];

@@ -19,6 +19,10 @@ export default async function ExpensesLayout({ children }: { children: React.Rea
       name: "Expenses",
       href: "/dashboard/expenses",
     },
+    {
+      name: "Settings",
+      href: "/dashboard/settings",
+    },
   ];
 
   return (
