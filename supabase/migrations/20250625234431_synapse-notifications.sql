@@ -45,6 +45,14 @@ CREATE INDEX idx_notifications_user_status ON synapse.notifications(user_id, sta
 -- Enable Row Level Security
 ALTER TABLE synapse.notifications ENABLE ROW LEVEL SECURITY;
 
+-- Enable real-time replication for notifications table
+-- This is required for Supabase real-time subscriptions to work properly
+ALTER TABLE synapse.notifications REPLICA IDENTITY FULL;
+
+-- Add the table to the real-time publication
+-- This ensures real-time events are broadcast for INSERT, UPDATE, DELETE
+ALTER PUBLICATION supabase_realtime ADD TABLE synapse.notifications;
+
 -- Policy: Users can view their own notifications
 CREATE POLICY "Users can view their own notifications"
 ON synapse.notifications FOR SELECT

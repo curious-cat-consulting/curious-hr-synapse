@@ -1,7 +1,6 @@
 "use client";
 
 import { Bell, Check, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@components/ui/badge";
@@ -77,31 +76,66 @@ export function NotificationBell() {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let isMounted = true;
 
-    // Fetch user ID first, then subscribe
-    supabase.auth.getUser().then(({ data }) => {
-      const userId = data.user?.id;
-      if (!userId) return;
-      if (!isMounted) return;
-      channel = supabase
-        .channel("notifications")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "synapse",
-            table: "notifications",
-            filter: `user_id=eq.${userId}`,
-          },
-          () => {
-            fetchNotifications();
-          }
-        )
-        .subscribe();
+    // Set up auth state listener to handle subscription properly
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        session?.user != null &&
+        isMounted
+      ) {
+        // Clean up existing channel
+        if (channel != null) {
+          supabase.removeChannel(channel);
+          channel = null;
+        }
+
+        // Wait a bit for the session to be fully established
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!isMounted) return;
+
+        // Create new subscription with retry logic
+        const setupChannel = () => {
+          channel = supabase
+            .channel(`notifications-${session.user.id}-${Date.now()}`) // Unique channel name
+            .on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "synapse",
+                table: "notifications",
+                filter: `user_id=eq.${session.user.id}`,
+              },
+              () => {
+                // Refetch notifications when any change occurs
+                fetchNotifications();
+              }
+            )
+            .subscribe((status) => {
+              if (status === "CLOSED") {
+                setTimeout(() => {
+                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                  if (isMounted && session.user !== null) {
+                    setupChannel();
+                  }
+                }, 2000);
+              }
+            });
+        };
+
+        setupChannel();
+      }
     });
 
     return () => {
       isMounted = false;
-      if (channel !== null) supabase.removeChannel(channel);
+      authSubscription.unsubscribe();
+      if (channel !== null) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 
@@ -267,20 +301,6 @@ export function NotificationBell() {
             </div>
           )}
         </div>
-        {notifications.length > 0 && (
-          <>
-            <Separator />
-            <div className="p-2">
-              <Link
-                href="/dashboard/notifications"
-                className="block w-full text-center text-sm text-muted-foreground hover:text-foreground"
-                onClick={() => setIsOpen(false)}
-              >
-                View all notifications
-              </Link>
-            </div>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

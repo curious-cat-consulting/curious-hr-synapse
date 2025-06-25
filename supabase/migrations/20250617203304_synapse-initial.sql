@@ -173,6 +173,7 @@ $$
 DECLARE
   new_expense synapse.expenses;
   next_account_expense_id integer;
+  account_name text;
 BEGIN
   -- Check authentication
   IF auth.uid() IS NULL THEN
@@ -193,6 +194,11 @@ BEGIN
   -- Get the next account expense ID
   SELECT synapse.get_next_account_expense_id(expense_account_id) INTO next_account_expense_id;
 
+  -- Get account name for notification
+  SELECT a.name INTO account_name
+  FROM basejump.accounts a
+  WHERE a.id = expense_account_id;
+
   -- Create the expense
   INSERT INTO synapse.expenses (
     user_id,
@@ -211,6 +217,26 @@ BEGIN
   )
   RETURNING * INTO new_expense;
 
+  -- Create notification for expense creation
+  INSERT INTO synapse.notifications (
+    user_id,
+    account_id,
+    type,
+    title,
+    message,
+    metadata
+  ) VALUES (
+    auth.uid(),
+    expense_account_id,
+    'EXPENSE_CREATED'::synapse.notification_type,
+    'New Expense Created',
+    format('Expense "%s" has been created in %s', expense_title, account_name),
+    jsonb_build_object(
+      'expense_id', new_expense.id,
+      'account_name', account_name
+    )
+  );
+
   -- Return the created expense
   RETURN json_build_object(
     'id', new_expense.id,
@@ -223,7 +249,7 @@ BEGIN
     'updated_at', new_expense.updated_at,
     'user_id', new_expense.user_id,
     'account_id', new_expense.account_id,
-    'account_name', (SELECT name FROM basejump.accounts WHERE id = new_expense.account_id),
+    'account_name', account_name,
     'account_personal', (SELECT personal_account FROM basejump.accounts WHERE id = new_expense.account_id),
     'currency_code', 'USD'
   );
