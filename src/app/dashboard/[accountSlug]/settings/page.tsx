@@ -4,10 +4,11 @@ import EditTeamSlug from "@components/basejump/edit-team-slug";
 import { getAccountBySlug } from "@lib/actions/accounts";
 
 export default async function TeamSettingsPage({
-  params: { accountSlug },
+  params,
 }: {
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
+  const { accountSlug } = await params;
   const teamAccount = await getAccountBySlug(accountSlug);
 
   return (

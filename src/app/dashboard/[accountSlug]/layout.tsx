@@ -5,11 +5,12 @@ import { getAccountBySlug } from "@lib/actions/accounts";
 
 export default async function PersonalAccountDashboard({
   children,
-  params: { accountSlug },
+  params,
 }: {
   children: React.ReactNode;
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
+  const { accountSlug } = await params;
   const teamAccount = await getAccountBySlug(accountSlug);
 
   if (teamAccount === null) {

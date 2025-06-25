@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { processReceiptsForExpense } from "@lib/analysis/receipt-processing";
 import { createClient } from "@lib/supabase/server";
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     console.log("Processing receipts for expense");
 
@@ -18,15 +18,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const formData = await request.formData();
     const receipts = formData.getAll("receipts") as File[];
 
-    console.log(`Processing ${receipts.length} receipts for expense: ${params.id}`);
+    console.log(`Processing ${receipts.length} receipts for expense: ${id}`);
 
     // Process receipts using the enhanced logic (including upload)
-    await processReceiptsForExpense(supabase, params.id, user.id, receipts);
+    await processReceiptsForExpense(supabase, id, user.id, receipts);
 
-    console.log(`Receipt processing complete for expense: ${params.id}`);
+    console.log(`Receipt processing complete for expense: ${id}`);
 
     return NextResponse.json({
       success: true,

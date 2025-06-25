@@ -2,13 +2,14 @@ import DashboardTitle from "@components/dashboard/dashboard-title";
 import SettingsNavigation from "@components/dashboard/settings-navigation";
 import { Separator } from "@components/ui/separator";
 
-export default function TeamSettingsPage({
+export default async function TeamSettingsPage({
   children,
-  params: { accountSlug },
+  params,
 }: {
   children: React.ReactNode;
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
+  const { accountSlug } = await params;
   const items = [
     { name: "Account", href: `/dashboard/${accountSlug}/settings` },
     { name: "Members", href: `/dashboard/${accountSlug}/settings/members` },

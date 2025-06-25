@@ -47,6 +47,13 @@ export function TeamExpensesWithFilters({
     return grouped;
   }, [filteredAndSortedExpenses]);
 
+  // Wrapper function to handle type conversion for onValueChange
+  const handleViewModeChange = (value: string) => {
+    if (value === "chronological" || value === "byUser") {
+      actions.setViewMode(value);
+    }
+  };
+
   const EmptyState = () => (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-16">
@@ -57,7 +64,8 @@ export function TeamExpensesWithFilters({
           <div>
             <h3 className="text-lg font-semibold">No team expenses found</h3>
             <p className="text-muted-foreground">
-              No expenses match your current filters, or your team hasn't created any expenses yet.
+              No expenses match your current filters, or your team hasn&apos;t created any expenses
+              yet.
             </p>
           </div>
           <Button asChild>
@@ -92,7 +100,7 @@ export function TeamExpensesWithFilters({
       {filteredAndSortedExpenses.length === 0 ? (
         <EmptyState />
       ) : (
-        <Tabs value={filters.viewMode} onValueChange={actions.setViewMode} className="w-full">
+        <Tabs value={filters.viewMode} onValueChange={handleViewModeChange} className="w-full">
           <TabsContent value="chronological" className="mt-0">
             <div className="grid gap-4">
               {filteredAndSortedExpenses.map((expense) => (
@@ -132,13 +140,9 @@ export function TeamExpensesWithFilters({
                     </div>
                     <CardContent className="p-0">
                       <div className="divide-y">
-                        {userExpenses.map((expense, index) => (
+                        {userExpenses.map((expense) => (
                           <div key={expense.id} className="p-4">
-                            <TeamExpenseCard
-                              expense={expense}
-                              accountSlug={accountSlug}
-                              className="border-0 bg-transparent shadow-none"
-                            />
+                            <TeamExpenseCard expense={expense} accountSlug={accountSlug} />
                           </div>
                         ))}
                       </div>

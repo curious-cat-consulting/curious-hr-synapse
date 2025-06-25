@@ -4,10 +4,11 @@ import { Alert } from "@components/ui/alert";
 import { getAccountBySlug } from "@lib/actions/accounts";
 
 export default async function TeamMembersPage({
-  params: { accountSlug },
+  params,
 }: {
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
+  const { accountSlug } = await params;
   const teamAccount = await getAccountBySlug(accountSlug);
 
   if (teamAccount.account_role !== "owner") {
