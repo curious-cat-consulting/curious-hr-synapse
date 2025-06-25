@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { TeamExpensesWithFilters } from "@/src/components/expenses/team-expenses-with-filters";
 import { NewExpenseDrawer } from "@components/expenses/new-expense-drawer";
+import { useAccountBySlug } from "@lib/hooks/use-accounts";
 import { createClient } from "@lib/supabase/client";
 import type { TeamExpense } from "@type/expense";
 
@@ -19,27 +20,11 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingExpenseId, setProcessingExpenseId] = useState<string | null>(null);
   const [accountSlug, setAccountSlug] = useState<string | null>(null);
-  const [accountId, setAccountId] = useState<string | null>(null);
-  const [accountName, setAccountName] = useState<string | null>(null);
 
-  const fetchAccountDetails = async (slug: string) => {
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.rpc("get_account_by_slug", {
-        slug: slug,
-      });
-
-      if (error !== null) {
-        console.error("Error fetching account details:", error);
-        return;
-      }
-
-      setAccountId(data.account_id);
-      setAccountName(data.name);
-    } catch (error) {
-      console.error("Error fetching account details:", error);
-    }
-  };
+  // Use the cached hook instead of manual fetching
+  const { data: accountData, error: accountError } = useAccountBySlug(accountSlug);
+  const accountId = accountData?.account_id ?? null;
+  const accountName = accountData?.name ?? null;
 
   const fetchTeamExpenses = async (slug: string) => {
     try {
@@ -53,7 +38,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         return;
       }
 
-      setExpenses(data ?? []);
+      setExpenses(data !== null ? data : []);
     } catch (error) {
       console.error("Error fetching team expenses:", error);
     } finally {
@@ -76,7 +61,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
       }
 
       // Check if processing is complete
-      const expense = data as any;
+      const expense = data as { status: string };
       const isComplete = expense.status === "ANALYZED" || expense.status === "PENDING";
 
       if (isComplete) {
@@ -101,7 +86,6 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
 
   useEffect(() => {
     if (accountSlug !== null) {
-      fetchAccountDetails(accountSlug);
       fetchTeamExpenses(accountSlug);
     }
   }, [accountSlug]);
@@ -131,6 +115,22 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
     setIsProcessing(true);
     setProcessingExpenseId(expenseId);
   };
+
+  // Handle account error
+  if (accountError) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Team Expenses</h1>
+        </div>
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <p className="text-red-600">Error loading account: {accountError.message}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

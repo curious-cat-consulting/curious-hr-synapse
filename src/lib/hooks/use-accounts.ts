@@ -21,6 +21,25 @@ export const useAccounts = (options?: SWRConfiguration) => {
   );
 };
 
+export const useAccountBySlug = (slug: string | null, options?: SWRConfiguration) => {
+  const supabaseClient = createClient();
+  return useSWR(
+    slug !== null && slug !== "" ? ["account-by-slug", slug] : null,
+    async () => {
+      const { data, error } = await supabaseClient.rpc("get_account_by_slug", {
+        slug,
+      });
+
+      if (error !== null) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    },
+    options
+  );
+};
+
 export const useCurrentUser = (options?: SWRConfiguration) => {
   const supabaseClient = createClient();
   return useSWR<{ id: string; email?: string }>(

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import DashboardHeader from "@components/dashboard/dashboard-header";
-import { createClient } from "@lib/supabase/server";
+import { getAccountBySlug } from "@lib/actions/accounts";
 
 export default async function PersonalAccountDashboard({
   children,
@@ -10,15 +10,7 @@ export default async function PersonalAccountDashboard({
   children: React.ReactNode;
   params: { accountSlug: string };
 }) {
-  const supabaseClient = createClient();
-
-  const { data: teamAccount, error } = await supabaseClient.rpc("get_account_by_slug", {
-    slug: accountSlug,
-  });
-
-  if (error !== null) {
-    console.error(error);
-  }
+  const teamAccount = await getAccountBySlug(accountSlug);
 
   if (teamAccount === null) {
     redirect("/dashboard");

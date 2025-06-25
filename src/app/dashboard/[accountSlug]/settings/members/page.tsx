@@ -1,17 +1,14 @@
 import ManageTeamInvitations from "@components/basejump/manage-team-invitations";
 import ManageTeamMembers from "@components/basejump/manage-team-members";
 import { Alert } from "@components/ui/alert";
-import { createClient } from "@lib/supabase/server";
+import { getAccountBySlug } from "@lib/actions/accounts";
 
 export default async function TeamMembersPage({
   params: { accountSlug },
 }: {
   params: { accountSlug: string };
 }) {
-  const supabaseClient = createClient();
-  const { data: teamAccount } = await supabaseClient.rpc("get_account_by_slug", {
-    slug: accountSlug,
-  });
+  const teamAccount = await getAccountBySlug(accountSlug);
 
   if (teamAccount.account_role !== "owner") {
     return <Alert variant="destructive">You do not have permission to access this page</Alert>;
