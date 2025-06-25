@@ -39,7 +39,7 @@ export default async function PersonalAccountPage() {
           </li>
         </ul>
         <div className="mt-6 space-y-3">
-          <NewExpenseDialog />
+          <NewExpenseDialog fullWidth={true} />
           <Link
             href="/dashboard/expenses"
             className="block w-full rounded-md bg-secondary px-4 py-2 text-center text-secondary-foreground hover:opacity-90"

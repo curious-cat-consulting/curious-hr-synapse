@@ -4,6 +4,11 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 
+import {
+  ExpenseSortControl,
+  sortExpenses,
+  type ExpenseSortOption,
+} from "@components/expenses/expense-sort-control";
 import { TeamExpenseCard } from "@components/expenses/team-expense-card";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
@@ -39,6 +44,7 @@ export function TeamExpensesWithFilters({
   });
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"chronological" | "byUser">("chronological");
+  const [sortBy, setSortBy] = useState<ExpenseSortOption>("created_date");
 
   const toggleStatusFilter = (status: string) => {
     setStatusFilters((prev) => ({
@@ -63,45 +69,53 @@ export function TeamExpensesWithFilters({
     }));
   }, [expenses]);
 
-  // Filter expenses by status and user
-  const filteredExpenses = expenses.filter((expense) => {
-    const statusMatch = statusFilters[expense.status];
-    const userMatch = selectedUser === "all" || expense.user_id === selectedUser;
-    return statusMatch && userMatch;
-  });
+  // Filter and sort expenses
+  const filteredAndSortedExpenses = useMemo(() => {
+    const filtered = expenses.filter((expense) => {
+      const statusMatch = statusFilters[expense.status];
+      const userMatch = selectedUser === "all" || expense.user_id === selectedUser;
+      return statusMatch && userMatch;
+    });
+
+    return sortExpenses(filtered, sortBy);
+  }, [expenses, statusFilters, selectedUser, sortBy]);
 
   // Group expenses by user for the "byUser" view
   const expensesByUser = useMemo(() => {
     const grouped = new Map<string, TeamExpense[]>();
-    filteredExpenses.forEach((expense) => {
+    filteredAndSortedExpenses.forEach((expense) => {
       if (!grouped.has(expense.user_id)) {
         grouped.set(expense.user_id, []);
       }
       grouped.get(expense.user_id)!.push(expense);
     });
     return grouped;
-  }, [filteredExpenses]);
+  }, [filteredAndSortedExpenses]);
 
   return (
     <>
       <div className="mb-6 space-y-4">
-        {/* Status Filters */}
-        <div>
-          <h2 className="mb-2 text-sm font-medium">Filter by Status</h2>
-          <div className="flex flex-wrap gap-4">
-            {Object.entries(statusFilters).map(([status, checked]) => (
-              <div key={status} className="flex items-center space-x-2">
-                <Checkbox
-                  id={status}
-                  checked={checked}
-                  onCheckedChange={() => toggleStatusFilter(status)}
-                />
-                <Label htmlFor={status} className="text-sm">
-                  <Badge>{status}</Badge>
-                </Label>
-              </div>
-            ))}
+        {/* Status Filters and Sort Control */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="mb-2 text-sm font-medium">Filter by Status</h2>
+            <div className="flex flex-wrap gap-4">
+              {Object.entries(statusFilters).map(([status, checked]) => (
+                <div key={status} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={status}
+                    checked={checked}
+                    onCheckedChange={() => toggleStatusFilter(status)}
+                  />
+                  <Label htmlFor={status} className="text-sm">
+                    <Badge>{status}</Badge>
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
+
+          <ExpenseSortControl sortBy={sortBy} onSortChange={setSortBy} includeUserSort={true} />
         </div>
 
         {/* User Filter */}
@@ -137,7 +151,7 @@ export function TeamExpensesWithFilters({
         </div>
       </div>
 
-      {filteredExpenses.length === 0 ? (
+      {filteredAndSortedExpenses.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <p className="mb-4 text-muted-foreground">No expenses found</p>
@@ -157,7 +171,7 @@ export function TeamExpensesWithFilters({
         >
           <TabsContent value="chronological" className="mt-0">
             <div className="grid gap-4">
-              {filteredExpenses.map((expense) => (
+              {filteredAndSortedExpenses.map((expense) => (
                 <TeamExpenseCard
                   key={expense.id}
                   expense={expense}

@@ -25,6 +25,7 @@ interface NewExpenseDialogProps {
   onExpenseCreated?: (expenseId: string) => void;
   accountId?: string; // Optional account_id for team expenses
   accountName?: string; // Optional account name to display
+  fullWidth?: boolean; // Optional prop to make button full width
 }
 
 interface ExpenseApiResponse {
@@ -52,6 +53,7 @@ export function NewExpenseDialog({
   onExpenseCreated,
   accountId,
   accountName,
+  fullWidth,
 }: Readonly<NewExpenseDialogProps>) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -199,7 +201,7 @@ export function NewExpenseDialog({
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button className="w-full">
+          <Button className={fullWidth === true ? "w-full" : ""}>
             <Plus className="mr-2 h-4 w-4" />
             New Expense
           </Button>

@@ -43,6 +43,7 @@ AS
 $$
 SELECT json_build_object(
   'id', e.id,
+  'account_expense_id', e.account_expense_id,
   'title', e.title,
   'description', e.description,
   'amount', e.amount,

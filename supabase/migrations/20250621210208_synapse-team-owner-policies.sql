@@ -113,6 +113,7 @@ BEGIN
   -- Return the updated expense
   RETURN json_build_object(
     'id', updated_expense.id,
+    'account_expense_id', updated_expense.account_expense_id,
     'title', updated_expense.title,
     'description', updated_expense.description,
     'amount', updated_expense.amount,

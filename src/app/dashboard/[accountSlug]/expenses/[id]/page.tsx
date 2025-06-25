@@ -94,6 +94,9 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
             <div className="mb-6 flex items-start justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
+                  <span className="rounded bg-gray-100 px-3 py-1 font-mono text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                    {expense.account_expense_id}
+                  </span>
                   <h1 className="text-3xl font-bold">{expense.title}</h1>
                   <Badge
                     variant={expense.account_personal ? "secondary" : "default"}
