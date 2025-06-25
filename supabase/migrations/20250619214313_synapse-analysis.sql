@@ -103,6 +103,7 @@ SELECT json_build_object(
         'miles_driven', mli.miles_driven,
         'calculated_miles', mli.calculated_miles,
         'custom_miles', mli.custom_miles,
+        'mileage_rate', mli.mileage_rate,
         'total_amount', mli.total_amount,
         'line_item_date', mli.line_item_date,
         'created_at', mli.created_at,
@@ -156,7 +157,12 @@ BEGIN
     store_receipt_analysis.expense_id,
     receipt_id,
     analysis_data->>'vendor_name',
-    (analysis_data->>'receipt_date')::date,
+    CASE 
+      WHEN analysis_data->>'receipt_date' IS NOT NULL 
+        AND analysis_data->>'receipt_date' != '' 
+      THEN (analysis_data->>'receipt_date')::date 
+      ELSE NULL 
+    END,
     (analysis_data->>'receipt_total')::decimal,
     CASE 
       WHEN analysis_data->>'tax_amount' IS NOT NULL 
@@ -187,6 +193,7 @@ BEGIN
       value->>'category' as category,
       CASE 
         WHEN value->>'date' IS NOT NULL 
+          AND value->>'date' != '' 
         THEN (value->>'date')::date 
         ELSE NULL 
       END as line_item_date
@@ -212,7 +219,15 @@ BEGIN
     line_items.total_amount,
     line_items.category,
     true,
-    COALESCE(line_items.line_item_date, (analysis_data->>'receipt_date')::date)
+    COALESCE(
+      line_items.line_item_date, 
+      CASE 
+        WHEN analysis_data->>'receipt_date' IS NOT NULL 
+          AND analysis_data->>'receipt_date' != '' 
+        THEN (analysis_data->>'receipt_date')::date 
+        ELSE NULL 
+      END
+    )
   FROM line_items;
 END;
 $$;
@@ -232,6 +247,8 @@ AS
 $$
 DECLARE
   analysis_record jsonb;
+  expense_record synapse.expenses;
+  account_name text;
 BEGIN
   -- Verify the user has access to this expense
   IF NOT EXISTS (
@@ -240,6 +257,16 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Access denied: expense not found or not owned by user';
   END IF;
+
+  -- Get expense details for notification
+  SELECT e.* INTO expense_record
+  FROM synapse.expenses e
+  WHERE e.id = store_receipt_analyses.expense_id;
+
+  -- Get account name for notification
+  SELECT a.name INTO account_name
+  FROM basejump.accounts a
+  WHERE a.id = expense_record.account_id;
 
   -- Process each analysis
   FOR analysis_record IN SELECT * FROM jsonb_array_elements(analyses_data)
@@ -255,6 +282,29 @@ BEGIN
   UPDATE synapse.expenses 
   SET status = 'ANALYZED'::synapse.expense_status
   WHERE id = store_receipt_analyses.expense_id;
+
+  -- Create notification for AI analysis completion
+  INSERT INTO synapse.notifications (
+    user_id,
+    account_id,
+    type,
+    title,
+    message,
+    metadata
+  ) VALUES (
+    expense_record.user_id,
+    expense_record.account_id,
+    'EXPENSE_ANALYZED'::synapse.notification_type,
+    'AI Analysis Complete',
+    format('Your expense "%s" has been analyzed by AI. %s receipt(s) processed successfully.', 
+           expense_record.title, 
+           jsonb_array_length(analyses_data)),
+    jsonb_build_object(
+      'expense_id', expense_record.id,
+      'account_name', account_name,
+      'receipts_processed', jsonb_array_length(analyses_data)
+    )
+  );
 END;
 $$;
 

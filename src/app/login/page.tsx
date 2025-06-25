@@ -6,12 +6,14 @@ import { Input } from "@components/ui/input";
 import { SubmitButton } from "@components/ui/submit-button";
 import { createClient } from "@lib/supabase/server";
 
-export default function Login({
+export default async function Login({
   searchParams,
 }: {
-  searchParams: { message: string; returnUrl?: string };
+  searchParams: Promise<{ message: string; returnUrl?: string }>;
 }) {
-  const signIn = async (_prevState: any, formData: FormData) => {
+  const params = await searchParams;
+
+  const signIn = async (_prevState: unknown, formData: FormData) => {
     "use server";
 
     const email = formData.get("email") as string;
@@ -24,15 +26,13 @@ export default function Login({
     });
 
     if (error !== null) {
-      return redirect(
-        `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`
-      );
+      return redirect(`/login?message=Could not authenticate user&returnUrl=${params.returnUrl}`);
     }
 
-    return redirect(searchParams.returnUrl ?? "/dashboard");
+    return redirect(params.returnUrl ?? "/dashboard");
   };
 
-  const signUp = async (_prevState: any, formData: FormData) => {
+  const signUp = async (_prevState: unknown, formData: FormData) => {
     "use server";
 
     const headersList = await headers();
@@ -45,18 +45,16 @@ export default function Login({
       email,
       password,
       options: {
-        emailRedirectTo: `${origin}/auth/callback?returnUrl=${searchParams.returnUrl}`,
+        emailRedirectTo: `${origin}/auth/callback?returnUrl=${params.returnUrl}`,
       },
     });
 
     if (error !== null) {
-      return redirect(
-        `/login?message=Could not authenticate user&returnUrl=${searchParams.returnUrl}`
-      );
+      return redirect(`/login?message=Could not authenticate user&returnUrl=${params.returnUrl}`);
     }
 
     return redirect(
-      `/login?message=Check email to continue sign in process&returnUrl=${searchParams.returnUrl}`
+      `/login?message=Check email to continue sign in process&returnUrl=${params.returnUrl}`
     );
   };
 
@@ -87,11 +85,17 @@ export default function Login({
         <label className="text-md" htmlFor="email">
           Email
         </label>
-        <Input name="email" placeholder="you@example.com" required />
+        <Input name="email" placeholder="you@example.com" autoComplete="email" required />
         <label className="text-md" htmlFor="password">
           Password
         </label>
-        <Input type="password" name="password" placeholder="••••••••" required />
+        <Input
+          type="password"
+          name="password"
+          placeholder="••••••••"
+          autoComplete="current-password"
+          required
+        />
         <SubmitButton formAction={signIn} pendingText="Signing In...">
           Sign In
         </SubmitButton>
@@ -99,10 +103,8 @@ export default function Login({
           Sign Up
         </SubmitButton>
         {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
-        {searchParams.message?.length > 0 && (
-          <p className="mt-4 bg-foreground/10 p-4 text-center text-foreground">
-            {searchParams.message}
-          </p>
+        {params.message?.length > 0 && (
+          <p className="mt-4 bg-foreground/10 p-4 text-center text-foreground">{params.message}</p>
         )}
       </form>
     </div>

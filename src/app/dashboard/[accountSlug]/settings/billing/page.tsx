@@ -1,18 +1,16 @@
 import AccountBillingStatus from "@components/basejump/account-billing-status";
 import { Alert } from "@components/ui/alert";
-import { createClient } from "@lib/supabase/server";
+import { getAccountBySlug } from "@lib/actions/accounts";
 
 const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 
 export default async function TeamBillingPage({
-  params: { accountSlug },
+  params,
 }: {
-  params: { accountSlug: string };
+  params: Promise<{ accountSlug: string }>;
 }) {
-  const supabaseClient = createClient();
-  const { data: teamAccount } = await supabaseClient.rpc("get_account_by_slug", {
-    slug: accountSlug,
-  });
+  const { accountSlug } = await params;
+  const teamAccount = await getAccountBySlug(accountSlug);
 
   if (teamAccount.account_role !== "owner") {
     return <Alert variant="destructive">You do not have permission to access this page</Alert>;

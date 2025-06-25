@@ -2,7 +2,7 @@ BEGIN;
   create extension "basejump-supabase_test_helpers" version '0.0.6';
   
   -- Plan the tests
-  SELECT plan(8);
+  SELECT plan(7);
 
   -- Create test users
   SELECT tests.create_supabase_user('test1', 'test1@test.com');
@@ -10,12 +10,10 @@ BEGIN;
 
   -- Create test expenses
   SELECT tests.authenticate_as('test1');
-  INSERT INTO synapse.expenses (user_id, account_id, title, amount, description, status)
-  VALUES (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW');
+  select public.create_expense('Test Expense 1', tests.get_supabase_uid('test1'), 'Test Description 1');
 
   SELECT tests.authenticate_as('test2');
-  INSERT INTO synapse.expenses (user_id, account_id, title, amount, description, status)
-  VALUES (tests.get_supabase_uid('test2'), tests.get_supabase_uid('test2'), 'Test Expense 2', 200.00, 'Test Description 2', 'NEW');
+  select public.create_expense('Test Expense 2', tests.get_supabase_uid('test2'), 'Test Description 2');
 
   -- Get expense IDs
   SELECT tests.authenticate_as('test1');
@@ -69,7 +67,7 @@ BEGIN;
     'Should return error when user tries to update another user expense (not team member)'
   );
 
-  -- Test 9: Should return correct expense data structure
+  -- Test 7: Should return correct expense data structure
   SELECT tests.authenticate_as('test1');
   SELECT results_eq(
     $$ SELECT json_typeof(public.update_expense_status(current_setting('test.expense1_id')::uuid, 'PENDING'::synapse.expense_status)) $$,

@@ -52,7 +52,7 @@ export default async function TeamAccountPage({ params }: Readonly<TeamAccountPa
             Review Team Expenses
           </Link>
           <Link
-            href="/dashboard/analytics"
+            href={`/dashboard/${accountSlug}/analytics`}
             className="block w-full rounded-md bg-secondary px-4 py-2 text-center text-secondary-foreground hover:opacity-90"
           >
             View Analytics

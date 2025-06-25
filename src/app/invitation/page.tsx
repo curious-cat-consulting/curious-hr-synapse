@@ -5,15 +5,16 @@ import AcceptTeamInvitation from "@components/basejump/accept-team-invitation";
 export default async function AcceptInvitationPage({
   searchParams,
 }: {
-  searchParams: { token?: string };
+  searchParams: Promise<{ token?: string }>;
 }) {
-  if (!searchParams.token) {
+  const { token } = await searchParams;
+  if (!token) {
     redirect("/");
   }
 
   return (
     <div className="mx-auto my-12 w-full max-w-md">
-      <AcceptTeamInvitation token={searchParams.token} />
+      <AcceptTeamInvitation token={token} />
     </div>
   );
 }

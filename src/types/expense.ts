@@ -55,6 +55,7 @@ export interface MileageLineItem {
   miles_driven: number;
   calculated_miles?: number;
   custom_miles?: number;
+  mileage_rate: number;
   total_amount: number;
   line_item_date?: string;
   created_at: string;

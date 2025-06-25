@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/ui/select";
+import { useMileageRate } from "@lib/hooks/use-mileage-rate";
 import { createClient } from "@lib/supabase/client";
 import type { ReceiptMetadata } from "@type/expense";
 
@@ -36,6 +37,11 @@ interface AddLineItemDialogProps {
   onLineItemAdded?: () => void;
   receipts?: ReceiptMetadata[];
   selectedReceiptId?: string;
+  account?: {
+    metadata?: {
+      mileage_rate?: number;
+    };
+  } | null;
 }
 
 export function AddLineItemDialog({
@@ -45,6 +51,7 @@ export function AddLineItemDialog({
   onLineItemAdded,
   receipts = [],
   selectedReceiptId,
+  account,
 }: Readonly<AddLineItemDialogProps>) {
   const [type, setType] = useState<"regular" | "miles">("regular");
 
@@ -69,6 +76,9 @@ export function AddLineItemDialog({
     return today.toISOString().split("T")[0];
   });
 
+  // Get the mileage rate from account metadata or use default
+  const mileageRate = useMileageRate(account);
+
   // Update total for regular using useEffect for better reactivity
   useEffect(() => {
     if (quantity !== "" && unitPrice !== "") {
@@ -82,12 +92,12 @@ export function AddLineItemDialog({
   // Update total for miles using useEffect for better reactivity
   useEffect(() => {
     if (milesDriven !== "") {
-      const total = Number(milesDriven) * 0.655; // IRS 2023 rate
+      const total = Number(milesDriven) * mileageRate;
       setMilesTotalAmount(total.toFixed(2));
     } else {
       setMilesTotalAmount("");
     }
-  }, [milesDriven]);
+  }, [milesDriven, mileageRate]);
 
   // Auto-select the most recent receipt when dialog opens or receipts change
   useEffect(() => {
@@ -162,9 +172,10 @@ export function AddLineItemDialog({
           expense_id: expenseId,
           from_address: fromAddress,
           to_address: toAddress,
-          category: milesCategory !== "" ? milesCategory : null,
           miles_driven: Number(milesDriven),
           total_amount: Number(milesTotalAmount),
+          mileage_rate: mileageRate,
+          category: milesCategory !== "" ? milesCategory : null,
           line_item_date: lineItemDate !== "" ? lineItemDate : null,
         });
 

@@ -12,9 +12,9 @@ import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
 
 interface ExpenseDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 function getStatusColor(status: string) {

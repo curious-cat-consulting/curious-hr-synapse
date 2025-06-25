@@ -174,3 +174,14 @@ SELECT
   updated_at
 FROM expense_data
 ORDER BY account_id, account_expense_id;
+
+-- Sync account_expense_counters with max account_expense_id for each account
+-- This ensures the counters are properly initialized after seeding expenses
+INSERT INTO synapse.account_expense_counters (account_id, last_expense_id, updated_at)
+SELECT account_id, max(account_expense_id), now()
+FROM synapse.expenses
+GROUP BY account_id
+ON CONFLICT (account_id) 
+DO UPDATE SET 
+  last_expense_id = excluded.last_expense_id, 
+  updated_at = excluded.updated_at;
