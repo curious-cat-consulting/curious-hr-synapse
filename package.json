@@ -33,6 +33,7 @@
     "filepond": "^4.32.8",
     "filepond-plugin-image-preview": "^4.6.12",
     "geist": "^1.2.1",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.368.0",
     "next": "latest",
     "next-themes": "^0.3.0",

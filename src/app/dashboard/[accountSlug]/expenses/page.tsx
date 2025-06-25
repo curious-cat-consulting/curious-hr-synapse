@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { TeamExpensesWithFilters } from "@/src/components/expenses/team-expenses-with-filters";
 import { NewExpenseDrawer } from "@components/expenses/new-expense-drawer";
-import { TeamExpensesWithFilters } from "@components/expenses/team-expenses-with-filters";
 import { createClient } from "@lib/supabase/client";
 import type { TeamExpense } from "@type/expense";
 

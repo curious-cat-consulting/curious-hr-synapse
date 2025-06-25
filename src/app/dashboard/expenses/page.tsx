@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { ExpensesWithFilters } from "@components/expenses/expenses-with-filters";
+import { ExpensesWithFilters } from "@/src/components/expenses/expenses-with-filters";
 import { NewExpenseDrawer } from "@components/expenses/new-expense-drawer";
 import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
