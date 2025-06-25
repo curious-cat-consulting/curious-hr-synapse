@@ -13,14 +13,11 @@ select tests.create_supabase_user('test2', 'test2@test.com');
 
 -- Create test expenses for the users
 select tests.authenticate_as('test1');
-insert into synapse.expenses (user_id, account_id, title, amount, description, status)
-values 
-  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW'),
-  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 'Test Expense 2', 200.00, 'Test Description 2', 'ANALYZED');
+select public.create_expense('Test Expense 1', tests.get_supabase_uid('test1'), 'Test Description 1');
+select public.create_expense('Test Expense 2', tests.get_supabase_uid('test1'), 'Test Description 2');
 
 select tests.authenticate_as('test2');
-insert into synapse.expenses (user_id, account_id, title, amount, description, status)
-values (tests.get_supabase_uid('test2'), tests.get_supabase_uid('test2'), 'Test Expense 3', 300.00, 'Test Description 3', 'NEW');
+select public.create_expense('Test Expense 3', tests.get_supabase_uid('test2'), 'Test Description 3');
 
 -- Get expense IDs for testing
 select tests.authenticate_as('test1');
@@ -51,7 +48,7 @@ select results_eq(
        (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'amount',
        (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'status',
        (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'currency_code' $$,
-  $$ select 'Test Expense 1', 'Test Description 1', '100.00', 'NEW', 'USD' $$,
+  $$ select 'Test Expense 1', 'Test Description 1', '0.00', 'NEW', 'USD' $$,
   'get_expense_details should return correct basic expense data'
 );
 
@@ -179,10 +176,10 @@ select is(
 
 -- Test with mileage line items
 select lives_ok(
-    $$ insert into synapse.mileage_line_items (expense_id, from_address, to_address, category, miles_driven, total_amount, line_item_date)
+    $$ insert into synapse.mileage_line_items (expense_id, from_address, to_address, category, miles_driven, mileage_rate, total_amount, line_item_date)
        values 
-         (current_setting('test.expense1_id')::uuid, '123 Main St', '456 Oak Ave', 'Business Travel', 25.5, 38.25, '2024-01-15'),
-         (current_setting('test.expense1_id')::uuid, '456 Oak Ave', '789 Pine St', 'Client Meeting', 15.2, 22.80, '2024-01-16') $$,
+         (current_setting('test.expense1_id')::uuid, '123 Main St', '456 Oak Ave', 'Business Travel', 25.5, 0.655, 16.70, '2024-01-15'),
+         (current_setting('test.expense1_id')::uuid, '456 Oak Ave', '789 Pine St', 'Client Meeting', 15.2, 0.75, 11.40, '2024-01-16') $$,
     'User should be able to insert mileage line items'
 );
 

@@ -159,7 +159,7 @@ export function LineItemCard({ item, canEdit, onDelete }: Readonly<LineItemCardP
                 isDeleted ? "text-gray-400 dark:text-gray-500" : "text-gray-500 dark:text-gray-400"
               }`}
             >
-              Miles: {item.miles_driven} • Rate: $0.655/mile
+              Miles: {item.miles_driven} • Rate: ${item.mileage_rate.toFixed(3)}/mile
             </p>
           )}
 

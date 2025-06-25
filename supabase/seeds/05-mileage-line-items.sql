@@ -10,6 +10,7 @@ INSERT INTO synapse.mileage_line_items (
   miles_driven,
   calculated_miles,
   custom_miles,
+  mileage_rate,
   total_amount,
   created_at,
   line_item_date
@@ -43,7 +44,21 @@ SELECT
     WHEN random() < 0.2 THEN round((random() * 50 + 5)::numeric, 1)
     ELSE null
   END as custom_miles,
-  round((random() * 50 + 5)::numeric * 0.655, 2) as total_amount,
+  CASE 
+    WHEN mileage_num = 1 THEN 0.655 -- IRS standard rate
+    WHEN mileage_num = 2 THEN 0.75  -- Higher rate for business travel
+    WHEN mileage_num = 3 THEN 0.60  -- Lower rate for local travel
+    WHEN mileage_num = 4 THEN 0.80  -- Premium rate for urgent travel
+    ELSE 0.70  -- Standard business rate
+  END as mileage_rate,
+  round((random() * 50 + 5)::numeric * 
+    CASE 
+      WHEN mileage_num = 1 THEN 0.655
+      WHEN mileage_num = 2 THEN 0.75
+      WHEN mileage_num = 3 THEN 0.60
+      WHEN mileage_num = 4 THEN 0.80
+      ELSE 0.70
+    END, 2) as total_amount,
   e.created_at + interval '1 day' * mileage_num as created_at,
   e.created_at::date + interval '1 day' * mileage_num as line_item_date
 FROM synapse.expenses e

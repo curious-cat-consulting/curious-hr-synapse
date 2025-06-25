@@ -8,20 +8,17 @@ select tests.create_supabase_user('test1', 'test1@test.com');
 
 -- Create test expense
 select tests.authenticate_as('test1');
-INSERT INTO synapse.expenses (id, user_id, account_id, title, description, amount, status)
-VALUES (
-  '550e8400-e29b-41d4-a716-446655440000'::uuid,
-  tests.get_supabase_uid('test1'),
-  tests.get_supabase_uid('test1'),
-  'Test Expense',
-  'Test Description',
-  100.00,
-  'PENDING'::synapse.expense_status
-);
+DO $$
+DECLARE
+  exp json;
+BEGIN
+  SELECT public.create_expense('Test Expense', tests.get_supabase_uid('test1'), 'Test Description') INTO exp;
+  PERFORM set_config('test.expense_id', (exp->>'id')::text, false);
+END $$;
 
 -- Create test receipt in storage
 INSERT INTO storage.objects (bucket_id, name, owner_id)
-VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/550e8400-e29b-41d4-a716-446655440000/receipt1.png'), tests.get_supabase_uid('test1'));
+VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt1.png'), tests.get_supabase_uid('test1'));
 
 -- Get the storage object ID for the receipt
 DO $$
@@ -29,7 +26,7 @@ DECLARE
     receipt_obj_id uuid;
 BEGIN
     SELECT id INTO receipt_obj_id FROM storage.objects 
-    WHERE name = concat(tests.get_supabase_uid('test1'), '/550e8400-e29b-41d4-a716-446655440000/receipt1.png')
+    WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt1.png')
     LIMIT 1;
     
     -- Store for later use
@@ -38,14 +35,14 @@ END $$;
 
 -- Test 1: Function exists and is callable
 select lives_ok(
-  $$ select public.store_receipt_analyses('550e8400-e29b-41d4-a716-446655440000'::uuid, '[]'::jsonb) $$,
+  $$ select public.store_receipt_analyses(current_setting('test.expense_id')::uuid, '[]'::jsonb) $$,
   'Function store_receipt_analyses should be callable with empty array'
 );
 
 -- Test 2: Store single receipt analysis
 select lives_ok(
   $$ select public.store_receipt_analyses(
-    '550e8400-e29b-41d4-a716-446655440000'::uuid,
+    current_setting('test.expense_id')::uuid,
     jsonb_build_array(
       jsonb_build_object(
         'receiptId', current_setting('test.receipt_obj_id')::uuid,
@@ -81,35 +78,35 @@ select lives_ok(
 
 -- Test 3: Verify receipt metadata was created
 select is(
-  (select count(*)::int from synapse.receipt_metadata where expense_id = '550e8400-e29b-41d4-a716-446655440000'::uuid),
+  (select count(*)::int from synapse.receipt_metadata where expense_id = current_setting('test.expense_id')::uuid),
   1,
   'Should have created one receipt metadata record'
 );
 
 -- Test 4: Verify receipt metadata details
 select is(
-  (select vendor_name from synapse.receipt_metadata where expense_id = '550e8400-e29b-41d4-a716-446655440000'::uuid limit 1),
+  (select vendor_name from synapse.receipt_metadata where expense_id = current_setting('test.expense_id')::uuid limit 1),
   'Test Restaurant',
   'Receipt metadata should have correct vendor name'
 );
 
 -- Test 5: Verify line items were created
 select is(
-  (select count(*)::int from synapse.receipt_line_items where expense_id = '550e8400-e29b-41d4-a716-446655440000'::uuid),
+  (select count(*)::int from synapse.receipt_line_items where expense_id = current_setting('test.expense_id')::uuid),
   2,
   'Should have created two line items'
 );
 
 -- Test 6: Verify line item details
 select is(
-  (select description from synapse.receipt_line_items where expense_id = '550e8400-e29b-41d4-a716-446655440000'::uuid and description = 'Burger and Fries'),
+  (select description from synapse.receipt_line_items where expense_id = current_setting('test.expense_id')::uuid and description = 'Burger and Fries'),
   'Burger and Fries',
   'First line item should have correct description'
 );
 
 -- Test 7: Verify expense status was updated
 select is(
-  (select status from synapse.expenses where id = '550e8400-e29b-41d4-a716-446655440000'::uuid),
+  (select status from synapse.expenses where id = current_setting('test.expense_id')::uuid),
   'ANALYZED'::synapse.expense_status,
   'Expense status should be updated to ANALYZED'
 );
@@ -117,7 +114,7 @@ select is(
 -- Test 8: Test multiple receipt analyses
 -- Create another receipt in storage
 INSERT INTO storage.objects (bucket_id, name, owner_id)
-VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/550e8400-e29b-41d4-a716-446655440000/receipt2.png'), tests.get_supabase_uid('test1'));
+VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt2.png'), tests.get_supabase_uid('test1'));
 
 -- Get the second storage object ID
 DO $$
@@ -125,7 +122,7 @@ DECLARE
     receipt_obj_id2 uuid;
 BEGIN
     SELECT id INTO receipt_obj_id2 FROM storage.objects 
-    WHERE name = concat(tests.get_supabase_uid('test1'), '/550e8400-e29b-41d4-a716-446655440000/receipt2.png')
+    WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt2.png')
     LIMIT 1;
     
     -- Store for later use
@@ -134,7 +131,7 @@ END $$;
 
 select lives_ok(
   $$ select public.store_receipt_analyses(
-    '550e8400-e29b-41d4-a716-446655440000'::uuid,
+    current_setting('test.expense_id')::uuid,
     jsonb_build_array(
       jsonb_build_object(
         'receiptId', current_setting('test.receipt_obj_id2')::uuid,

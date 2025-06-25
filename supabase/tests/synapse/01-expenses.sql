@@ -3,6 +3,13 @@ create extension "basejump-supabase_test_helpers" version '0.0.6';
 
 select plan(23);
 
+-- Sync account_expense_counters with max account_expense_id for each account (fix for test/seed conflict)
+insert into synapse.account_expense_counters (account_id, last_expense_id, updated_at)
+select account_id, max(account_expense_id), now()
+from synapse.expenses
+group by account_id
+on conflict (account_id) do update set last_expense_id = excluded.last_expense_id, updated_at = excluded.updated_at;
+
 -- Test schema and table existence
 select has_schema('synapse', 'Synapse schema should exist');
 select has_table('synapse', 'expenses', 'Synapse expenses table should exist');
@@ -39,8 +46,7 @@ select tests.authenticate_as('test1');
 
 -- Test INSERT policy - should be able to insert own expense
 select lives_ok(
-    $$ insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status)
-       values (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 1, 'Test Expense', 100.00, 'Test Description', 'NEW') $$,
+    $$ select public.create_expense('Test Expense', tests.get_supabase_uid('test1'), 'Test Description') $$,
     'User should be able to insert their own expense'
 );
 
@@ -119,11 +125,14 @@ select throws_ok(
 select tests.authenticate_as('test1');
 
 -- Test get_expenses returns expenses in descending order by created_at
-insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status, created_at)
-values
-  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 2, 'Expense 1', 10.00, 'Desc 1', 'NEW', now() - interval '2 days'),
-  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 3, 'Expense 2', 20.00, 'Desc 2', 'NEW', now() - interval '1 day'),
-  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 4, 'Expense 3', 30.00, 'Desc 3', 'NEW', now());
+-- Remove manual account_expense_id values that conflict with the counter
+-- Instead, use create_expense for all inserts to keep the counter in sync
+select public.create_expense('Expense 1', tests.get_supabase_uid('test1'), 'Desc 1');
+update synapse.expenses set created_at = now() - interval '2 days' where title = 'Expense 1' and user_id = tests.get_supabase_uid('test1');
+select public.create_expense('Expense 2', tests.get_supabase_uid('test1'), 'Desc 2');
+update synapse.expenses set created_at = now() - interval '1 day' where title = 'Expense 2' and user_id = tests.get_supabase_uid('test1');
+select public.create_expense('Expense 3', tests.get_supabase_uid('test1'), 'Desc 3');
+update synapse.expenses set created_at = now() where title = 'Expense 3' and user_id = tests.get_supabase_uid('test1');
 
 select results_eq(
   $$ select (json_array_elements(public.get_expenses())->>'title')::text $$,

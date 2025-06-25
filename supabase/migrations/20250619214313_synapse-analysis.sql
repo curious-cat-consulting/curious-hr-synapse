@@ -103,6 +103,7 @@ SELECT json_build_object(
         'miles_driven', mli.miles_driven,
         'calculated_miles', mli.calculated_miles,
         'custom_miles', mli.custom_miles,
+        'mileage_rate', mli.mileage_rate,
         'total_amount', mli.total_amount,
         'line_item_date', mli.line_item_date,
         'created_at', mli.created_at,

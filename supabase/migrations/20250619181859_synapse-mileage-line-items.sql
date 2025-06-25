@@ -14,6 +14,7 @@ CREATE TABLE synapse.mileage_line_items (
   miles_driven DECIMAL NOT NULL,
   calculated_miles DECIMAL, -- system-calculated, can be overridden
   custom_miles DECIMAL,     -- user override
+  mileage_rate DECIMAL NOT NULL, -- no default, handled in application layer
   total_amount DECIMAL NOT NULL,
   created_at TIMESTAMP DEFAULT NOW(),
   line_item_date DATE DEFAULT CURRENT_DATE
@@ -82,6 +83,7 @@ CREATE OR REPLACE FUNCTION public.add_mileage_line_item(
   to_address text,
   miles_driven decimal,
   total_amount decimal,
+  mileage_rate decimal,
   category text DEFAULT NULL,
   line_item_date date DEFAULT CURRENT_DATE
 )
@@ -118,6 +120,10 @@ BEGIN
     RAISE EXCEPTION 'Total amount must be greater than 0';
   END IF;
 
+  IF mileage_rate IS NULL OR mileage_rate <= 0 THEN
+    RAISE EXCEPTION 'Mileage rate must be greater than 0';
+  END IF;
+
   -- Verify the expense exists and belongs to the user
   IF NOT EXISTS (
     SELECT 1 FROM synapse.expenses 
@@ -142,7 +148,8 @@ BEGIN
     category,
     miles_driven,
     total_amount,
-    line_item_date
+    line_item_date,
+    mileage_rate
   ) VALUES (
     expense_id,
     from_address,
@@ -150,7 +157,8 @@ BEGIN
     category,
     miles_driven,
     total_amount,
-    line_item_date
+    line_item_date,
+    mileage_rate
   )
   RETURNING * INTO new_line_item;
 
@@ -161,6 +169,7 @@ BEGIN
     'to_address', new_line_item.to_address,
     'category', new_line_item.category,
     'miles_driven', new_line_item.miles_driven,
+    'mileage_rate', new_line_item.mileage_rate,
     'total_amount', new_line_item.total_amount,
     'line_item_date', new_line_item.line_item_date,
     'created_at', new_line_item.created_at,
@@ -228,5 +237,5 @@ END;
 $$;
 
 -- Grant execute permissions for mileage line items functions
-GRANT EXECUTE ON FUNCTION public.add_mileage_line_item(uuid, text, text, decimal, decimal, text, date) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.add_mileage_line_item(uuid, text, text, decimal, decimal, decimal, text, date) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_mileage_line_item(uuid) TO authenticated;
