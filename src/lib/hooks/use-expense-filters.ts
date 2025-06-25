@@ -5,20 +5,67 @@ import { sortExpenses, type ExpenseSortOption } from "@components/expenses/expen
 
 export type ExpenseStatus = "NEW" | "PENDING" | "ANALYZED" | "APPROVED" | "REJECTED";
 
+interface UseExpenseFiltersProps {
+  initialStatusFilters?: ExpenseStatus[];
+  initialSelectedUser?: string;
+  initialViewMode?: "chronological" | "byUser";
+  initialSortBy?: ExpenseSortOption;
+  includeTeamFeatures?: boolean;
+}
+
+interface UseExpenseFiltersReturn {
+  filters: {
+    statusFilters: ExpenseStatus[];
+    selectedUser: string;
+    viewMode: "chronological" | "byUser";
+    sortBy: ExpenseSortOption;
+  };
+  actions: {
+    setStatusFilters: (statuses: ExpenseStatus[]) => void;
+    setSelectedUser: (userId: string) => void;
+    setViewMode: (mode: "chronological" | "byUser") => void;
+    setSortBy: (sort: ExpenseSortOption) => void;
+    resetFilters: () => void;
+  };
+  filterExpenses: <
+    T extends {
+      status: string;
+      user_id?: string;
+      user_name?: string;
+      account_expense_id: number;
+      title: string;
+      created_at: string;
+      updated_at?: string;
+    },
+  >(
+    expenses: T[]
+  ) => T[];
+  getUniqueUsers: <T extends { user_id?: string; user_name?: string }>(
+    expenses: T[]
+  ) => Array<{ id: string; name: string }>;
+}
+
+interface SavedFilters {
+  statusFilters?: ExpenseStatus[];
+  selectedUser?: string;
+  viewMode?: "chronological" | "byUser";
+  sortBy?: ExpenseSortOption;
+}
+
 // Add this helper function at the top
 const getCookieKey = (includeTeamFeatures: boolean) =>
   includeTeamFeatures ? "team-expense-filters" : "expense-filters";
 
-const loadFiltersFromCookie = (includeTeamFeatures: boolean) => {
+const loadFiltersFromCookie = (includeTeamFeatures: boolean): SavedFilters | null => {
   try {
     const saved = Cookies.get(getCookieKey(includeTeamFeatures));
-    return saved ? JSON.parse(saved) : null;
+    return saved !== undefined ? JSON.parse(saved) : null;
   } catch {
     return null;
   }
 };
 
-const saveFiltersToCookie = (filters: any, includeTeamFeatures: boolean) => {
+const saveFiltersToCookie = (filters: SavedFilters, includeTeamFeatures: boolean) => {
   Cookies.set(getCookieKey(includeTeamFeatures), JSON.stringify(filters), {
     expires: 30, // 30 days
   });
@@ -36,19 +83,19 @@ export function useExpenseFilters({
   const savedFilters = loadFiltersFromCookie(includeTeamFeatures);
 
   const [statusFilters, setStatusFilters] = useState<ExpenseStatus[]>(
-    savedFilters?.statusFilters || initialStatusFilters
+    savedFilters?.statusFilters ?? initialStatusFilters
   );
   const [selectedUser, setSelectedUser] = useState<string>(
-    savedFilters?.selectedUser || initialSelectedUser
+    savedFilters?.selectedUser ?? initialSelectedUser
   );
   const [viewMode, setViewMode] = useState<"chronological" | "byUser">(
-    savedFilters?.viewMode || initialViewMode
+    savedFilters?.viewMode ?? initialViewMode
   );
-  const [sortBy, setSortBy] = useState<ExpenseSortOption>(savedFilters?.sortBy || initialSortBy);
+  const [sortBy, setSortBy] = useState<ExpenseSortOption>(savedFilters?.sortBy ?? initialSortBy);
 
   // Save to cookies whenever filters change
   useEffect(() => {
-    const filters = { statusFilters, selectedUser, viewMode, sortBy };
+    const filters: SavedFilters = { statusFilters, selectedUser, viewMode, sortBy };
     saveFiltersToCookie(filters, includeTeamFeatures);
   }, [statusFilters, selectedUser, viewMode, sortBy, includeTeamFeatures]);
 
@@ -61,7 +108,19 @@ export function useExpenseFilters({
 
   const filterExpenses = useMemo(
     () =>
-      <T extends { status: string; user_id?: string; user_name?: string }>(expenses: T[]): T[] => {
+      <
+        T extends {
+          status: string;
+          user_id?: string;
+          user_name?: string;
+          account_expense_id: number;
+          title: string;
+          created_at: string;
+          updated_at?: string;
+        },
+      >(
+        expenses: T[]
+      ): T[] => {
         const filtered = expenses.filter((expense) => {
           const statusMatch = statusFilters.includes(expense.status as ExpenseStatus);
           const userMatch =
@@ -69,7 +128,8 @@ export function useExpenseFilters({
           return statusMatch && userMatch;
         });
 
-        return filtered;
+        // Apply sorting to the filtered results
+        return sortExpenses(filtered, sortBy);
       },
     [statusFilters, selectedUser, sortBy, includeTeamFeatures]
   );

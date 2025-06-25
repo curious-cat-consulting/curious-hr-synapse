@@ -146,10 +146,15 @@ SELECT COALESCE(json_agg(
     'amount', e.amount,
     'status', e.status,
     'created_at', e.created_at,
-    'account_id', e.account_id
+    'updated_at', e.updated_at,
+    'user_id', e.user_id,
+    'account_id', e.account_id,
+    'account_name', a.name,
+    'account_personal', a.personal_account
   ) ORDER BY e.created_at DESC
 ), '[]'::json)
 FROM synapse.expenses e
+INNER JOIN basejump.accounts a ON e.account_id = a.id
 WHERE e.account_id IN (SELECT basejump.get_accounts_with_role());
 $$;
 
@@ -215,7 +220,12 @@ BEGIN
     'amount', new_expense.amount,
     'status', new_expense.status,
     'created_at', new_expense.created_at,
-    'account_id', new_expense.account_id
+    'updated_at', new_expense.updated_at,
+    'user_id', new_expense.user_id,
+    'account_id', new_expense.account_id,
+    'account_name', (SELECT name FROM basejump.accounts WHERE id = new_expense.account_id),
+    'account_personal', (SELECT personal_account FROM basejump.accounts WHERE id = new_expense.account_id),
+    'currency_code', 'USD'
   );
 END;
 $$;
@@ -223,6 +233,7 @@ $$;
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expenses() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.create_expense(text, uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION synapse.get_next_account_expense_id(uuid) TO authenticated;
 
 /*
 ===============================================================================
