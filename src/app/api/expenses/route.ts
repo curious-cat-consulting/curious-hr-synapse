@@ -21,14 +21,18 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const title = formData.get("title") as string;
     const description = formData.get("description") as string | null;
+    const accountId = formData.get("account_id") as string | null;
     const receipts = formData.getAll("receipts") as File[];
 
-    console.log(`Expense title: "${title}", receipts: ${receipts.length}`);
+    console.log(
+      `Expense title: "${title}", receipts: ${receipts.length}, account_id: ${accountId ?? "null"}`
+    );
 
     // Create expense using RPC function
     const { data: expense, error: rpcError } = await supabase.rpc("create_expense", {
       expense_title: title,
       expense_description: description,
+      expense_account_id: accountId != null && accountId !== "" ? accountId : null,
     });
 
     if (rpcError !== null) {

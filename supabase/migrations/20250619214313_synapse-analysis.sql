@@ -43,12 +43,17 @@ AS
 $$
 SELECT json_build_object(
   'id', e.id,
+  'account_expense_id', e.account_expense_id,
   'title', e.title,
   'description', e.description,
   'amount', e.amount,
   'status', e.status,
   'created_at', e.created_at,
   'updated_at', e.updated_at,
+  'user_id', e.user_id,
+  'account_id', e.account_id,
+  'account_name', a.name,
+  'account_personal', a.personal_account,
   'currency_code', 'USD',
   'receipt_metadata', COALESCE(
     (SELECT json_agg(
@@ -109,7 +114,8 @@ SELECT json_build_object(
   )
 )
 FROM synapse.expenses e
-WHERE e.id = expense_id AND e.user_id = auth.uid()
+JOIN basejump.accounts a ON e.account_id = a.id
+WHERE e.id = expense_id
 $$;
 
 /**

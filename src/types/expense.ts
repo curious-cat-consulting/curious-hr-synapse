@@ -1,5 +1,6 @@
 export interface Expense {
   id: string;
+  account_expense_id: number;
   title: string;
   description: string;
   amount: number;
@@ -7,10 +8,28 @@ export interface Expense {
   status: "NEW" | "PENDING" | "APPROVED" | "REJECTED" | "ANALYZED";
   created_at: string;
   updated_at: string;
+  user_id: string;
+  account_id: string;
+  account_name: string;
+  account_personal: boolean;
   receipt_metadata: ReceiptMetadata[];
   receipt_line_items: ReceiptLineItem[];
   mileage_line_items: MileageLineItem[];
   unprocessed_receipts: UnprocessedReceipt[];
+}
+
+export interface TeamExpense
+  extends Omit<
+    Expense,
+    | "receipt_metadata"
+    | "receipt_line_items"
+    | "mileage_line_items"
+    | "unprocessed_receipts"
+    | "updated_at"
+    | "currency_code"
+  > {
+  user_id: string;
+  user_name: string;
 }
 
 export interface ReceiptLineItem {

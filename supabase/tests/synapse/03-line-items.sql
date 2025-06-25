@@ -14,11 +14,11 @@ select tests.rls_enabled('synapse', 'receipt_line_items');
 
 -- Test that RLS policies exist
 select policies_are('synapse', 'receipt_metadata', 
-    ARRAY['Users can view their own receipt metadata', 'Users can insert their own receipt metadata'],
+    ARRAY['Users can view their own receipt metadata', 'Users can insert their own receipt metadata', 'Team owners can view member receipt metadata'],
     'Receipt metadata should have the correct RLS policies');
 
 select policies_are('synapse', 'receipt_line_items', 
-    ARRAY['Users can view their own receipt line items', 'Users can insert their own receipt line items', 'Users can update their own receipt line items', 'Users can delete their own non-AI line items'],
+    ARRAY['Users can view their own receipt line items', 'Users can insert their own receipt line items', 'Users can update their own receipt line items', 'Users can delete their own non-AI line items', 'Team owners can view member receipt line items'],
     'Receipt line items should have the correct RLS policies');
 
 -- Create test users
@@ -27,8 +27,8 @@ select tests.create_supabase_user('test2', 'test2@test.com');
 
 -- Create test expenses for the users
 select tests.authenticate_as('test1');
-insert into synapse.expenses (user_id, title, amount, description, status)
-values (tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW');
+insert into synapse.expenses (user_id, account_id, title, amount, description, status)
+values (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW');
 
 -- Verify expense was created
 select is(
@@ -38,8 +38,8 @@ select is(
 );
 
 select tests.authenticate_as('test2');
-insert into synapse.expenses (user_id, title, amount, description, status)
-values (tests.get_supabase_uid('test2'), 'Test Expense 2', 200.00, 'Test Description 2', 'NEW');
+insert into synapse.expenses (user_id, account_id, title, amount, description, status)
+values (tests.get_supabase_uid('test2'), tests.get_supabase_uid('test2'), 'Test Expense 2', 200.00, 'Test Description 2', 'NEW');
 
 -- Get expense IDs for testing
 select tests.authenticate_as('test1');

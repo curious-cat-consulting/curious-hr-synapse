@@ -1,7 +1,15 @@
 import { PartyPopper } from "lucide-react";
 import Link from "next/link";
 
-export default function PersonalAccountPage() {
+interface TeamAccountPageProps {
+  params: Promise<{
+    accountSlug: string;
+  }>;
+}
+
+export default async function TeamAccountPage({ params }: Readonly<TeamAccountPageProps>) {
+  const { accountSlug } = await params;
+
   return (
     <div className="mx-auto flex h-full w-full max-w-screen-md flex-col content-center items-center justify-center gap-y-4 py-12 text-center">
       <PartyPopper className="h-12 w-12 text-gray-400" />
@@ -38,10 +46,10 @@ export default function PersonalAccountPage() {
         </ul>
         <div className="mt-6 space-y-3">
           <Link
-            href="/dashboard/review"
+            href={`/dashboard/${accountSlug}/expenses`}
             className="block w-full rounded-md bg-primary px-4 py-2 text-center text-primary-foreground hover:opacity-90"
           >
-            Review Pending Expenses
+            Review Team Expenses
           </Link>
           <Link
             href="/dashboard/analytics"
@@ -50,10 +58,10 @@ export default function PersonalAccountPage() {
             View Analytics
           </Link>
           <Link
-            href="/dashboard/admin"
+            href={`/dashboard/${accountSlug}/settings`}
             className="block w-full rounded-md bg-blue-600 px-4 py-2 text-center text-white hover:opacity-90"
           >
-            Admin Dashboard
+            Team Settings
           </Link>
         </div>
       </div>

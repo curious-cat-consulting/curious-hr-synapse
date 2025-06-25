@@ -11,10 +11,11 @@ import { useCurrentUser } from "@lib/hooks/use-accounts";
 import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
 
-interface ExpenseDetailsPageProps {
-  params: {
+interface TeamExpenseDetailsPageProps {
+  params: Promise<{
+    accountSlug: string;
     id: string;
-  };
+  }>;
 }
 
 function getStatusColor(status: string) {
@@ -34,7 +35,7 @@ function getStatusColor(status: string) {
   }
 }
 
-export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPageProps>) {
+export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseDetailsPageProps>) {
   const [expense, setExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
   const { data: currentUser } = useCurrentUser();

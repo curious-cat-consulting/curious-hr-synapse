@@ -30,6 +30,10 @@ export default async function PersonalAccountDashboard({
       href: `/dashboard/${accountSlug}`,
     },
     {
+      name: "Expenses",
+      href: `/dashboard/${accountSlug}/expenses`,
+    },
+    {
       name: "Settings",
       href: `/dashboard/${accountSlug}/settings`,
     },

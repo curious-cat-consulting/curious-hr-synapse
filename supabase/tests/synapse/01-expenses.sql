@@ -13,9 +13,9 @@ select enum_has_labels('synapse', 'expense_status',
     ARRAY['ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED'],
     'Expense status enum should have correct labels');
 
--- Test table columns
+-- Test table columns (now includes account_id and account_expense_id)
 select columns_are('synapse', 'expenses',
-    ARRAY['id', 'user_id', 'title', 'amount', 'description', 'status', 'created_at', 'updated_at'],
+    ARRAY['id', 'account_expense_id', 'user_id', 'account_id', 'title', 'amount', 'description', 'status', 'created_at', 'updated_at'],
     'Expenses table should have the correct columns');
 
 -- Test function existence
@@ -25,12 +25,12 @@ select function_returns('public', 'get_expenses', ARRAY[]::text[], 'json',
 -- Test RLS is enabled
 select tests.rls_enabled('synapse', 'expenses');
 
--- Test that RLS policies exist
+-- Test that RLS policies exist (updated for account-based policies)
 select policies_are('synapse', 'expenses', 
-    ARRAY['Users can view their own expenses', 'Users can insert their own expenses', 'Users can update their own expenses'],
+    ARRAY['Users can view their account expenses', 'Users can insert expenses for their account', 'Users can update their account expenses'],
     'Should have the correct RLS policies');
 
--- Create test users
+-- Create test users (personal accounts are created automatically)
 select tests.create_supabase_user('test1', 'test1@test.com');
 select tests.create_supabase_user('test2', 'test2@test.com');
 
@@ -39,8 +39,8 @@ select tests.authenticate_as('test1');
 
 -- Test INSERT policy - should be able to insert own expense
 select lives_ok(
-    $$ insert into synapse.expenses (user_id, title, amount, description, status)
-       values (tests.get_supabase_uid('test1'), 'Test Expense', 100.00, 'Test Description', 'NEW') $$,
+    $$ insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status)
+       values (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 1, 'Test Expense', 100.00, 'Test Description', 'NEW') $$,
     'User should be able to insert their own expense'
 );
 
@@ -64,12 +64,12 @@ select is(
     'Expense title should be updated'
 );
 
--- Test that user cannot insert expense for another user
+-- Test that user cannot insert expense for another user's account
 select throws_ok(
-    $$ insert into synapse.expenses (user_id, title, amount, description, status)
-       values (tests.get_supabase_uid('test2'), 'Malicious Expense', 50.00, 'Should fail', 'NEW') $$,
+    $$ insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status)
+       values (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test2'), 1, 'Malicious Expense', 50.00, 'Should fail', 'NEW') $$,
     'new row violates row-level security policy for table "expenses"',
-    'User should not be able to insert expense for another user'
+    'User should not be able to insert expense for another user account'
 );
 
 -- Test as different authenticated user (test2)
@@ -109,8 +109,8 @@ select throws_ok(
 
 -- Should not be able to insert as anonymous user
 select throws_ok(
-    $$ insert into synapse.expenses (user_id, title, amount, description, status)
-       values ('11111111-1111-1111-1111-111111111111'::uuid, 'Anonymous Expense', 25.00, 'Should fail', 'NEW') $$,
+    $$ insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status)
+       values ('11111111-1111-1111-1111-111111111111'::uuid, '11111111-1111-1111-1111-111111111111'::uuid, 1, 'Anonymous Expense', 25.00, 'Should fail', 'NEW') $$,
     'permission denied for schema synapse',
     'Anonymous users should not be able to insert expenses'
 );
@@ -119,11 +119,11 @@ select throws_ok(
 select tests.authenticate_as('test1');
 
 -- Test get_expenses returns expenses in descending order by created_at
-insert into synapse.expenses (user_id, title, amount, description, status, created_at)
+insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status, created_at)
 values
-  (tests.get_supabase_uid('test1'), 'Expense 1', 10.00, 'Desc 1', 'NEW', now() - interval '2 days'),
-  (tests.get_supabase_uid('test1'), 'Expense 2', 20.00, 'Desc 2', 'NEW', now() - interval '1 day'),
-  (tests.get_supabase_uid('test1'), 'Expense 3', 30.00, 'Desc 3', 'NEW', now());
+  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 2, 'Expense 1', 10.00, 'Desc 1', 'NEW', now() - interval '2 days'),
+  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 3, 'Expense 2', 20.00, 'Desc 2', 'NEW', now() - interval '1 day'),
+  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 4, 'Expense 3', 30.00, 'Desc 3', 'NEW', now());
 
 select results_eq(
   $$ select (json_array_elements(public.get_expenses())->>'title')::text $$,
@@ -134,18 +134,18 @@ select results_eq(
 -- Test create_expense function: success
 select tests.authenticate_as('test1');
 select lives_ok(
-  $$ select public.create_expense('API Expense', 'Created via API') $$,
+  $$ select public.create_expense('API Expense', tests.get_supabase_uid('test1'), 'Created via API') $$,
   'create_expense should succeed with valid input'
 );
 select is(
-  (select (public.create_expense('API Expense 2', null))->>'title'),
+  (select (public.create_expense('API Expense 2', tests.get_supabase_uid('test1'), null))->>'title'),
   'API Expense 2',
   'create_expense should use title if description is null'
 );
 
 -- Test create_expense function: validation
 select throws_ok(
-  $$ select public.create_expense('', 'No title') $$,
+  $$ select public.create_expense('', tests.get_supabase_uid('test1'), 'No title') $$,
   'Title is required',
   'create_expense should fail if title is empty'
 );
@@ -153,7 +153,7 @@ select throws_ok(
 -- Test create_expense function: RLS (should not allow unauthenticated)
 select tests.clear_authentication();
 select throws_ok(
-  $$ select public.create_expense('Should Fail', 'No auth') $$,
+  $$ select public.create_expense('Should Fail', tests.get_supabase_uid('test1'), 'No auth') $$,
   'permission denied for function create_expense',
   'create_expense should not allow unauthenticated users'
 );

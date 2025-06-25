@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(34);
+select plan(36);
 
 -- Test function existence
 select function_returns('public', 'get_expense_details', ARRAY['uuid'], 'json',
@@ -13,14 +13,14 @@ select tests.create_supabase_user('test2', 'test2@test.com');
 
 -- Create test expenses for the users
 select tests.authenticate_as('test1');
-insert into synapse.expenses (user_id, title, amount, description, status)
+insert into synapse.expenses (user_id, account_id, title, amount, description, status)
 values 
-  (tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW'),
-  (tests.get_supabase_uid('test1'), 'Test Expense 2', 200.00, 'Test Description 2', 'ANALYZED');
+  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 'Test Expense 1', 100.00, 'Test Description 1', 'NEW'),
+  (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test1'), 'Test Expense 2', 200.00, 'Test Description 2', 'ANALYZED');
 
 select tests.authenticate_as('test2');
-insert into synapse.expenses (user_id, title, amount, description, status)
-values (tests.get_supabase_uid('test2'), 'Test Expense 3', 300.00, 'Test Description 3', 'NEW');
+insert into synapse.expenses (user_id, account_id, title, amount, description, status)
+values (tests.get_supabase_uid('test2'), tests.get_supabase_uid('test2'), 'Test Expense 3', 300.00, 'Test Description 3', 'NEW');
 
 -- Get expense IDs for testing
 select tests.authenticate_as('test1');
@@ -273,6 +273,25 @@ select is(
   0,
   'Expense without mileage line items should return empty array'
 );
+
+-- Test that account information is included
+SELECT results_eq(
+  $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_name' $$,
+  $$ SELECT 'test1' $$,
+  'get_expense_details should include account_name field'
+);
+
+SELECT results_eq(
+  $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_personal' $$,
+  $$ SELECT 'true' $$,
+  'get_expense_details should include account_personal field'
+);
+
+-- SELECT results_eq(
+--   $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_id' $$,
+--   $$ SELECT current_setting('test.personal_account_id') $$,
+--   'get_expense_details should include account_id field'
+-- );
 
 SELECT *
 FROM finish();

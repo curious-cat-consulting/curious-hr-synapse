@@ -8,9 +8,10 @@ select tests.create_supabase_user('test1', 'test1@test.com');
 
 -- Create test expense
 select tests.authenticate_as('test1');
-INSERT INTO synapse.expenses (id, user_id, title, description, amount)
+INSERT INTO synapse.expenses (id, user_id, account_id, title, description, amount)
 VALUES (
   '550e8400-e29b-41d4-a716-446655440000'::uuid,
+  tests.get_supabase_uid('test1'),
   tests.get_supabase_uid('test1'),
   'Test Expense',
   'Test Description',

@@ -28,7 +28,9 @@ CREATE TYPE synapse.expense_status AS ENUM ('ANALYZED', 'APPROVED', 'NEW', 'PEND
 -- Create expenses table
 CREATE TABLE synapse.expenses (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  account_expense_id integer NOT NULL,
   user_id uuid REFERENCES auth.users(id) NOT NULL,
+  account_id uuid REFERENCES basejump.accounts(id) NOT NULL,
   title text NOT NULL,
   amount decimal(10,2) NOT NULL,
   description text NOT NULL,
@@ -36,33 +38,64 @@ CREATE TABLE synapse.expenses (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
 
-  CONSTRAINT valid_expense_status CHECK (status IN ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED'))
+  CONSTRAINT valid_expense_status CHECK (status IN ('ANALYZED', 'APPROVED', 'NEW', 'PENDING', 'REJECTED')),
+  UNIQUE(account_id, account_expense_id)
 );
+
+-- Create table to track the last used account_expense_id per account (for thread safety)
+CREATE TABLE synapse.account_expense_counters (
+  account_id uuid REFERENCES basejump.accounts(id) PRIMARY KEY,
+  last_expense_id integer NOT NULL DEFAULT 0,
+  updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Index for account_id
+CREATE INDEX idx_expenses_account_id ON synapse.expenses(account_id);
+-- Index for account_expense_id lookups
+CREATE INDEX idx_expenses_account_expense_id ON synapse.expenses(account_id, account_expense_id);
 
 -- Enable Row Level Security
 ALTER TABLE synapse.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE synapse.account_expense_counters ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow users to view their own expenses
-CREATE POLICY "Users can view their own expenses"
+-- Policy: Users can view expenses for accounts they are a member of
+CREATE POLICY "Users can view their account expenses"
 ON synapse.expenses FOR SELECT
 TO authenticated
-USING (auth.uid() = user_id);
+USING (
+  account_id IN (SELECT basejump.get_accounts_with_role())
+);
 
--- Create policy to allow users to insert their own expenses
-CREATE POLICY "Users can insert their own expenses"
+-- Policy: Users can insert expenses for accounts they are a member of
+CREATE POLICY "Users can insert expenses for their account"
 ON synapse.expenses FOR INSERT
 TO authenticated
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (
+  user_id = auth.uid() AND account_id IN (SELECT basejump.get_accounts_with_role())
+);
 
--- Create policy to allow users to update their own expenses
-CREATE POLICY "Users can update their own expenses"
+-- Policy: Users can update expenses for accounts they are a member of
+CREATE POLICY "Users can update their account expenses"
 ON synapse.expenses FOR UPDATE
 TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING (
+  user_id = auth.uid() AND account_id IN (SELECT basejump.get_accounts_with_role())
+)
+WITH CHECK (
+  user_id = auth.uid() AND account_id IN (SELECT basejump.get_accounts_with_role())
+);
 
--- Open up access to expenses
+-- Policy for account_expense_counters (only allow access to accounts user has access to)
+CREATE POLICY "Users can access counters for their accounts"
+ON synapse.account_expense_counters FOR ALL
+TO authenticated
+USING (
+  account_id IN (SELECT basejump.get_accounts_with_role())
+);
+
+-- Open up access to expenses and counters
 GRANT SELECT, INSERT, UPDATE ON TABLE synapse.expenses TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE synapse.account_expense_counters TO authenticated;
 
 /*
 ===============================================================================
@@ -71,7 +104,33 @@ GRANT SELECT, INSERT, UPDATE ON TABLE synapse.expenses TO authenticated;
 */
 
 /**
-  Returns the current user's expenses
+  Gets the next account expense ID for a given account (thread-safe)
+ */
+CREATE OR REPLACE FUNCTION synapse.get_next_account_expense_id(account_uuid uuid)
+  RETURNS integer
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+AS
+$$
+DECLARE
+  next_id integer;
+BEGIN
+  -- Use UPSERT to atomically get and increment the counter
+  -- This prevents race conditions when multiple users create expenses simultaneously
+  INSERT INTO synapse.account_expense_counters (account_id, last_expense_id)
+  VALUES (account_uuid, 1)
+  ON CONFLICT (account_id) 
+  DO UPDATE SET 
+    last_expense_id = synapse.account_expense_counters.last_expense_id + 1,
+    updated_at = now()
+  RETURNING last_expense_id INTO next_id;
+  
+  RETURN next_id;
+END;
+$$;
+
+/**
+  Returns the current user's expenses for all their accounts
  */
 CREATE OR REPLACE FUNCTION public.get_expenses()
   RETURNS json
@@ -81,22 +140,25 @@ $$
 SELECT COALESCE(json_agg(
   json_build_object(
     'id', e.id,
+    'account_expense_id', e.account_expense_id,
     'title', e.title,
     'description', e.description,
     'amount', e.amount,
     'status', e.status,
-    'created_at', e.created_at
+    'created_at', e.created_at,
+    'account_id', e.account_id
   ) ORDER BY e.created_at DESC
 ), '[]'::json)
 FROM synapse.expenses e
-WHERE e.user_id = auth.uid();
+WHERE e.account_id IN (SELECT basejump.get_accounts_with_role());
 $$;
 
 /**
-  Creates a new expense for the current user
+  Creates a new expense for the current user in a given account
  */
 CREATE OR REPLACE FUNCTION public.create_expense(
   expense_title text,
+  expense_account_id uuid,
   expense_description text DEFAULT NULL
 )
   RETURNS json
@@ -105,6 +167,7 @@ AS
 $$
 DECLARE
   new_expense synapse.expenses;
+  next_account_expense_id integer;
 BEGIN
   -- Check authentication
   IF auth.uid() IS NULL THEN
@@ -115,15 +178,28 @@ BEGIN
   IF expense_title IS NULL OR trim(expense_title) = '' THEN
     RAISE EXCEPTION 'Title is required';
   END IF;
+  IF expense_account_id IS NULL THEN
+    RAISE EXCEPTION 'Account ID is required';
+  END IF;
+  IF NOT basejump.has_role_on_account(expense_account_id) THEN
+    RAISE EXCEPTION 'Access denied: you do not have access to this account';
+  END IF;
+
+  -- Get the next account expense ID
+  SELECT synapse.get_next_account_expense_id(expense_account_id) INTO next_account_expense_id;
 
   -- Create the expense
   INSERT INTO synapse.expenses (
     user_id,
+    account_id,
+    account_expense_id,
     title,
     description,
     amount
   ) VALUES (
     auth.uid(),
+    expense_account_id,
+    next_account_expense_id,
     expense_title,
     COALESCE(expense_description, expense_title),
     0
@@ -133,18 +209,20 @@ BEGIN
   -- Return the created expense
   RETURN json_build_object(
     'id', new_expense.id,
+    'account_expense_id', new_expense.account_expense_id,
     'title', new_expense.title,
     'description', new_expense.description,
     'amount', new_expense.amount,
     'status', new_expense.status,
-    'created_at', new_expense.created_at
+    'created_at', new_expense.created_at,
+    'account_id', new_expense.account_id
   );
 END;
 $$;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expenses() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_expense(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_expense(text, uuid, text) TO authenticated;
 
 /*
 ===============================================================================
