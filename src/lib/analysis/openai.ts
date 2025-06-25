@@ -11,7 +11,7 @@ export const openai = new OpenAI({
 export interface ReceiptAnalysis {
   vendor_name: string;
   vendor_address?: string;
-  receipt_date: string;
+  receipt_date?: string;
   receipt_total: number;
   tax_amount?: number;
   currency: string;
@@ -41,7 +41,7 @@ Please analyze this receipt and extract the following information in JSON format
 {
   "vendor_name": string, // The name of the vendor
   "vendor_address": string, // The address of the vendor (if available)
-  "receipt_date": string, // The date of the receipt (YYYY-MM-DD)
+  "receipt_date": string, // The date of the receipt (YYYY-MM-DD format, or empty string if not found)
   "receipt_total": number, // The total amount (number, no currency symbol)
   "tax_amount": number, // The tax amount (number, no currency symbol, if available)
   "currency": string, // The currency code (e.g., USD, EUR, AED)
@@ -52,7 +52,7 @@ Please analyze this receipt and extract the following information in JSON format
       "unit_price": number, // Unit price (if available)
       "total_amount": number, // Total amount for this item
       "category": string, // Category (if possible)
-      "date": string // The date for this line item or receipt (YYYY-MM-DD, if available)
+      "date": string // The date for this line item or receipt (YYYY-MM-DD format, or empty string if not available)
     },
     ...
   ],
@@ -61,6 +61,7 @@ Please analyze this receipt and extract the following information in JSON format
 
 - All monetary values should be numbers without currency symbols.
 - If a line item has a specific date (e.g., for travel or mileage), include it in the "date" field for that item.
+- If a date is not found or cannot be determined, use an empty string ("") for the date field.
 - Format the response as a valid JSON object, and wrap it in triple backticks with the json language tag (\`\`\`json ... \`\`\`).
 `,
           },

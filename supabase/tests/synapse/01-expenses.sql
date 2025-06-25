@@ -3,13 +3,6 @@ create extension "basejump-supabase_test_helpers" version '0.0.6';
 
 select plan(23);
 
--- Sync account_expense_counters with max account_expense_id for each account (fix for test/seed conflict)
-insert into synapse.account_expense_counters (account_id, last_expense_id, updated_at)
-select account_id, max(account_expense_id), now()
-from synapse.expenses
-group by account_id
-on conflict (account_id) do update set last_expense_id = excluded.last_expense_id, updated_at = excluded.updated_at;
-
 -- Test schema and table existence
 select has_schema('synapse', 'Synapse schema should exist');
 select has_table('synapse', 'expenses', 'Synapse expenses table should exist');

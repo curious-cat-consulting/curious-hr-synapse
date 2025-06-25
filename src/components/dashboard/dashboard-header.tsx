@@ -4,6 +4,7 @@ import Link from "next/link";
 import UserAccountButton from "@components/basejump/user-account-button";
 import NavigatingAccountSelector from "@components/dashboard/navigation-account-selector";
 import BasejumpLogo from "@components/getting-started/basejump-logo";
+import { NotificationBell } from "@components/notifications/notification-bell";
 import { ThemeToggle } from "@components/theme-toggle";
 
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
@@ -70,6 +71,7 @@ export default function DashboardHeader({ accountId, navigation = [] }: Props) {
       </Sheet>
 
       <div className="flex items-center gap-x-4">
+        <NotificationBell />
         <ThemeToggle />
         <UserAccountButton />
       </div>

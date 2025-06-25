@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(8);
+select plan(9);
 
 -- Create test users
 select tests.create_supabase_user('test1', 'test1@test.com');
@@ -156,6 +156,50 @@ select lives_ok(
     )
   ) $$,
   'Should be able to store multiple receipt analyses'
+);
+
+-- Test handling empty receipt dates
+-- Create a storage object for the test UUID
+INSERT INTO storage.objects (bucket_id, name, owner_id)
+VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/test-receipt.png'), tests.get_supabase_uid('test1'));
+
+-- Get the test storage object ID
+DO $$
+DECLARE
+    test_receipt_obj_id uuid;
+BEGIN
+    SELECT id INTO test_receipt_obj_id FROM storage.objects 
+    WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/test-receipt.png')
+    LIMIT 1;
+    
+    -- Store for later use
+    PERFORM set_config('test.test_receipt_obj_id', test_receipt_obj_id::text, false);
+END $$;
+
+SELECT lives_ok(
+  $$ select public.store_receipt_analyses(
+    current_setting('test.expense_id')::uuid,
+    jsonb_build_array(
+      jsonb_build_object(
+        'receiptId', current_setting('test.test_receipt_obj_id')::uuid,
+        'analysis', jsonb_build_object(
+          'vendor_name', 'Test Vendor',
+          'receipt_date', '',
+          'receipt_total', 25.50,
+          'currency', 'USD',
+          'line_items', jsonb_build_array(
+            jsonb_build_object(
+              'description', 'Test Item',
+              'total_amount', 25.50,
+              'date', ''
+            )
+          ),
+          'confidence_score', 0.9
+        )
+      )
+    )
+  ) $$,
+  'Function should handle empty receipt dates without error'
 );
 
 SELECT *
