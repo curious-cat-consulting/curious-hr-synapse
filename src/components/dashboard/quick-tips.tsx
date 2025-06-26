@@ -55,8 +55,8 @@ export const personalQuickTips: QuickTip[] = [
   {
     icon: <Download className="h-4 w-4" />,
     title: "Export Your Data",
-    description: "Export your expense history to CSV or PDF for record keeping and tax purposes.",
-    iconBgColor: "bg-green-100",
+    description: "Export your expense history to CSV or Excel for record keeping and tax purposes.",
+    iconBgColor: "bg-green-100 rounded-full",
     iconColor: "text-green-600",
   },
   {

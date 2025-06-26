@@ -2,7 +2,6 @@
 CREATE OR REPLACE FUNCTION public.get_team_expenses(team_account_slug text)
   RETURNS json
   LANGUAGE plpgsql
-  SECURITY DEFINER
   SET search_path = public, basejump
 AS
 $$
@@ -109,7 +108,6 @@ CREATE OR REPLACE FUNCTION public.update_expense_status(
 )
   RETURNS json
   LANGUAGE plpgsql
-  SECURITY DEFINER
   SET search_path = public, basejump
 AS
 $$

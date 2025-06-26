@@ -114,7 +114,6 @@ CREATE OR REPLACE FUNCTION synapse.create_notification(
 )
   RETURNS json
   LANGUAGE plpgsql
-  SECURITY DEFINER
 AS
 $$
 DECLARE

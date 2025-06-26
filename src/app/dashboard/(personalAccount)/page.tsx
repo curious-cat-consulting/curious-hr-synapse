@@ -24,11 +24,8 @@ export default async function PersonalAccountPage() {
       {/* Getting Started Guide */}
       <GettingStarted title="Getting Started" steps={personalGettingStartedSteps} />
 
-      {/* Recent Activity Placeholder */}
-      <RecentActivity
-        title="Recent Activity"
-        message="Recent activity will appear here as you start submitting expenses"
-      />
+      {/* Recent Activity */}
+      <RecentActivity title="Recent Activity" />
 
       {/* Quick Tips */}
       <QuickTips title="Quick Tips" tips={personalQuickTips} />

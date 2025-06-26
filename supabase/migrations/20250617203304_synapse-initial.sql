@@ -109,7 +109,6 @@ GRANT SELECT, INSERT, UPDATE ON TABLE synapse.account_expense_counters TO authen
 CREATE OR REPLACE FUNCTION synapse.get_next_account_expense_id(account_uuid uuid)
   RETURNS integer
   LANGUAGE plpgsql
-  SECURITY DEFINER
 AS
 $$
 DECLARE

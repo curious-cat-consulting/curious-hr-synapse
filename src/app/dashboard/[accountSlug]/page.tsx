@@ -2,6 +2,7 @@ import { FeaturesOverview, teamFeatures } from "@components/dashboard/features-o
 import { GettingStarted, teamGettingStartedSteps } from "@components/dashboard/getting-started";
 import { QuickActions, teamQuickActions } from "@components/dashboard/quick-actions";
 import { RecentActivity } from "@components/dashboard/recent-activity";
+import { getAccountBySlug } from "@lib/actions/accounts";
 
 interface TeamAccountPageProps {
   params: Promise<{
@@ -11,6 +12,7 @@ interface TeamAccountPageProps {
 
 export default async function TeamAccountPage({ params }: Readonly<TeamAccountPageProps>) {
   const { accountSlug } = await params;
+  const teamAccount = await getAccountBySlug(accountSlug);
 
   return (
     <div className="container mx-auto max-w-7xl p-6">
@@ -31,11 +33,8 @@ export default async function TeamAccountPage({ params }: Readonly<TeamAccountPa
       {/* Getting Started Guide */}
       <GettingStarted title="Getting Started" steps={teamGettingStartedSteps(accountSlug)} />
 
-      {/* Recent Activity Placeholder */}
-      <RecentActivity
-        title="Recent Activity"
-        message="Recent activity will appear here as your team starts using the platform"
-      />
+      {/* Recent Activity */}
+      <RecentActivity title="Recent Activity" accountId={teamAccount.account_id} />
     </div>
   );
 }

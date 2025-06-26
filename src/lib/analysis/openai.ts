@@ -26,6 +26,25 @@ export interface ReceiptAnalysis {
   confidence_score: number;
 }
 
+// Compact JSON interface for AI responses
+interface CompactReceiptAnalysis {
+  v: string; // vendor_name
+  a?: string; // vendor_address
+  d?: string; // receipt_date
+  t: number; // receipt_total
+  x?: number; // tax_amount
+  c: string; // currency
+  l: {
+    d: string; // description
+    q?: number; // quantity
+    u?: number; // unit_price
+    t: number; // total_amount
+    g?: string; // category
+    dt?: string; // date
+  }[];
+  s: number; // confidence_score
+}
+
 export async function analyzeReceipt(imageBase64: string): Promise<ReceiptAnalysis> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -36,33 +55,31 @@ export async function analyzeReceipt(imageBase64: string): Promise<ReceiptAnalys
           {
             type: "text",
             text: `
-Please analyze this receipt and extract the following information in JSON format:
+Please analyze this receipt and extract the following information in compact JSON format:
 
 {
-  "vendor_name": string, // The name of the vendor
-  "vendor_address": string, // The address of the vendor (if available)
-  "receipt_date": string, // The date of the receipt (YYYY-MM-DD format, or empty string if not found)
-  "receipt_total": number, // The total amount (number, no currency symbol)
-  "tax_amount": number, // The tax amount (number, no currency symbol, if available)
-  "currency": string, // The currency code (e.g., USD, EUR, AED)
-  "line_items": [
+  "v": string, // vendor_name
+  "a": string, // vendor_address (optional)
+  "d": string, // receipt_date (YYYY-MM-DD or empty string)
+  "t": number, // receipt_total (number, no currency symbol)
+  "x": number, // tax_amount (optional, number, no currency symbol)
+  "c": string, // currency code (e.g., USD, EUR, AED)
+  "l": [
     {
-      "description": string, // Description of the item
-      "quantity": number, // Quantity (if available)
-      "unit_price": number, // Unit price (if available)
-      "total_amount": number, // Total amount for this item
-      "category": string, // Category (if possible)
-      "date": string // The date for this line item or receipt (YYYY-MM-DD format, or empty string if not available)
-    },
-    ...
+      "d": string, // description
+      "q": number, // quantity (optional)
+      "u": number, // unit_price (optional)
+      "t": number, // total_amount
+      "g": string, // category (optional)
+      "dt": string // date if different from receipt date (optional, YYYY-MM-DD or empty string)
+    }
   ],
-  "confidence_score": number // Confidence score between 0 and 1
+  "s": number // confidence_score (0-1)
 }
 
-- All monetary values should be numbers without currency symbols.
-- If a line item has a specific date (e.g., for travel or mileage), include it in the "date" field for that item.
-- If a date is not found or cannot be determined, use an empty string ("") for the date field.
-- Format the response as a valid JSON object, and wrap it in triple backticks with the json language tag (\`\`\`json ... \`\`\`).
+- All monetary values should be numbers without currency symbols
+- Use empty string ("") for missing dates
+- Format as valid JSON wrapped in \`\`\`json ... \`\`\`
 `,
           },
           {
@@ -75,7 +92,7 @@ Please analyze this receipt and extract the following information in JSON format
         ],
       },
     ],
-    max_tokens: 1000,
+    max_tokens: 4000,
   });
 
   const content = response.choices[0]?.message?.content;
@@ -86,8 +103,31 @@ Please analyze this receipt and extract the following information in JSON format
   try {
     // Strip markdown formatting if present
     const jsonContent = content.replace(/```json\n?|\n?```/g, "").trim();
-    console.log(jsonContent);
-    return JSON.parse(jsonContent) as ReceiptAnalysis;
+    console.log("Raw AI response:", jsonContent);
+
+    // Parse the compact JSON format
+    const compactAnalysis = JSON.parse(jsonContent) as CompactReceiptAnalysis;
+
+    // Convert to the full interface format
+    const analysis: ReceiptAnalysis = {
+      vendor_name: compactAnalysis.v,
+      vendor_address: compactAnalysis.a,
+      receipt_date: compactAnalysis.d,
+      receipt_total: compactAnalysis.t,
+      tax_amount: compactAnalysis.x,
+      currency: compactAnalysis.c,
+      line_items: compactAnalysis.l.map((item) => ({
+        description: item.d,
+        quantity: item.q,
+        unit_price: item.u,
+        total_amount: item.t,
+        category: item.g,
+        date: item.dt,
+      })),
+      confidence_score: compactAnalysis.s,
+    };
+
+    return analysis;
   } catch (error) {
     console.error("Failed to parse OpenAI response", error);
     console.error("OpenAI response:", content);

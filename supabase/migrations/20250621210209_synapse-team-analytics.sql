@@ -8,7 +8,6 @@
 CREATE OR REPLACE FUNCTION public.get_team_analytics(team_account_slug text)
   RETURNS json
   LANGUAGE plpgsql
-  SECURITY DEFINER
   SET search_path = public, basejump
 AS
 $$

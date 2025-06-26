@@ -21,20 +21,43 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedNotifications, setHasLoadedNotifications] = useState(false);
 
   const supabase = createClient();
 
+  const fetchUnreadCount = async () => {
+    try {
+      const { data: unreadCountData } = await supabase.rpc("get_unread_notification_count");
+      setUnreadCount(Number(unreadCountData ?? 0));
+    } catch (error) {
+      console.error("Error fetching unread notification count:", error);
+    }
+  };
+
   const fetchNotifications = async () => {
+    if (hasLoadedNotifications) return; // Don't refetch if already loaded
+
     try {
       const { data: notificationsData } = await supabase.rpc("get_notifications", {
         limit_count: 10,
         offset_count: 0,
       });
 
-      const { data: unreadCountData } = await supabase.rpc("get_unread_notification_count");
+      setNotifications(notificationsData ?? []);
+      setHasLoadedNotifications(true);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const refreshNotifications = async () => {
+    try {
+      const { data: notificationsData } = await supabase.rpc("get_notifications", {
+        limit_count: 10,
+        offset_count: 0,
+      });
 
       setNotifications(notificationsData ?? []);
-      setUnreadCount(Number(unreadCountData ?? 0));
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
@@ -43,7 +66,7 @@ export function NotificationBell() {
   const markAsRead = async (notificationId: string) => {
     try {
       await supabase.rpc("mark_notification_read", { notification_id: notificationId });
-      await fetchNotifications();
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -52,7 +75,7 @@ export function NotificationBell() {
   const deleteNotification = async (notificationId: string) => {
     try {
       await supabase.rpc("delete_notification", { notification_id: notificationId });
-      await fetchNotifications();
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
     } catch (error) {
       console.error("Error deleting notification:", error);
     }
@@ -62,7 +85,7 @@ export function NotificationBell() {
     setIsLoading(true);
     try {
       await supabase.rpc("mark_all_notifications_read");
-      await fetchNotifications();
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
     } finally {
@@ -74,7 +97,7 @@ export function NotificationBell() {
     setIsLoading(true);
     try {
       await supabase.rpc("delete_all_notifications");
-      await fetchNotifications();
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
     } catch (error) {
       console.error("Error deleting all notifications:", error);
     } finally {
@@ -82,8 +105,15 @@ export function NotificationBell() {
     }
   };
 
+  const handleDropdownOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open && !hasLoadedNotifications) {
+      fetchNotifications();
+    }
+  };
+
   useEffect(() => {
-    fetchNotifications();
+    fetchUnreadCount();
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let isMounted = true;
@@ -122,8 +152,12 @@ export function NotificationBell() {
                 filter: `user_id=eq.${session.user.id}`,
               },
               () => {
-                // Refetch notifications when any change occurs
-                fetchNotifications();
+                // Only refresh unread count when notifications change
+                fetchUnreadCount();
+                // If notifications are currently loaded, refresh them too
+                if (hasLoadedNotifications) {
+                  refreshNotifications();
+                }
               }
             )
             .subscribe((status) => {
@@ -149,7 +183,7 @@ export function NotificationBell() {
         supabase.removeChannel(channel);
       }
     };
-  }, []);
+  }, [hasLoadedNotifications]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -205,7 +239,7 @@ export function NotificationBell() {
     typeof unreadCount === "number" && Number.isFinite(unreadCount) ? unreadCount : 0;
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />

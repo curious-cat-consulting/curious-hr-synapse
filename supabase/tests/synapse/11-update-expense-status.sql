@@ -63,7 +63,7 @@ BEGIN;
   SELECT tests.authenticate_as('test1');
   SELECT throws_ok(
     $$ SELECT public.update_expense_status(current_setting('test.expense2_id')::uuid, 'APPROVED'::synapse.expense_status) $$,
-    'Access denied: you can only update your own expenses or expenses of team members',
+    'Expense not found',
     'Should return error when user tries to update another user expense (not team member)'
   );
 
