@@ -5,6 +5,8 @@ export type NotificationType =
   | "EXPENSE_REJECTED"
   | "RECEIPT_PROCESSED"
   | "TEAM_INVITATION"
+  | "TEAM_CREATED"
+  | "POSTING_ACCOUNT_UPDATED"
   | "GENERAL";
 
 export type NotificationStatus = "UNREAD" | "READ";

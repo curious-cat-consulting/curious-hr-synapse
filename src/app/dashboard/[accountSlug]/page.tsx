@@ -19,7 +19,7 @@ export default async function TeamAccountPage({ params }: Readonly<TeamAccountPa
     <div className="container mx-auto max-w-7xl p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Team Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Team Owner Dashboard</h1>
         <p className="text-muted-foreground">
           Manage team expenses, track approvals, and monitor spending patterns
         </p>
