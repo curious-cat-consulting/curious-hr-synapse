@@ -10,8 +10,6 @@ import type { Expense } from "@type/expense";
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingExpenseId, setProcessingExpenseId] = useState<string | null>(null);
 
   const fetchExpenses = async () => {
     try {
@@ -31,62 +29,13 @@ export default function ExpensesPage() {
     }
   };
 
-  // Poll for expense status updates
-  const pollExpenseStatus = async (expenseId: string) => {
-    const supabase = createClient();
-
-    try {
-      const { data, error } = await supabase.rpc("get_expense_details", {
-        expense_id: expenseId,
-      });
-
-      if (error !== null) {
-        console.error("Error polling expense status:", error);
-        return false;
-      }
-
-      // Check if processing is complete
-      const expense = data as Expense;
-      const isComplete = expense.status === "ANALYZED" || expense.status === "PENDING";
-
-      if (isComplete) {
-        console.log(`Expense ${expenseId} processing complete, status: ${expense.status}`);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Error polling expense status:", error);
-      return false;
-    }
-  };
-
   useEffect(() => {
     fetchExpenses();
   }, []);
 
-  // Poll for expense status when processing
-  useEffect(() => {
-    if (!isProcessing || processingExpenseId === null) return;
-
-    const pollInterval = setInterval(async () => {
-      const isComplete = await pollExpenseStatus(processingExpenseId);
-
-      if (isComplete) {
-        setIsProcessing(false);
-        setProcessingExpenseId(null);
-        fetchExpenses(); // Refresh the list
-        clearInterval(pollInterval);
-      }
-    }, 2000); // Poll every 2 seconds
-
-    return () => clearInterval(pollInterval);
-  }, [isProcessing, processingExpenseId]);
-
-  const handleExpenseCreated = (expenseId: string) => {
-    // Close dialog immediately and show loading indicator
-    setIsProcessing(true);
-    setProcessingExpenseId(expenseId);
+  const handleExpenseCreated = (_expenseId: string) => {
+    // Refresh the expense list after creating a new expense
+    fetchExpenses();
   };
 
   if (isLoading) {

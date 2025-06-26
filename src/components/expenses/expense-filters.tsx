@@ -1,6 +1,6 @@
 "use client";
 
-import { Filter, RotateCcw, Users } from "lucide-react";
+import { Filter, RotateCcw, Users, ListOrdered } from "lucide-react";
 import * as React from "react";
 
 import {
@@ -166,7 +166,7 @@ export function ExpenseFilters({
             </div>
           )}
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr_1fr]">
             {/* Status Filter */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2 text-sm font-semibold">
@@ -208,7 +208,10 @@ export function ExpenseFilters({
 
             {/* Sort Control */}
             <div className="space-y-3">
-              <Label className="text-sm font-semibold">Sort & Order</Label>
+              <Label className="flex items-center gap-2 text-sm font-semibold">
+                <ListOrdered className="h-4 w-4" />
+                Sort
+              </Label>
               <ExpenseSortControl
                 sortBy={sortBy}
                 onSortChange={onSortByChange}
