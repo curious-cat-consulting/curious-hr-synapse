@@ -87,7 +87,7 @@ export function MultiSelect({
           )}
           disabled={disabled}
         >
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-nowrap gap-1 overflow-hidden">
             {selected.length <= maxDisplay ? (
               selected.map((value) => {
                 const option = options.find((opt) => opt.value === value);
@@ -102,7 +102,7 @@ export function MultiSelect({
                       handleUnselect(value);
                     }}
                   >
-                    <span>{option?.label || value}</span>
+                    <span>{option?.label ?? value}</span>
                     <X className="h-3 w-3 rounded-full hover:bg-muted" />
                   </Badge>
                 );

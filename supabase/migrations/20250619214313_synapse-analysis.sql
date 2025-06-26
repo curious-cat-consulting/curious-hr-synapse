@@ -131,7 +131,6 @@ CREATE OR REPLACE FUNCTION synapse.store_receipt_analysis(
 )
   RETURNS void
   LANGUAGE plpgsql
-  SECURITY DEFINER
 AS
 $$
 BEGIN
@@ -242,7 +241,6 @@ CREATE OR REPLACE FUNCTION public.store_receipt_analyses(
 )
   RETURNS void
   LANGUAGE plpgsql
-  SECURITY DEFINER
 AS
 $$
 DECLARE
@@ -311,4 +309,5 @@ $$;
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expense_details(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_receipts_to_process(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.store_receipt_analyses(uuid, jsonb) TO authenticated; 
+GRANT EXECUTE ON FUNCTION public.store_receipt_analyses(uuid, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION synapse.store_receipt_analysis(uuid, uuid, jsonb) TO authenticated; 

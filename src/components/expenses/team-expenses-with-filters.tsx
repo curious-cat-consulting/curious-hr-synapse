@@ -17,13 +17,13 @@ import { ExpenseFilters } from "./expense-filters";
 interface TeamExpensesWithFiltersProps {
   expenses: TeamExpense[];
   accountSlug?: string;
-  compact?: boolean;
+  exportFilename?: string;
 }
 
 export function TeamExpensesWithFilters({
   expenses,
   accountSlug,
-  compact = false,
+  exportFilename,
 }: Readonly<TeamExpensesWithFiltersProps>) {
   const { filters, actions, filterExpenses, getUniqueUsers } = useExpenseFilters({
     includeTeamFeatures: true,
@@ -93,8 +93,9 @@ export function TeamExpensesWithFilters({
         users={users}
         includeTeamFeatures={true}
         includeUserSort={true}
-        compact={compact}
         onResetFilters={actions.resetFilters}
+        expenses={filteredAndSortedExpenses}
+        exportFilename={exportFilename}
       />
 
       {filteredAndSortedExpenses.length === 0 ? (

@@ -3,35 +3,19 @@
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 
-import { ExpenseApprovalButtons } from "@/src/components/expenses/expense-approval-buttons";
 import { ReceiptsAndLineItems } from "@/src/components/expenses/receipts-and-line-items";
+import { ExpenseApprovalButtons } from "@components/expenses/expense-approval-buttons";
+import { ExportExpenseDetailsButton } from "@components/expenses/export-expense-details-button";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
+import { LoadingSpinner } from "@components/ui/loading-spinner";
 import { useCurrentUser } from "@lib/hooks/use-accounts";
 import { createClient } from "@lib/supabase/client";
+import { getStatusColor } from "@lib/utils";
 import type { Expense } from "@type/expense";
 
 interface ExpenseDetailsPageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "APPROVED":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
-    case "REJECTED":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
-    case "ANALYZED":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
-    case "NEW":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
-    case "PENDING":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
-  }
+  params: Promise<{ id: string }>;
 }
 
 export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPageProps>) {
@@ -67,7 +51,7 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <LoadingSpinner size="lg" text="Loading expense details..." />
       </div>
     );
   }
@@ -137,13 +121,21 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
                   {format(new Date(expense.created_at), "PPP")}
                 </p>
               </div>
-              <div>
-                <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Last Updated
-                </p>
-                <p className="text-sm font-semibold">
-                  {format(new Date(expense.updated_at), "PPP")}
-                </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Last Updated
+                  </p>
+                  <p className="text-sm font-semibold">
+                    {format(new Date(expense.updated_at), "PPP")}
+                  </p>
+                </div>
+                <ExportExpenseDetailsButton
+                  expense={expense}
+                  filename={`expense-${expense.account_expense_id}`}
+                  variant="ghost"
+                  size="sm"
+                />
               </div>
             </div>
           </CardContent>

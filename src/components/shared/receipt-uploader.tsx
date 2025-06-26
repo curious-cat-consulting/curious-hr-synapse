@@ -26,6 +26,7 @@ interface ReceiptUploaderProps {
   title?: string;
   description?: string;
   showUploadButton?: boolean;
+  inDrawer?: boolean;
 }
 
 export function ReceiptUploader({
@@ -37,6 +38,7 @@ export function ReceiptUploader({
   title = "Upload Receipts",
   description = "Drag and drop your receipt files here or click to browse",
   showUploadButton = true,
+  inDrawer = false,
 }: Readonly<ReceiptUploaderProps>) {
   const [files, setFiles] = useState<(FilePondInitialFile | FilePondFile)[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -164,7 +166,7 @@ export function ReceiptUploader({
         </div>
       </div>
 
-      <LoadingIndicator isVisible={isUploading} />
+      <LoadingIndicator isVisible={isUploading} inDrawer={inDrawer} />
     </>
   );
 }

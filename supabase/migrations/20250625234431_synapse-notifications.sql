@@ -45,6 +45,14 @@ CREATE INDEX idx_notifications_user_status ON synapse.notifications(user_id, sta
 -- Enable Row Level Security
 ALTER TABLE synapse.notifications ENABLE ROW LEVEL SECURITY;
 
+-- Enable real-time replication for notifications table
+-- This is required for Supabase real-time subscriptions to work properly
+ALTER TABLE synapse.notifications REPLICA IDENTITY FULL;
+
+-- Add the table to the real-time publication
+-- This ensures real-time events are broadcast for INSERT, UPDATE, DELETE
+ALTER PUBLICATION supabase_realtime ADD TABLE synapse.notifications;
+
 -- Policy: Users can view their own notifications
 CREATE POLICY "Users can view their own notifications"
 ON synapse.notifications FOR SELECT
@@ -106,7 +114,6 @@ CREATE OR REPLACE FUNCTION synapse.create_notification(
 )
   RETURNS json
   LANGUAGE plpgsql
-  SECURITY DEFINER
 AS
 $$
 DECLARE
@@ -306,10 +313,37 @@ BEGIN
 END;
 $$;
 
+/**
+  Deletes all notifications for the current user
+ */
+CREATE OR REPLACE FUNCTION public.delete_all_notifications()
+  RETURNS integer
+  LANGUAGE plpgsql
+AS
+$$
+DECLARE
+  deleted_count integer;
+BEGIN
+  -- Check authentication
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  -- Delete all notifications for the current user
+  DELETE FROM synapse.notifications
+  WHERE user_id = auth.uid()
+    AND account_id IN (SELECT basejump.get_accounts_with_role());
+
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  RETURN deleted_count;
+END;
+$$;
+
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION synapse.create_notification(synapse.notification_type, text, text, uuid, jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_notifications(integer, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_unread_notification_count() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.mark_notification_read(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.mark_all_notifications_read() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.delete_notification(uuid) TO authenticated; 
+GRANT EXECUTE ON FUNCTION public.delete_notification(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_all_notifications() TO authenticated; 

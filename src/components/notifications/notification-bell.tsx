@@ -1,7 +1,6 @@
 "use client";
 
 import { Bell, Check, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@components/ui/badge";
@@ -22,20 +21,43 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedNotifications, setHasLoadedNotifications] = useState(false);
 
   const supabase = createClient();
 
+  const fetchUnreadCount = async () => {
+    try {
+      const { data: unreadCountData } = await supabase.rpc("get_unread_notification_count");
+      setUnreadCount(Number(unreadCountData ?? 0));
+    } catch (error) {
+      console.error("Error fetching unread notification count:", error);
+    }
+  };
+
   const fetchNotifications = async () => {
+    if (hasLoadedNotifications) return; // Don't refetch if already loaded
+
     try {
       const { data: notificationsData } = await supabase.rpc("get_notifications", {
         limit_count: 10,
         offset_count: 0,
       });
 
-      const { data: unreadCountData } = await supabase.rpc("get_unread_notification_count");
+      setNotifications(notificationsData ?? []);
+      setHasLoadedNotifications(true);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const refreshNotifications = async () => {
+    try {
+      const { data: notificationsData } = await supabase.rpc("get_notifications", {
+        limit_count: 10,
+        offset_count: 0,
+      });
 
       setNotifications(notificationsData ?? []);
-      setUnreadCount(Number(unreadCountData ?? 0));
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
@@ -44,7 +66,7 @@ export function NotificationBell() {
   const markAsRead = async (notificationId: string) => {
     try {
       await supabase.rpc("mark_notification_read", { notification_id: notificationId });
-      await fetchNotifications();
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -53,7 +75,7 @@ export function NotificationBell() {
   const deleteNotification = async (notificationId: string) => {
     try {
       await supabase.rpc("delete_notification", { notification_id: notificationId });
-      await fetchNotifications();
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
     } catch (error) {
       console.error("Error deleting notification:", error);
     }
@@ -63,7 +85,7 @@ export function NotificationBell() {
     setIsLoading(true);
     try {
       await supabase.rpc("mark_all_notifications_read");
-      await fetchNotifications();
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
     } finally {
@@ -71,39 +93,97 @@ export function NotificationBell() {
     }
   };
 
+  const deleteAllNotifications = async () => {
+    setIsLoading(true);
+    try {
+      await supabase.rpc("delete_all_notifications");
+      await Promise.all([fetchUnreadCount(), refreshNotifications()]);
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open && !hasLoadedNotifications) {
+      fetchNotifications();
+    }
+  };
+
   useEffect(() => {
-    fetchNotifications();
+    fetchUnreadCount();
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let isMounted = true;
 
-    // Fetch user ID first, then subscribe
-    supabase.auth.getUser().then(({ data }) => {
-      const userId = data.user?.id;
-      if (!userId) return;
-      if (!isMounted) return;
-      channel = supabase
-        .channel("notifications")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "synapse",
-            table: "notifications",
-            filter: `user_id=eq.${userId}`,
-          },
-          () => {
-            fetchNotifications();
-          }
-        )
-        .subscribe();
+    // Set up auth state listener to handle subscription properly
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        session?.user != null &&
+        isMounted
+      ) {
+        // Clean up existing channel
+        if (channel != null) {
+          supabase.removeChannel(channel);
+          channel = null;
+        }
+
+        // Wait a bit for the session to be fully established
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!isMounted) return;
+
+        // Create new subscription with retry logic
+        const setupChannel = () => {
+          channel = supabase
+            .channel(`notifications-${session.user.id}-${Date.now()}`) // Unique channel name
+            .on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "synapse",
+                table: "notifications",
+                filter: `user_id=eq.${session.user.id}`,
+              },
+              () => {
+                // Only refresh unread count when notifications change
+                fetchUnreadCount();
+                // If notifications are currently loaded, refresh them too
+                if (hasLoadedNotifications) {
+                  refreshNotifications();
+                }
+              }
+            )
+            .subscribe((status) => {
+              if (status === "CLOSED") {
+                setTimeout(() => {
+                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                  if (isMounted && session.user !== null) {
+                    setupChannel();
+                  }
+                }, 2000);
+              }
+            });
+        };
+
+        setupChannel();
+      }
     });
 
     return () => {
       isMounted = false;
-      if (channel !== null) supabase.removeChannel(channel);
+      authSubscription.unsubscribe();
+      if (channel !== null) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, []);
+  }, [hasLoadedNotifications]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -159,7 +239,7 @@ export function NotificationBell() {
     typeof unreadCount === "number" && Number.isFinite(unreadCount) ? unreadCount : 0;
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
@@ -176,16 +256,29 @@ export function NotificationBell() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between p-2">
           <h3 className="text-sm font-semibold">Notifications</h3>
-          {Math.max(0, safeUnreadCount) > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              disabled={isLoading}
-              className="h-auto p-1 text-xs"
-            >
-              Mark all read
-            </Button>
+          {notifications.length > 0 && (
+            <div className="flex gap-1">
+              {Math.max(0, safeUnreadCount) > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  disabled={isLoading}
+                  className="h-auto p-1 text-xs"
+                >
+                  Mark all read
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={deleteAllNotifications}
+                disabled={isLoading}
+                className="h-auto p-1 text-xs text-destructive hover:text-destructive"
+              >
+                Delete all
+              </Button>
+            </div>
           )}
         </div>
         <Separator />
@@ -267,20 +360,6 @@ export function NotificationBell() {
             </div>
           )}
         </div>
-        {notifications.length > 0 && (
-          <>
-            <Separator />
-            <div className="p-2">
-              <Link
-                href="/dashboard/notifications"
-                className="block w-full text-center text-sm text-muted-foreground hover:text-foreground"
-                onClick={() => setIsOpen(false)}
-              >
-                View all notifications
-              </Link>
-            </div>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

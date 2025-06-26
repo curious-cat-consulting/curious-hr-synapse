@@ -1,123 +1,589 @@
+import { Receipt, Shield, Zap, Users, BarChart3, Star, Check, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
-import Header from "@components/getting-started/header";
+import { HeroSection } from "@components/landing/hero-section";
+import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@components/ui/card";
+import { Separator } from "@components/ui/separator";
 
-export default async function Index() {
+export default function LandingPage() {
   return (
-    <div className="flex w-full flex-1 flex-col items-center gap-20">
-      <nav className="flex h-16 w-full justify-center border-b border-b-foreground/10 px-2 md:px-0">
-        <div className="flex w-full max-w-screen-lg items-center justify-between p-3 text-sm">
-          <Button asChild className="gap-x-1 fill-black" variant="outline" size="sm">
-            <a target="_blank" rel="noopener" href="https://twitter.com/tiniscule">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 50 50"
-                width="25px"
-                height="25px"
-              >
-                <path d="M 5.9199219 6 L 20.582031 27.375 L 6.2304688 44 L 9.4101562 44 L 21.986328 29.421875 L 31.986328 44 L 44 44 L 28.681641 21.669922 L 42.199219 6 L 39.029297 6 L 27.275391 19.617188 L 17.933594 6 L 5.9199219 6 z M 9.7167969 8 L 16.880859 8 L 40.203125 42 L 33.039062 42 L 9.7167969 8 z" />
-              </svg>
-              Created by @tiniscule
-            </a>
-          </Button>
-
-          <Link href="/dashboard">Dashboard</Link>
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Receipt className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold">Synapse</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link href="/login" className="text-sm font-medium hover:text-primary">
+              Sign In
+            </Link>
+            <Button asChild>
+              <Link href="/login">Get Started Free</Link>
+            </Button>
+          </div>
         </div>
       </nav>
 
-      <div className="flex w-full max-w-4xl flex-1 flex-col gap-12 px-3">
-        <Header />
-        <main className="flex flex-1 flex-col gap-6">
-          <h2 className="mb-4 text-4xl font-bold">Next steps</h2>
-          <ol className="list-decimal space-y-4">
-            <li className="leading-relaxed">
-              Decide if you want to support both personal and team accounts. Personal accounts can't
-              be disabled, but you can remove the dashboard sections that display them.
-              <a
-                className="mx-2 border-b"
-                href="https://usebasejump.com/docs/understanding-accounts"
-              >
-                Learn more here
-              </a>
-            </li>
-            <li className="leading-relaxed">
-              <p>Generate additional tables in Supabase using the Basejump CLI</p>
-              <pre className="inline overflow-hidden rounded bg-red-50 px-2 py-1 text-sm">
-                npx @usebasejump/cli@latest generate table posts title body published:boolean
-                published_at:date{" "}
-              </pre>
-              <p>
-                The CLI isn't required, but it'll help you learn the RLS policy options available to
-                you.{" "}
-                <a className="mx-2 border-b" href="https://usebasejump.com/docs/example-schema">
-                  Learn more here
-                </a>
+      {/* Hero Section */}
+      <HeroSection />
+
+      {/* Key Features */}
+      <section className="container px-4 py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
+              Everything you need to manage expenses intelligently
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Powerful features designed to save time and reduce errors
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <Receipt className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>AI-Powered Receipt Processing</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Upload receipts and let our AI automatically extract line items, amounts, and
+                  vendor information with 99% accuracy.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <BarChart3 className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Smart Categorization</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Automatic expense categorization and tagging based on machine learning patterns
+                  and your business rules.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Team Collaboration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Streamlined approval workflows, team management, and real-time collaboration for
+                  expense processing.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Real-time Tracking</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Monitor expense status, get instant notifications, and track spending patterns in
+                  real-time.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <BarChart3 className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Advanced Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Detailed reports, spending insights, and predictive analytics to optimize your
+                  expense management.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Fraud Detection</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Automated validation, duplicate detection, and security measures to protect
+                  against expense fraud.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="container bg-muted/30 px-4 py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">How It Works</h2>
+          <p className="mb-16 text-xl text-muted-foreground">Get started in minutes, not hours</p>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+                1
+              </div>
+              <h3 className="mb-2 text-xl font-semibold">Upload Receipts</h3>
+              <p className="text-muted-foreground">
+                Simply take a photo or upload your receipts. Our AI handles the rest.
               </p>
-            </li>
-            <li>
-              Flesh out the dashboard with any additional functionality you need.{" "}
-              <a className="mx-2 border-b" href="https://usebasejump.com/docs">
-                Check out the Basejump API docs here
-              </a>
-            </li>
-            <li>
-              Setup subscription billing. Determine if you want to bill for both personal and team
-              accounts, update your{" "}
-              <pre className="inline overflow-hidden rounded bg-red-50 px-2 py-1 text-sm">
-                basejump.config
-              </pre>{" "}
-              table accordingly.{" "}
-              <a className="mx-2 border-b" href="https://usebasejump.com/docs/billing-stripe">
-                Learn more about setting up Stripe here
-              </a>
-            </li>
-          </ol>
-          <h2 className="mb-4 mt-8 text-4xl font-bold">Resources</h2>
-          <ul className="list-disc space-y-2">
-            <li className="leading-relaxed">
-              <a className="mx-2 border-b" href="https://usebasejump.com/docs">
-                Basejump Docs
-              </a>
-            </li>
-            <li className="leading-relaxed">
-              <a className="mx-2 border-b" href="https://usebasejump.com/docs/testing">
-                Writing tests on Supabase with pgTAP
-              </a>
-            </li>
-            <li className="leading-relaxed">
-              <a className="mx-2 border-b" href="https://usebasejump.com/docs/rls">
-                Working with RLS Policies in Supabase
-              </a>
-            </li>
-            <li className="leading-relaxed">
-              <a className="mx-2 border-b" href="https://usebasejump.com/docs/deployment">
-                Deploying to Production
-              </a>
-            </li>
-          </ul>
-          <div className="mx-auto mt-8 flex items-center gap-x-4 text-center">
-            Questions?
-            <Button asChild className="gap-x-1 fill-white">
-              <a target="_blank" rel="noopener" href="https://twitter.com/tiniscule">
-                Ask or follow along on{" "}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 50 50"
-                  width="25px"
-                  height="25px"
-                >
-                  <path d="M 5.9199219 6 L 20.582031 27.375 L 6.2304688 44 L 9.4101562 44 L 21.986328 29.421875 L 31.986328 44 L 44 44 L 28.681641 21.669922 L 42.199219 6 L 39.029297 6 L 27.275391 19.617188 L 17.933594 6 L 5.9199219 6 z M 9.7167969 8 L 16.880859 8 L 40.203125 42 L 33.039062 42 L 9.7167969 8 z" />
-                </svg>
-              </a>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+                2
+              </div>
+              <h3 className="mb-2 text-xl font-semibold">AI Processing</h3>
+              <p className="text-muted-foreground">
+                Our AI extracts data, categorizes expenses, and flags any issues automatically.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+                3
+              </div>
+              <h3 className="mb-2 text-xl font-semibold">Review & Approve</h3>
+              <p className="text-muted-foreground">
+                Review the processed data, make any adjustments, and submit for approval.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Plans */}
+      <section className="container px-4 py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Simple, Transparent Pricing</h2>
+          <p className="mb-16 text-xl text-muted-foreground">
+            Choose the plan that fits your needs
+          </p>
+
+          <div className="grid gap-8 lg:grid-cols-2">
+            <Card className="border-2">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Personal Plan</CardTitle>
+                <CardDescription>Perfect for individual expense tracking</CardDescription>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">$9</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-2 text-left">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    AI receipt processing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Smart categorization
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Basic analytics
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Mobile app access
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Export to CSV/PDF
+                  </li>
+                </ul>
+                <Button className="w-full" variant="outline">
+                  Start Free Trial
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 border-primary">
+              <CardHeader className="text-center">
+                <Badge className="mx-auto mb-2 w-fit">Most Popular</Badge>
+                <CardTitle className="text-2xl">Team Plan</CardTitle>
+                <CardDescription>For organizations with approval workflows</CardDescription>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">$29</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-2 text-left">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Everything in Personal
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Team collaboration
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Approval workflows
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Advanced analytics
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Fraud detection
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    API access
+                  </li>
+                </ul>
+                <Button className="w-full">Start Free Trial</Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="mt-8 text-sm text-muted-foreground">
+            All plans include a 14-day free trial. No credit card required.
+          </p>
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <section className="container bg-muted/30 px-4 py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Trusted by Teams Worldwide</h2>
+          <p className="mb-12 text-xl text-muted-foreground">
+            Join thousands of companies saving time and money
+          </p>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="mb-4 flex justify-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="mb-4 text-muted-foreground">
+                  "Synapse has completely transformed our expense management. What used to take
+                  hours now takes minutes."
+                </p>
+                <p className="font-semibold">Sarah Johnson</p>
+                <p className="text-sm text-muted-foreground">CFO, TechCorp</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="mb-4 flex justify-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="mb-4 text-muted-foreground">
+                  "The AI accuracy is incredible. We've reduced our expense processing time by 80%."
+                </p>
+                <p className="font-semibold">Mike Chen</p>
+                <p className="text-sm text-muted-foreground">Operations Manager, StartupXYZ</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="mb-4 flex justify-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="mb-4 text-muted-foreground">
+                  "Best expense management solution we've used. The team collaboration features are
+                  game-changing."
+                </p>
+                <p className="font-semibold">Lisa Rodriguez</p>
+                <p className="text-sm text-muted-foreground">Finance Director, GlobalCo</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 opacity-60">
+            <div className="text-2xl font-bold">500+</div>
+            <Separator orientation="vertical" className="h-8" />
+            <div className="text-2xl font-bold">10,000+</div>
+            <Separator orientation="vertical" className="h-8" />
+            <div className="text-2xl font-bold">$2M+</div>
+            <Separator orientation="vertical" className="h-8" />
+            <div className="text-2xl font-bold">99.9%</div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
+            <div>Companies</div>
+            <div>Receipts Processed</div>
+            <div>Expenses Managed</div>
+            <div>Uptime</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Elements */}
+      <section className="container px-4 py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Security & Compliance</h2>
+          <p className="mb-16 text-xl text-muted-foreground">
+            Your data security is our top priority
+          </p>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="text-center">
+              <Shield className="mx-auto mb-4 h-12 w-12 text-primary" />
+              <h3 className="mb-2 font-semibold">Bank-Level Security</h3>
+              <p className="text-sm text-muted-foreground">
+                AES-256 encryption and SOC 2 compliance
+              </p>
+            </div>
+
+            <div className="text-center">
+              <Zap className="mx-auto mb-4 h-12 w-12 text-primary" />
+              <h3 className="mb-2 font-semibold">Real-time Processing</h3>
+              <p className="text-sm text-muted-foreground">
+                Instant AI analysis and fraud detection
+              </p>
+            </div>
+
+            <div className="text-center">
+              <Users className="mx-auto mb-4 h-12 w-12 text-primary" />
+              <h3 className="mb-2 font-semibold">Team Controls</h3>
+              <p className="text-sm text-muted-foreground">Granular permissions and audit trails</p>
+            </div>
+
+            <div className="text-center">
+              <BarChart3 className="mx-auto mb-4 h-12 w-12 text-primary" />
+              <h3 className="mb-2 font-semibold">Compliance Ready</h3>
+              <p className="text-sm text-muted-foreground">GDPR, HIPAA, and SOX compliant</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="container bg-muted/30 px-4 py-24">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-16 text-center text-3xl font-bold sm:text-4xl">
+            Frequently Asked Questions
+          </h2>
+
+          <div className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  How accurate is the AI receipt processing?
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Our AI achieves 99% accuracy for standard receipts. For complex or damaged
+                  receipts, our system flags them for manual review to ensure complete accuracy.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  Can I integrate with my existing accounting software?
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Yes! We offer integrations with QuickBooks, Xero, Sage, and other popular
+                  accounting platforms. We also provide API access for custom integrations.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">What happens during the free trial?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  You get full access to all features for 14 days. No credit card required. You can
+                  upgrade to a paid plan anytime during or after the trial.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">How secure is my data?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  We use bank-level security with AES-256 encryption, SOC 2 compliance, and regular
+                  security audits. Your data is never shared with third parties without your
+                  explicit consent.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container px-4 py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
+            Ready to Transform Your Expense Management?
+          </h2>
+          <p className="mb-8 text-xl text-muted-foreground">
+            Join thousands of companies saving time and money with AI-powered expense automation
+          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <Button size="lg" asChild className="text-lg">
+              <Link href="/login">Start Your Free Trial</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="text-lg">
+              <Link href="/login">Schedule a Demo</Link>
             </Button>
           </div>
-        </main>
-      </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            No credit card required • 14-day free trial • Cancel anytime
+          </p>
+        </div>
+      </section>
 
-      <footer className="flex w-full items-center justify-center gap-x-2 border-t border-t-foreground/10 p-8 text-sm">
-        <p className="text-3xl">👦🐯</p>
-        <p>There&apos;s treasure everywhere</p>
+      {/* Footer */}
+      <footer className="border-t bg-muted/30">
+        <div className="container px-4 py-12">
+          <div className="grid gap-8 md:grid-cols-4">
+            <div>
+              <div className="mb-4 flex items-center space-x-2">
+                <Receipt className="h-6 w-6 text-primary" />
+                <span className="text-lg font-bold">Synapse</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                AI-powered expense management that saves time and reduces errors.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="mb-4 font-semibold">Product</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Features
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Pricing
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Integrations
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    API
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="mb-4 font-semibold">Company</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Blog
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Careers
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Contact
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="mb-4 font-semibold">Support</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Documentation
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Status
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-primary">
+                    Security
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <Separator className="my-8" />
+
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <p className="text-sm text-muted-foreground">© 2024 Synapse. All rights reserved.</p>
+            <div className="flex space-x-6 text-sm text-muted-foreground">
+              <Link href="#" className="hover:text-primary">
+                Privacy Policy
+              </Link>
+              <Link href="#" className="hover:text-primary">
+                Terms of Service
+              </Link>
+              <Link href="#" className="hover:text-primary">
+                Cookie Policy
+              </Link>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );

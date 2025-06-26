@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(26);
+select plan(32);
 
 -- Test schema and table existence
 select has_schema('synapse', 'Synapse schema should exist');
@@ -164,6 +164,57 @@ select is(
   (select count(*)::int from synapse.notifications where user_id = tests.get_supabase_uid('test2')),
   1,
   'User 2 should have their own notification'
+);
+
+-- Test 16: Create multiple notifications for user 2
+select lives_ok(
+  $$ select synapse.create_notification(
+    'EXPENSE_APPROVED'::synapse.notification_type,
+    'User 2 Notification 2',
+    'This is another notification for user 2',
+    tests.get_supabase_uid('test2'),
+    '{}'::jsonb
+  ) $$,
+  'Should be able to create another notification for user 2'
+);
+
+select lives_ok(
+  $$ select synapse.create_notification(
+    'EXPENSE_REJECTED'::synapse.notification_type,
+    'User 2 Notification 3',
+    'This is a third notification for user 2',
+    tests.get_supabase_uid('test2'),
+    '{}'::jsonb
+  ) $$,
+  'Should be able to create a third notification for user 2'
+);
+
+-- Test 17: Verify user 2 has 3 notifications
+select is(
+  (select count(*)::int from synapse.notifications where user_id = tests.get_supabase_uid('test2')),
+  3,
+  'User 2 should have 3 notifications before delete all'
+);
+
+-- Test 18: Delete all notifications for user 2
+select lives_ok(
+  $$ select public.delete_all_notifications() $$,
+  'Should be able to delete all notifications for user 2'
+);
+
+-- Test 19: Verify all notifications were deleted for user 2
+select is(
+  (select count(*)::int from synapse.notifications where user_id = tests.get_supabase_uid('test2')),
+  0,
+  'User 2 should have 0 notifications after delete all'
+);
+
+-- Test 20: Verify user 1 notifications are unaffected
+select tests.authenticate_as('test1');
+select is(
+  (select count(*)::int from synapse.notifications where user_id = tests.get_supabase_uid('test1')),
+  1,
+  'User 1 should still have their notification after user 2 deleted all'
 );
 
 SELECT *

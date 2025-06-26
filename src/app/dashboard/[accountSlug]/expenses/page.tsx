@@ -17,8 +17,6 @@ interface TeamExpensesPageProps {
 export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPageProps>) {
   const [expenses, setExpenses] = useState<TeamExpense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingExpenseId, setProcessingExpenseId] = useState<string | null>(null);
   const [accountSlug, setAccountSlug] = useState<string | null>(null);
 
   // Use the cached hook instead of manual fetching
@@ -38,41 +36,11 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         return;
       }
 
-      setExpenses(data !== null ? data : []);
+      setExpenses(data !== null && Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching team expenses:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Poll for expense status updates
-  const pollExpenseStatus = async (expenseId: string) => {
-    const supabase = createClient();
-
-    try {
-      const { data, error } = await supabase.rpc("get_expense_details", {
-        expense_id: expenseId,
-      });
-
-      if (error !== null) {
-        console.error("Error polling expense status:", error);
-        return false;
-      }
-
-      // Check if processing is complete
-      const expense = data as { status: string };
-      const isComplete = expense.status === "ANALYZED" || expense.status === "PENDING";
-
-      if (isComplete) {
-        console.log(`Expense ${expenseId} processing complete, status: ${expense.status}`);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Error polling expense status:", error);
-      return false;
     }
   };
 
@@ -90,30 +58,11 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
     }
   }, [accountSlug]);
 
-  // Poll for expense status when processing
-  useEffect(() => {
-    if (!isProcessing || processingExpenseId === null) return;
-
-    const pollInterval = setInterval(async () => {
-      const isComplete = await pollExpenseStatus(processingExpenseId);
-
-      if (isComplete) {
-        setIsProcessing(false);
-        setProcessingExpenseId(null);
-        if (accountSlug !== null) {
-          fetchTeamExpenses(accountSlug); // Refresh the list
-        }
-        clearInterval(pollInterval);
-      }
-    }, 2000); // Poll every 2 seconds
-
-    return () => clearInterval(pollInterval);
-  }, [isProcessing, processingExpenseId, accountSlug]);
-
-  const handleExpenseCreated = (expenseId: string) => {
-    // Close dialog immediately and show loading indicator
-    setIsProcessing(true);
-    setProcessingExpenseId(expenseId);
+  const handleExpenseCreated = (_expenseId: string) => {
+    // Refresh the expense list after creating a new expense
+    if (accountSlug !== null) {
+      fetchTeamExpenses(accountSlug);
+    }
   };
 
   // Handle account error
@@ -159,7 +108,11 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         />
       </div>
 
-      <TeamExpensesWithFilters expenses={expenses} accountSlug={accountSlug ?? undefined} />
+      <TeamExpensesWithFilters
+        expenses={expenses}
+        accountSlug={accountSlug ?? undefined}
+        exportFilename={`team-expenses-${accountSlug}`}
+      />
     </div>
   );
 }

@@ -87,7 +87,7 @@ select tests.authenticate_as('non_member');
 
 select throws_ok(
   $$ select public.get_team_analytics('test-team-analytics') $$,
-  'Only account owners can access this function',
+  'Account not found',
   'Non-members should not be able to access get_team_analytics'
 );
 

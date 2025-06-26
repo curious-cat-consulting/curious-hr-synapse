@@ -85,11 +85,18 @@ export default async function Login({
         <label className="text-md" htmlFor="email">
           Email
         </label>
-        <Input name="email" placeholder="you@example.com" autoComplete="email" required />
+        <Input
+          id="email"
+          name="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+        />
         <label className="text-md" htmlFor="password">
           Password
         </label>
         <Input
+          id="password"
           type="password"
           name="password"
           placeholder="••••••••"

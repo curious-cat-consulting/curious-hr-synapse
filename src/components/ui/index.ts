@@ -1,4 +1,5 @@
 export { Alert, AlertDescription, AlertTitle } from "./alert";
+export { AddressAutocomplete } from "./address-autocomplete";
 export { Badge } from "./badge";
 export { Button } from "./button";
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card";
@@ -55,6 +56,7 @@ export {
 export { Input } from "./input";
 export { Label } from "./label";
 export { LoadingIndicator } from "./loading-indicator";
+export { LoadingSpinner } from "./loading-spinner";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export { Progress } from "./progress";
 export {

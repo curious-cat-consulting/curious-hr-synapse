@@ -253,6 +253,7 @@ export function NewExpenseDrawer({
                 description=""
                 className="border-0 shadow-none"
                 showUploadButton={false}
+                inDrawer={true}
               />
             </div>
           </form>

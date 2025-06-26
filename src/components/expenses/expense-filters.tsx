@@ -1,12 +1,13 @@
 "use client";
 
-import { Filter, RotateCcw, Users } from "lucide-react";
+import { Filter, RotateCcw, Users, ListOrdered } from "lucide-react";
 import * as React from "react";
 
 import {
   ExpenseSortControl,
   type ExpenseSortOption,
 } from "@components/expenses/expense-sort-control";
+import { ExportExpenseButton } from "@components/expenses/export-expense-button";
 import { Button } from "@components/ui/button";
 import { Card, CardContent } from "@components/ui/card";
 import { Label } from "@components/ui/label";
@@ -19,6 +20,7 @@ import {
 } from "@components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { cn } from "@lib/utils";
+import type { Expense, TeamExpense } from "@type/expense";
 
 import type { MultiSelectOption } from "../ui/multi-select";
 import { MultiSelect } from "../ui/multi-select";
@@ -46,10 +48,13 @@ interface ExpenseFiltersProps {
 
   // UI
   className?: string;
-  compact?: boolean;
 
   // Actions
   onResetFilters?: () => void;
+
+  // Export
+  expenses?: (Expense | TeamExpense)[];
+  exportFilename?: string;
 }
 
 const STATUS_OPTIONS: MultiSelectOption[] = [
@@ -73,8 +78,9 @@ export function ExpenseFilters({
   includeTeamFeatures = false,
   includeUserSort = false,
   className,
-  compact = false,
   onResetFilters,
+  expenses = [],
+  exportFilename,
 }: ExpenseFiltersProps) {
   const hasActiveFilters = React.useMemo(() => {
     const defaultStatuses = ["NEW", "PENDING", "ANALYZED"];
@@ -87,73 +93,21 @@ export function ExpenseFilters({
     return hasNonDefaultStatus || hasUserFilter || hasNonDefaultSort;
   }, [statusFilters, selectedUser, sortBy, includeTeamFeatures]);
 
-  if (compact) {
-    return (
-      <Card className={cn("border-0 bg-muted/30", className)}>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm font-medium">Filters:</Label>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="min-w-[200px]">
-                <MultiSelect
-                  options={STATUS_OPTIONS}
-                  selected={statusFilters as string[]}
-                  onChange={(selected) => onStatusFiltersChange(selected as ExpenseStatus[])}
-                  placeholder="Select statuses..."
-                  maxDisplay={2}
-                />
-              </div>
-
-              {includeTeamFeatures && onSelectedUserChange != null && (
-                <Select value={selectedUser} onValueChange={onSelectedUserChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="All users" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              <ExpenseSortControl
-                sortBy={sortBy}
-                onSortChange={onSortByChange}
-                includeUserSort={includeUserSort}
-              />
-
-              {hasActiveFilters && onResetFilters != null && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onResetFilters}
-                  className="h-9 px-2 text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className={cn("space-y-6", className)}>
       <Card className="border-0 bg-gradient-to-r from-muted/50 to-muted/30">
         <CardContent className="p-6">
           {/* Reset Filters Button - Top Right */}
-          {hasActiveFilters && onResetFilters != null && (
-            <div className="mb-4 flex justify-end">
+          <div className="mb-4 flex justify-end gap-2">
+            {expenses.length > 0 && (
+              <ExportExpenseButton
+                expenses={expenses}
+                filename={exportFilename}
+                variant="outline"
+                size="sm"
+              />
+            )}
+            {hasActiveFilters && onResetFilters != null && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -163,10 +117,10 @@ export function ExpenseFilters({
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
-            </div>
-          )}
+            )}
+          </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr_1fr]">
             {/* Status Filter */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2 text-sm font-semibold">
@@ -208,7 +162,10 @@ export function ExpenseFilters({
 
             {/* Sort Control */}
             <div className="space-y-3">
-              <Label className="text-sm font-semibold">Sort & Order</Label>
+              <Label className="flex items-center gap-2 text-sm font-semibold">
+                <ListOrdered className="h-4 w-4" />
+                Sort
+              </Label>
               <ExpenseSortControl
                 sortBy={sortBy}
                 onSortChange={onSortByChange}

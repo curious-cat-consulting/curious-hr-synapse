@@ -1,6 +1,5 @@
 "use client";
 
-import { Label } from "@components/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,9 +23,6 @@ export function ExpenseSortControl({
 }: Readonly<ExpenseSortControlProps>) {
   return (
     <div className="flex items-center gap-2">
-      <Label htmlFor="sort" className="text-sm font-medium">
-        Sort by:
-      </Label>
       <Select value={sortBy} onValueChange={(value: ExpenseSortOption) => onSortChange(value)}>
         <SelectTrigger id="sort" className="w-40">
           <SelectValue />
