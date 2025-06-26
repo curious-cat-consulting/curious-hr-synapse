@@ -48,7 +48,7 @@ export const teamQuickActions = (accountSlug: string): QuickAction[] => [
   {
     icon: <Receipt className="h-5 w-5 text-primary" />,
     title: "Submit Expense",
-    description: "Upload receipts and let AI extract the details automatically",
+    description: "Upload receipts and let AI extract the details",
     badge: { text: "New", variant: "secondary" },
     action: (
       <Button asChild className="w-full" size="sm">
@@ -59,7 +59,7 @@ export const teamQuickActions = (accountSlug: string): QuickAction[] => [
   {
     icon: <CheckCircle className="h-5 w-5 text-green-600" />,
     title: "Review Expenses",
-    description: "Approve or reject team member expense submissions",
+    description: "Approve or reject team member expenses",
     badge: { text: "Pending", variant: "outline" },
     action: (
       <Button asChild className="w-full" size="sm" variant="outline">
@@ -81,7 +81,7 @@ export const teamQuickActions = (accountSlug: string): QuickAction[] => [
   {
     icon: <Settings className="h-5 w-5 text-gray-600" />,
     title: "Team Settings",
-    description: "Manage team members, roles, and approval workflows",
+    description: "Manage team members, roles, and rates",
     badge: { text: "Admin", variant: "outline" },
     action: (
       <Button asChild className="w-full" size="sm" variant="outline">
@@ -95,7 +95,7 @@ export const personalQuickActions: QuickAction[] = [
   {
     icon: <Receipt className="h-5 w-5 text-primary" />,
     title: "Submit Expense",
-    description: "Upload receipts and let AI extract the details automatically",
+    description: "Upload receipts and let AI extract the details",
     badge: { text: "New", variant: "secondary" },
     action: <NewExpenseDrawer fullWidth={true} />,
   },

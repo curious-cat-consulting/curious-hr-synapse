@@ -198,3 +198,182 @@ $$;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_team_analytics(text) TO authenticated; 
+
+/*
+===============================================================================
+                              PERSONAL ANALYTICS FUNCTION
+===============================================================================
+*/
+
+-- This function returns comprehensive analytics for personal accounts
+CREATE OR REPLACE FUNCTION public.get_personal_analytics()
+  RETURNS json
+  LANGUAGE plpgsql
+  SET search_path = public, basejump
+AS
+$$
+DECLARE
+  personal_account_id uuid;
+  analytics_data json;
+BEGIN
+  -- Get the personal account ID for the current user
+  personal_account_id := (public.get_personal_account() ->> 'account_id')::uuid;
+
+  -- Check if personal account exists
+  IF personal_account_id IS NULL THEN
+    RAISE EXCEPTION 'Personal account not found';
+  END IF;
+
+  -- Get comprehensive analytics data for personal account
+  WITH personal_expenses AS (
+    SELECT e.*
+    FROM synapse.expenses e
+    WHERE e.account_id = personal_account_id
+  ),
+  expense_stats AS (
+    SELECT 
+      COUNT(*) as total_expenses,
+      COUNT(CASE WHEN status = 'NEW' THEN 1 END) as new_expenses,
+      COUNT(CASE WHEN status = 'PENDING' THEN 1 END) as pending_expenses,
+      COUNT(CASE WHEN status = 'ANALYZED' THEN 1 END) as analyzed_expenses,
+      COUNT(CASE WHEN status = 'APPROVED' THEN 1 END) as approved_expenses,
+      COUNT(CASE WHEN status = 'REJECTED' THEN 1 END) as rejected_expenses,
+      SUM(amount) as total_amount,
+      AVG(amount) as avg_amount,
+      MIN(created_at) as first_expense_date,
+      MAX(created_at) as last_expense_date
+    FROM personal_expenses
+  ),
+  ai_stats AS (
+    SELECT 
+      COUNT(DISTINCT rm.id) as total_receipt_metadata,
+      COUNT(DISTINCT rli.id) as total_line_items,
+      COUNT(DISTINCT CASE WHEN rli.is_ai_generated THEN rli.id END) as ai_generated_line_items,
+      COUNT(DISTINCT CASE WHEN NOT rli.is_ai_generated THEN rli.id END) as manual_line_items,
+      AVG(rm.confidence_score) as avg_confidence_score
+    FROM personal_expenses pe
+    LEFT JOIN synapse.receipt_metadata rm ON rm.expense_id = pe.id
+    LEFT JOIN synapse.receipt_line_items rli ON rli.expense_id = pe.id AND (rli.is_deleted IS NULL OR rli.is_deleted = false)
+  ),
+  monthly_trends AS (
+    SELECT 
+      DATE_TRUNC('month', created_at) as month,
+      COUNT(*) as expense_count,
+      SUM(amount) as total_amount
+    FROM personal_expenses
+    WHERE created_at >= NOW() - INTERVAL '12 months'
+    GROUP BY DATE_TRUNC('month', created_at)
+    ORDER BY month
+  ),
+  category_stats AS (
+    SELECT 
+      COALESCE(rli.category, 'Uncategorized') as category,
+      COUNT(*) as line_item_count,
+      SUM(rli.total_amount) as total_amount
+    FROM personal_expenses pe
+    LEFT JOIN synapse.receipt_line_items rli ON rli.expense_id = pe.id AND (rli.is_deleted IS NULL OR rli.is_deleted = false)
+    WHERE rli.id IS NOT NULL
+    GROUP BY COALESCE(rli.category, 'Uncategorized')
+    ORDER BY total_amount DESC
+    LIMIT 10
+  ),
+  vendor_stats AS (
+    SELECT 
+      rm.vendor_name,
+      COUNT(*) as receipt_count,
+      SUM(rm.receipt_total) as total_amount,
+      AVG(rm.confidence_score) as avg_confidence
+    FROM personal_expenses pe
+    LEFT JOIN synapse.receipt_metadata rm ON rm.expense_id = pe.id
+    WHERE rm.id IS NOT NULL
+    GROUP BY rm.vendor_name
+    ORDER BY total_amount DESC
+    LIMIT 10
+  )
+  SELECT json_build_object(
+    'overview', (
+      SELECT json_build_object(
+        'total_expenses', es.total_expenses,
+        'total_amount', es.total_amount,
+        'avg_amount', es.avg_amount,
+        'total_members', 1, -- Personal account always has 1 member
+        'first_expense_date', es.first_expense_date,
+        'last_expense_date', es.last_expense_date
+      )
+      FROM expense_stats es
+    ),
+    'status_breakdown', (
+      SELECT json_build_object(
+        'new', es.new_expenses,
+        'pending', es.pending_expenses,
+        'analyzed', es.analyzed_expenses,
+        'approved', es.approved_expenses,
+        'rejected', es.rejected_expenses
+      )
+      FROM expense_stats es
+    ),
+    'member_performance', (
+      SELECT json_agg(
+        json_build_object(
+          'member_name', 'You',
+          'expense_count', es.total_expenses,
+          'total_amount', es.total_amount,
+          'avg_amount', es.avg_amount
+        )
+      )
+      FROM expense_stats es
+    ),
+    'ai_analytics', (
+      SELECT json_build_object(
+        'total_receipt_metadata', ais.total_receipt_metadata,
+        'total_line_items', ais.total_line_items,
+        'ai_generated_line_items', ais.ai_generated_line_items,
+        'manual_line_items', ais.manual_line_items,
+        'ai_generation_rate', CASE 
+          WHEN ais.total_line_items > 0 
+          THEN ROUND((ais.ai_generated_line_items::decimal / ais.total_line_items) * 100, 2)
+          ELSE 0 
+        END,
+        'avg_confidence_score', ROUND(ais.avg_confidence_score * 100, 2)
+      )
+      FROM ai_stats ais
+    ),
+    'monthly_trends', (
+      SELECT json_agg(
+        json_build_object(
+          'month', mt.month,
+          'expense_count', mt.expense_count,
+          'total_amount', mt.total_amount
+        )
+      )
+      FROM monthly_trends mt
+    ),
+    'top_categories', (
+      SELECT json_agg(
+        json_build_object(
+          'category', cs.category,
+          'line_item_count', cs.line_item_count,
+          'total_amount', cs.total_amount
+        )
+      )
+      FROM category_stats cs
+    ),
+    'top_vendors', (
+      SELECT json_agg(
+        json_build_object(
+          'vendor_name', vs.vendor_name,
+          'receipt_count', vs.receipt_count,
+          'total_amount', vs.total_amount,
+          'avg_confidence', ROUND(vs.avg_confidence * 100, 2)
+        )
+      )
+      FROM vendor_stats vs
+    )
+  ) INTO analytics_data;
+
+  RETURN analytics_data;
+END;
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.get_personal_analytics() TO authenticated; 
