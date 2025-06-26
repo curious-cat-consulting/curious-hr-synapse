@@ -1,4 +1,5 @@
 import { FeaturesOverview, teamFeatures } from "@components/dashboard/features-overview";
+import { FraudDetectionOverview } from "@components/dashboard/fraud-detection-overview";
 import { GettingStarted, teamGettingStartedSteps } from "@components/dashboard/getting-started";
 import { QuickActions, teamQuickActions } from "@components/dashboard/quick-actions";
 import { RecentActivity } from "@components/dashboard/recent-activity";
@@ -27,14 +28,22 @@ export default async function TeamAccountPage({ params }: Readonly<TeamAccountPa
       {/* Quick Actions */}
       <QuickActions actions={teamQuickActions(accountSlug)} />
 
+      {/* Dashboard Grid */}
+      <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Fraud Detection Overview */}
+        <FraudDetectionOverview accountId={teamAccount.account_id} accountSlug={accountSlug} />
+
+        {/* Recent Activity */}
+        <div className="md:col-span-2">
+          <RecentActivity title="Recent Activity" accountId={teamAccount.account_id} />
+        </div>
+      </div>
+
       {/* Team Features Overview */}
       <FeaturesOverview title="Team Features" features={teamFeatures} />
 
       {/* Getting Started Guide */}
       <GettingStarted title="Getting Started" steps={teamGettingStartedSteps(accountSlug)} />
-
-      {/* Recent Activity */}
-      <RecentActivity title="Recent Activity" accountId={teamAccount.account_id} />
     </div>
   );
 }
