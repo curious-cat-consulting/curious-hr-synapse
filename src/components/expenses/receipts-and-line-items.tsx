@@ -3,7 +3,6 @@
 import { Receipt, FileText, Plus, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { LineItemsList } from "@/src/components/expenses/line-items/line-items-list";
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
 import { Badge } from "@components/ui/badge";
@@ -12,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import type { Expense, LineItem } from "@type/expense";
 
-import { AddLineItemDialog } from "./line-items/add-line-item-dialog";
+import { AddLineItemDrawer } from "./line-items/add-line-item-drawer";
 
 interface ReceiptsAndLineItemsProps {
   expense: Expense;
@@ -30,7 +29,6 @@ export function ReceiptsAndLineItems({
   isExpenseOwner,
 }: Readonly<ReceiptsAndLineItemsProps>) {
   const [activeTab, setActiveTab] = useState("receipts");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | undefined>();
   const canUploadReceipts = ["ANALYZED", "NEW", "PENDING"].includes(expense.status);
   const canEdit = !["APPROVED", "REJECTED"].includes(expense.status);
@@ -41,16 +39,8 @@ export function ReceiptsAndLineItems({
   // Calculate total receipts (processed + unprocessed)
   const totalReceipts = expense.receipt_metadata.length + expense.unprocessed_receipts.length;
 
-  const openAddDialog = (receiptId?: string) => {
+  const openAddDrawer = (receiptId?: string) => {
     setSelectedReceiptId(receiptId);
-    setIsAddDialogOpen(true);
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    if (!open) {
-      setSelectedReceiptId(undefined);
-    }
-    setIsAddDialogOpen(open);
   };
 
   return (
@@ -148,19 +138,22 @@ export function ReceiptsAndLineItems({
                           </p>
                         </div>
                         {canEdit && isExpenseOwner && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
+                          <AddLineItemDrawer
+                            expenseId={expense.id}
+                            onLineItemAdded={onLineItemAdded}
+                            receipts={expense.receipt_metadata}
+                            selectedReceiptId={receipt.receipt_id}
+                            trigger={
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => openAddDialog(receipt.receipt_id)}
+                                onClick={() => openAddDrawer(receipt.receipt_id)}
                                 className="ml-2"
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Add new line item</TooltipContent>
-                          </Tooltip>
+                            }
+                          />
                         )}
                       </div>
                     </div>
@@ -242,9 +235,7 @@ export function ReceiptsAndLineItems({
           </TabsContent>
         </Tabs>
 
-        <AddLineItemDialog
-          isOpen={isAddDialogOpen}
-          onOpenChange={handleDialogClose}
+        <AddLineItemDrawer
           expenseId={expense.id}
           onLineItemAdded={onLineItemAdded}
           receipts={expense.receipt_metadata}

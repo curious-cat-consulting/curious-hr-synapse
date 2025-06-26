@@ -8,11 +8,13 @@ import { Progress } from "@components/ui/progress";
 interface LoadingIndicatorProps {
   isVisible: boolean;
   onComplete?: () => void;
+  inDrawer?: boolean;
 }
 
 export function LoadingIndicator({
   isVisible,
   onComplete: _onComplete,
+  inDrawer = false,
 }: Readonly<LoadingIndicatorProps>) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -67,8 +69,12 @@ export function LoadingIndicator({
 
   if (!isVisible) return null;
 
+  const positioningClass = inDrawer
+    ? "absolute bottom-0 left-0 right-0 z-50 border-t border-green-200 bg-white/95 shadow-lg backdrop-blur-sm"
+    : "fixed bottom-0 left-0 right-0 z-50 border-t border-green-200 bg-white/95 shadow-lg backdrop-blur-sm";
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-green-200 bg-white/95 shadow-lg backdrop-blur-sm">
+    <div className={positioningClass}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-green-600">

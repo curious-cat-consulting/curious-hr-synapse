@@ -70,6 +70,18 @@ export function NotificationBell() {
     }
   };
 
+  const deleteAllNotifications = async () => {
+    setIsLoading(true);
+    try {
+      await supabase.rpc("delete_all_notifications");
+      await fetchNotifications();
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
 
@@ -210,16 +222,29 @@ export function NotificationBell() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between p-2">
           <h3 className="text-sm font-semibold">Notifications</h3>
-          {Math.max(0, safeUnreadCount) > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              disabled={isLoading}
-              className="h-auto p-1 text-xs"
-            >
-              Mark all read
-            </Button>
+          {notifications.length > 0 && (
+            <div className="flex gap-1">
+              {Math.max(0, safeUnreadCount) > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  disabled={isLoading}
+                  className="h-auto p-1 text-xs"
+                >
+                  Mark all read
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={deleteAllNotifications}
+                disabled={isLoading}
+                className="h-auto p-1 text-xs text-destructive hover:text-destructive"
+              >
+                Delete all
+              </Button>
+            </div>
           )}
         </div>
         <Separator />

@@ -1,5 +1,4 @@
 import { Plus } from "lucide-react";
-import { useState } from "react";
 import { toast } from "react-toastify";
 
 import { Button } from "@components/ui/button";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { createClient } from "@lib/supabase/client";
 import type { LineItem, ReceiptMetadata } from "@type/expense";
 
-import { AddLineItemDialog } from "./add-line-item-dialog";
+import { AddLineItemDrawer } from "./add-line-item-drawer";
 import { LineItemCard } from "./line-item-card";
 
 interface LineItemsListProps {
@@ -31,7 +30,6 @@ export function LineItemsList({
   selectedReceiptId,
   isExpenseOwner,
 }: Readonly<LineItemsListProps>) {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const canEdit = !["APPROVED", "REJECTED"].includes(expenseStatus) && isExpenseOwner;
 
   const handleDelete = async (itemId: string, itemType: "regular" | "miles") => {
@@ -53,10 +51,6 @@ export function LineItemsList({
     }
   };
 
-  const openAddDialog = () => {
-    setIsAddDialogOpen(true);
-  };
-
   if (lineItems.length === 0) {
     return (
       <Card>
@@ -65,25 +59,21 @@ export function LineItemsList({
         </CardHeader>
         <CardContent>
           <div className="py-12 text-center text-gray-500">
-            <button
-              onClick={openAddDialog}
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <Plus className="h-8 w-8 text-gray-400" />
-            </button>
+            <AddLineItemDrawer
+              expenseId={expenseId}
+              onLineItemAdded={onLineItemAdded}
+              receipts={receipts}
+              selectedReceiptId={selectedReceiptId}
+              trigger={
+                <button className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200">
+                  <Plus className="h-8 w-8 text-gray-400" />
+                </button>
+              }
+            />
             <p className="mb-2 text-lg font-medium">No line items yet</p>
             <p className="text-sm">Click the + icon to add your first line item</p>
           </div>
         </CardContent>
-
-        <AddLineItemDialog
-          isOpen={isAddDialogOpen}
-          onOpenChange={setIsAddDialogOpen}
-          expenseId={expenseId}
-          onLineItemAdded={onLineItemAdded}
-          receipts={receipts}
-          selectedReceiptId={selectedReceiptId}
-        />
       </Card>
     );
   }
@@ -94,10 +84,18 @@ export function LineItemsList({
         <div className="flex items-center justify-between">
           <CardTitle>Line Items</CardTitle>
           {canEdit && (
-            <Button size="sm" onClick={openAddDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Line Item
-            </Button>
+            <AddLineItemDrawer
+              expenseId={expenseId}
+              onLineItemAdded={onLineItemAdded}
+              receipts={receipts}
+              selectedReceiptId={selectedReceiptId}
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Line Item
+                </Button>
+              }
+            />
           )}
         </div>
       </CardHeader>
@@ -108,15 +106,6 @@ export function LineItemsList({
           ))}
         </div>
       </CardContent>
-
-      <AddLineItemDialog
-        isOpen={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        expenseId={expenseId}
-        onLineItemAdded={onLineItemAdded}
-        receipts={receipts}
-        selectedReceiptId={selectedReceiptId}
-      />
     </Card>
   );
 }
