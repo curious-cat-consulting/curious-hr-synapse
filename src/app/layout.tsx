@@ -1,7 +1,9 @@
 import { Inter as FontSans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { ToastContainer } from "react-toastify";
+
 import "react-toastify/dist/ReactToastify.css";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
 import { cn } from "@lib/utils";
@@ -28,8 +30,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     >
       <body className="bg-background text-foreground">
         <ThemeProvider attribute="class">
-          <main className="flex min-h-screen flex-col items-center">{children}</main>
-          <ToastContainer />
+          <TooltipProvider>
+            <main className="flex min-h-screen flex-col items-center">{children}</main>
+            <ToastContainer />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

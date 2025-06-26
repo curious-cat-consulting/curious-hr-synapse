@@ -31,6 +31,7 @@ Adds a Nextjs starter app on top of [Basejump core](https://github.com/usebaseju
   disabled if you only wish to allow personal accounts. Billing on team accounts can also be disabled.
 - **Billing**: Basejump provides out of the box billing support for Stripe, but you can add your own providers easily.
   If you do, please consider contributing them so others can benefit!
+- **Address Autocomplete**: Google Places API integration for address autocomplete in mileage forms
 
 ## Quick Start
 
@@ -40,6 +41,21 @@ Adds a Nextjs starter app on top of [Basejump core](https://github.com/usebaseju
 4. Run `yarn dev`
 
 When you're ready to work on billing, you'll need to set up a Stripe account and add your Stripe keys to your `supabase/functions/.env` file. There's an example file you can copy.
+
+## Google Maps API Setup
+
+To enable address autocomplete in mileage forms, you'll need to set up Google Maps API:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Places API** for your project
+4. Create an API key in the Credentials section
+5. Add the API key to your `.env.local` file:
+   ```
+   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+   ```
+
+**Note**: The Places API has usage limits and may incur charges. Consider setting up billing alerts in your Google Cloud Console.
 
 ## Helpful Links
 

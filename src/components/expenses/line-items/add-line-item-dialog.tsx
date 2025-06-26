@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
+import { AddressAutocomplete } from "@components/ui/address-autocomplete";
 import { Button } from "@components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@components/ui/dialog";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
 import {
@@ -227,13 +234,17 @@ export function AddLineItemDialog({
               <span className={`font-mono text-lg ${totalColor}`}>${currentTotal.toFixed(2)}</span>
             )}
           </DialogTitle>
+          <DialogDescription>
+            Add a new line item to your expense. Choose between regular receipt items or mileage
+            entries.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleAddLineItem} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="type">Type</Label>
               <Select value={type} onValueChange={(value: "regular" | "miles") => setType(value)}>
-                <SelectTrigger>
+                <SelectTrigger id="type" name="type">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -260,7 +271,7 @@ export function AddLineItemDialog({
               <div className="col-span-2">
                 <Label htmlFor="receipt">Receipt</Label>
                 <Select value={receiptId} onValueChange={setReceiptId} required>
-                  <SelectTrigger>
+                  <SelectTrigger id="receipt" name="receipt">
                     <SelectValue placeholder="Select a receipt" />
                   </SelectTrigger>
                   <SelectContent>
@@ -286,7 +297,7 @@ export function AddLineItemDialog({
               <div>
                 <Label htmlFor="category">Category</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
+                  <SelectTrigger id="category" name="category">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -298,7 +309,12 @@ export function AddLineItemDialog({
                   </SelectContent>
                 </Select>
                 {category === "" && (
-                  <Input name="category" className="mt-2" placeholder="Or type your own category" />
+                  <Input
+                    id="category_input"
+                    name="category"
+                    className="mt-2"
+                    placeholder="Or type your own category"
+                  />
                 )}
               </div>
               <div>
@@ -331,29 +347,29 @@ export function AddLineItemDialog({
           {type === "miles" && (
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <Label htmlFor="from_address">From Address</Label>
-                <Input
+                <AddressAutocomplete
                   id="from_address"
-                  name="from_address"
+                  label="From Address"
                   value={fromAddress}
-                  onChange={(e) => setFromAddress(e.target.value)}
+                  onChange={setFromAddress}
+                  placeholder="Enter starting address"
                   required
                 />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="to_address">To Address</Label>
-                <Input
+                <AddressAutocomplete
                   id="to_address"
-                  name="to_address"
+                  label="To Address"
                   value={toAddress}
-                  onChange={(e) => setToAddress(e.target.value)}
+                  onChange={setToAddress}
+                  placeholder="Enter destination address"
                   required
                 />
               </div>
               <div>
                 <Label htmlFor="miles_category">Category</Label>
                 <Select value={milesCategory} onValueChange={setMilesCategory}>
-                  <SelectTrigger>
+                  <SelectTrigger id="miles_category" name="miles_category">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>

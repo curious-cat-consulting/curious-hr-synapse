@@ -3,6 +3,7 @@
 import { Receipt, FileText, Plus, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { LineItemsList } from "@/src/components/expenses/line-items/line-items-list";
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
 import { Badge } from "@components/ui/badge";
@@ -147,14 +148,19 @@ export function ReceiptsAndLineItems({
                           </p>
                         </div>
                         {canEdit && isExpenseOwner && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openAddDialog(receipt.receipt_id)}
-                            className="ml-2"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openAddDialog(receipt.receipt_id)}
+                                className="ml-2"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Add new line item</TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </div>
