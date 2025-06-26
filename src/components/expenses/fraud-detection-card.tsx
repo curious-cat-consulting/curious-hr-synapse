@@ -234,6 +234,7 @@ interface FraudIndicatorItemProps {
 }
 
 function FraudIndicatorItem({ item, accountSlug, riskColor }: Readonly<FraudIndicatorItemProps>) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const indicators = Object.entries(item.indicators).filter(([_, value]) => value != null);
 
   return (

@@ -6,14 +6,14 @@ import { createClient } from "../supabase/server";
  * Server-side function to get account by slug with React cache
  * This provides caching benefits while keeping components as server components
  */
-export const getAccountBySlug = cache(async (slug: string) => {
+export const getAccountBySlug = cache(async (accountSlug: string) => {
   const supabaseClient = createClient();
 
   const { data, error } = await supabaseClient.rpc("get_account_by_slug", {
-    slug,
+    slug: accountSlug,
   });
 
-  if (error !== null) {
+  if (error != null) {
     throw new Error(error.message);
   }
 
