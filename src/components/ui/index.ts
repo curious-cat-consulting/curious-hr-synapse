@@ -56,6 +56,7 @@ export {
 export { Input } from "./input";
 export { Label } from "./label";
 export { LoadingIndicator } from "./loading-indicator";
+export { LoadingSpinner } from "./loading-spinner";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export { Progress } from "./progress";
 export {

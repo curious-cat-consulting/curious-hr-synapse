@@ -8,6 +8,7 @@ import { ExpenseApprovalButtons } from "@components/expenses/expense-approval-bu
 import { ExportExpenseDetailsButton } from "@components/expenses/export-expense-details-button";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
+import { LoadingSpinner } from "@components/ui/loading-spinner";
 import { useCurrentUser } from "@lib/hooks/use-accounts";
 import { createClient } from "@lib/supabase/client";
 import { getStatusColor } from "@lib/utils";
@@ -50,7 +51,7 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <LoadingSpinner size="lg" text="Loading expense details..." />
       </div>
     );
   }

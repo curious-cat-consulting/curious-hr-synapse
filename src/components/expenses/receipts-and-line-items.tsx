@@ -234,13 +234,6 @@ export function ReceiptsAndLineItems({
             />
           </TabsContent>
         </Tabs>
-
-        <AddLineItemDrawer
-          expenseId={expense.id}
-          onLineItemAdded={onLineItemAdded}
-          receipts={expense.receipt_metadata}
-          selectedReceiptId={selectedReceiptId}
-        />
       </CardContent>
     </Card>
   );
