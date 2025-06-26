@@ -36,7 +36,7 @@ interface AnalyticsData {
     expense_count: number;
     total_amount: number;
     avg_amount: number;
-  }>;
+  }> | null;
   ai_analytics: {
     total_receipt_metadata: number;
     total_line_items: number;
@@ -49,18 +49,18 @@ interface AnalyticsData {
     month: string;
     expense_count: number;
     total_amount: number;
-  }>;
+  }> | null;
   top_categories: Array<{
     category: string;
     line_item_count: number;
     total_amount: number;
-  }>;
+  }> | null;
   top_vendors: Array<{
     vendor_name: string;
     receipt_count: number;
     total_amount: number;
     avg_confidence: number;
-  }>;
+  }> | null;
 }
 
 interface AnalyticsPageProps {

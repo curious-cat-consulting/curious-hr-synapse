@@ -8,7 +8,7 @@
 CREATE OR REPLACE FUNCTION public.detect_receipt_duplicates(expense_id uuid)
   RETURNS json
   LANGUAGE plpgsql
-  SET search_path = public, basejump
+  SET search_path = ''
 AS $$
 DECLARE
   duplicate_receipts json;

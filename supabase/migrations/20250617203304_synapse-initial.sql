@@ -109,6 +109,7 @@ GRANT SELECT, INSERT, UPDATE ON TABLE synapse.account_expense_counters TO authen
 CREATE OR REPLACE FUNCTION synapse.get_next_account_expense_id(account_uuid uuid)
   RETURNS integer
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
@@ -134,6 +135,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_expenses()
   RETURNS json
   LANGUAGE sql
+  SET search_path = ''
 AS
 $$
 SELECT COALESCE(json_agg(
@@ -167,6 +169,7 @@ CREATE OR REPLACE FUNCTION public.create_expense(
 )
   RETURNS json
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE

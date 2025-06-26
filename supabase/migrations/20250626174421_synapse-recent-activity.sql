@@ -24,7 +24,8 @@ begin
       limit 5;
   end if;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+SET search_path = '';
 
 -- Grant execute permissions
 grant execute on function get_recent_activity(uuid) to authenticated;

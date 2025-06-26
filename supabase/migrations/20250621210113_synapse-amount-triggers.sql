@@ -31,7 +31,8 @@ BEGIN
   
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
 
 -- Create function to handle soft delete for receipt line items
 CREATE OR REPLACE FUNCTION synapse.handle_receipt_line_item_soft_delete()
@@ -62,7 +63,8 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
 
 /*
 ===============================================================================

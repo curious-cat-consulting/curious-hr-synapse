@@ -114,6 +114,7 @@ CREATE OR REPLACE FUNCTION synapse.create_notification(
 )
   RETURNS json
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
@@ -178,6 +179,7 @@ CREATE OR REPLACE FUNCTION public.get_notifications(
 )
   RETURNS json
   LANGUAGE sql
+  SET search_path = ''
 AS
 $$
 SELECT COALESCE(json_agg(
@@ -205,6 +207,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_unread_notification_count()
   RETURNS integer
   LANGUAGE sql
+  SET search_path = ''
 AS
 $$
 SELECT COALESCE(count(*), 0)::integer
@@ -220,6 +223,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.mark_notification_read(notification_id uuid)
   RETURNS json
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
@@ -263,6 +267,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.mark_all_notifications_read()
   RETURNS integer
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
@@ -292,6 +297,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.delete_notification(notification_id uuid)
   RETURNS boolean
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
@@ -319,6 +325,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.delete_all_notifications()
   RETURNS integer
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE

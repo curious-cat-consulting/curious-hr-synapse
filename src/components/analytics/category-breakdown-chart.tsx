@@ -1,11 +1,14 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface CategoryBreakdownChartProps {
-  data: Array<{
-    category: string;
-    line_item_count: number;
-    total_amount: number;
-  }>;
+  data:
+    | Array<{
+        category: string;
+        line_item_count: number;
+        total_amount: number;
+      }>
+    | null
+    | undefined;
 }
 
 export function CategoryBreakdownChart({ data }: Readonly<CategoryBreakdownChartProps>) {
@@ -18,8 +21,16 @@ export function CategoryBreakdownChart({ data }: Readonly<CategoryBreakdownChart
     }).format(amount);
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload?.length) {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<{ value: number }>;
+    label?: string;
+  }) => {
+    if (active === true && payload != null && payload.length > 0) {
       const data = payload[0];
 
       return (
@@ -32,7 +43,10 @@ export function CategoryBreakdownChart({ data }: Readonly<CategoryBreakdownChart
     return null;
   };
 
-  if (data.length === 0) {
+  // Handle null/undefined data by providing empty array fallback
+  const chartData = data ?? [];
+
+  if (chartData.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center">
         <p className="text-muted-foreground">No category data available</p>
@@ -42,7 +56,7 @@ export function CategoryBreakdownChart({ data }: Readonly<CategoryBreakdownChart
 
   return (
     <ResponsiveContainer width="100%" height={400}>
-      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="category" angle={-45} textAnchor="end" height={80} interval={0} />
         <YAxis />

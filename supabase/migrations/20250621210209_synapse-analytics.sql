@@ -8,7 +8,7 @@
 CREATE OR REPLACE FUNCTION public.get_team_analytics(team_account_slug text)
   RETURNS json
   LANGUAGE plpgsql
-  SET search_path = public, basejump
+  SET search_path = ''
 AS
 $$
 DECLARE
@@ -209,7 +209,7 @@ GRANT EXECUTE ON FUNCTION public.get_team_analytics(text) TO authenticated;
 CREATE OR REPLACE FUNCTION public.get_personal_analytics()
   RETURNS json
   LANGUAGE plpgsql
-  SET search_path = public, basejump
+  SET search_path = ''
 AS
 $$
 DECLARE

@@ -11,11 +11,11 @@ import {
 } from "recharts";
 
 interface MonthlyTrendsChartProps {
-  data: Array<{
+  data?: Array<{
     month: string;
     expense_count: number;
     total_amount: number;
-  }>;
+  }> | null;
 }
 
 export function MonthlyTrendsChart({ data }: Readonly<MonthlyTrendsChartProps>) {
@@ -36,14 +36,22 @@ export function MonthlyTrendsChart({ data }: Readonly<MonthlyTrendsChartProps>) 
     }
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload?.length) {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<any>;
+    label?: string;
+  }) => {
+    if (active === true && payload != null && payload.length > 0) {
       const expenseData = payload[0];
       const amountData = payload[1];
 
       return (
         <div className="rounded-lg border bg-background p-3 shadow-sm">
-          <p className="font-medium">{formatMonth(label)}</p>
+          <p className="font-medium">{label != null ? formatMonth(label) : "Unknown"}</p>
           <p className="text-sm text-muted-foreground">Expenses: {expenseData.value}</p>
           <p className="text-sm text-muted-foreground">Total: {formatCurrency(amountData.value)}</p>
         </div>
@@ -52,7 +60,7 @@ export function MonthlyTrendsChart({ data }: Readonly<MonthlyTrendsChartProps>) 
     return null;
   };
 
-  if (data.length === 0) {
+  if (data == null || data.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center">
         <p className="text-muted-foreground">No trend data available</p>

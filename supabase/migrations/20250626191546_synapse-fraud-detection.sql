@@ -8,7 +8,7 @@
 CREATE OR REPLACE FUNCTION public.detect_fraud_patterns(account_id uuid)
   RETURNS json
   LANGUAGE plpgsql
-  SET search_path = public, basejump
+  SET search_path = ''
 AS $$
 DECLARE
   fraud_indicators json;
@@ -189,7 +189,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_fraud_detection_summary(account_id uuid)
   RETURNS json
   LANGUAGE plpgsql
-  SET search_path = public, basejump
+  SET search_path = ''
 AS $$
 DECLARE
   summary json;

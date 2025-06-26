@@ -138,58 +138,45 @@ CREATE OR REPLACE FUNCTION public.add_receipt_line_item(
 )
   RETURNS json
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
   new_line_item synapse.receipt_line_items;
 BEGIN
-  -- Check authentication
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
   END IF;
-
-  -- Validate input
   IF expense_id IS NULL THEN
     RAISE EXCEPTION 'Expense ID is required';
   END IF;
-
   IF receipt_id IS NULL THEN
     RAISE EXCEPTION 'Receipt ID is required';
   END IF;
-
   IF description IS NULL OR trim(description) = '' THEN
     RAISE EXCEPTION 'Description is required';
   END IF;
-
   IF total_amount IS NULL OR total_amount <= 0 THEN
     RAISE EXCEPTION 'Total amount must be greater than 0';
   END IF;
-
-  -- Verify the expense exists and belongs to the user
   IF NOT EXISTS (
     SELECT 1 FROM synapse.expenses 
     WHERE id = expense_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Expense not found or access denied';
   END IF;
-
-  -- Verify the receipt exists and belongs to the user
   IF NOT EXISTS (
     SELECT 1 FROM storage.objects 
     WHERE id = receipt_id AND owner_id::uuid = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Receipt not found or access denied';
   END IF;
-
-  -- Check if the expense is in a state that allows adding line items
   IF EXISTS (
     SELECT 1 FROM synapse.expenses 
     WHERE id = expense_id AND status IN ('APPROVED', 'REJECTED')
   ) THEN
     RAISE EXCEPTION 'Cannot add line items to expenses in this state';
   END IF;
-
-  -- Create the line item
   INSERT INTO synapse.receipt_line_items (
     expense_id,
     receipt_id,
@@ -212,8 +199,6 @@ BEGIN
     line_item_date
   )
   RETURNING * INTO new_line_item;
-
-  -- Return the created line item
   RETURN json_build_object(
     'id', new_line_item.id,
     'description', new_line_item.description,
@@ -235,62 +220,45 @@ $$;
 CREATE OR REPLACE FUNCTION public.delete_receipt_line_item(line_item_id uuid)
   RETURNS json
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
   line_item_record synapse.receipt_line_items;
   expense_record synapse.expenses;
 BEGIN
-  -- Check authentication
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
   END IF;
-
-  -- Validate input
   IF line_item_id IS NULL THEN
     RAISE EXCEPTION 'Line item ID is required';
   END IF;
-
-  -- Get the line item
   SELECT * INTO line_item_record
   FROM synapse.receipt_line_items
   WHERE id = line_item_id;
-
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Line item not found';
   END IF;
-
-  -- Get the expense to check permissions and status
   SELECT * INTO expense_record
   FROM synapse.expenses
   WHERE id = line_item_record.expense_id;
-
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Expense not found';
   END IF;
-
-  -- Check if the expense belongs to the user
   IF expense_record.user_id != auth.uid() THEN
     RAISE EXCEPTION 'Access denied';
   END IF;
-
-  -- Check if the expense is in a state that allows deletion
   IF expense_record.status IN ('APPROVED', 'REJECTED') THEN
     RAISE EXCEPTION 'Cannot delete line items in this state';
   END IF;
-
-  -- Delete based on type
   IF line_item_record.is_ai_generated THEN
-    -- Soft delete for AI-generated items
     UPDATE synapse.receipt_line_items
     SET is_deleted = true
     WHERE id = line_item_id;
   ELSE
-    -- Hard delete for manual items
     DELETE FROM synapse.receipt_line_items
     WHERE id = line_item_id;
   END IF;
-
   RETURN json_build_object('success', true);
 END;
 $$;
