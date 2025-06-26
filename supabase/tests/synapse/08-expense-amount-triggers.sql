@@ -7,38 +7,31 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
--- Test setup: Create test user and expense
-SELECT plan(11);
+SELECT plan(12);
 
--- Use an existing expense from seeded data for trigger testing
--- Get the first expense from the seeded data
+-- Test setup: Create test user and expense
+select tests.create_supabase_user('testuser', 'testuser@example.com');
+select tests.authenticate_as('testuser');
 DO $$
 DECLARE
-  existing_expense_id uuid;
+  exp json;
 BEGIN
-  SELECT id INTO existing_expense_id FROM synapse.expenses LIMIT 1;
-  PERFORM set_config('test.expense_id', existing_expense_id::text, false);
+  SELECT public.create_expense('Trigger Test Expense', tests.get_supabase_uid('testuser'), 'Trigger test') INTO exp;
+  PERFORM set_config('test.expense_id', (exp->>'id')::text, false);
 END $$;
 
--- Insert dummy bucket for bucket_id foreign key
-INSERT INTO storage.buckets (id, name, owner, created_at, updated_at)
-VALUES (
-  'test-bucket',
-  'Test Bucket',
-  'dddddddd-dddd-dddd-dddd-dddddddddddd',
-  NOW(),
-  NOW()
-);
-
 -- Insert dummy object for receipt_id foreign key
-INSERT INTO storage.objects (id, bucket_id, name, owner_id, created_at, updated_at)
-VALUES (
-  'cccccccc-cccc-cccc-cccc-cccccccccccc',
-  'test-bucket',
-  'test-object',
-  'dddddddd-dddd-dddd-dddd-dddddddddddd',
-  NOW(),
-  NOW()
+select lives_ok(
+  $$ insert into storage.objects (id, bucket_id, name, owner_id, created_at, updated_at)
+     values (
+       'cccccccc-cccc-cccc-cccc-cccccccccccc',
+       'receipts',
+       concat(tests.get_supabase_uid('testuser'), '/', current_setting('test.expense_id'), '/test-object'),
+       tests.get_supabase_uid('testuser'),
+       NOW(),
+       NOW()
+     ) $$,
+  'User should be able to create storage object for receipt foreign key'
 );
 
 -- Test 1: Initial expense amount should be 0
@@ -176,15 +169,15 @@ SELECT results_eq(
 );
 
 -- Cleanup
-DELETE FROM synapse.receipt_line_items WHERE expense_id = current_setting('test.expense_id')::uuid;
-DELETE FROM synapse.mileage_line_items WHERE expense_id = current_setting('test.expense_id')::uuid;
-DELETE FROM synapse.expenses WHERE id = current_setting('test.expense_id')::uuid;
-DELETE FROM storage.objects WHERE id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
-DELETE FROM storage.buckets WHERE id = 'test-bucket';
+-- DELETE FROM synapse.receipt_line_items WHERE expense_id = current_setting('test.expense_id')::uuid;
+-- DELETE FROM synapse.mileage_line_items WHERE expense_id = current_setting('test.expense_id')::uuid;
+-- DELETE FROM synapse.expenses WHERE id = current_setting('test.expense_id')::uuid;
+-- DELETE FROM storage.objects WHERE id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+-- DELETE FROM storage.buckets WHERE id = 'test-bucket';
 -- Clean up any accounts that might have been created for this user
-DELETE FROM basejump.account_user WHERE user_id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
-DELETE FROM basejump.accounts WHERE primary_owner_user_id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
-DELETE FROM auth.users WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+-- DELETE FROM basejump.account_user WHERE user_id = tests.get_supabase_uid('testuser');
+-- DELETE FROM basejump.accounts WHERE primary_owner_user_id = tests.get_supabase_uid('testuser');
+-- DELETE FROM auth.users WHERE id = tests.get_supabase_uid('testuser');
 
 SELECT * FROM finish();
 

@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 
+import { DuplicateDetectionCard } from "@/src/components/expenses/duplicate-detection-card";
 import { ExpenseApprovalButtons } from "@/src/components/expenses/expense-approval-buttons";
 import { ReceiptsAndLineItems } from "@/src/components/expenses/receipts-and-line-items";
 import { ExportExpenseDetailsButton } from "@components/expenses/export-expense-details-button";
@@ -24,11 +25,13 @@ interface TeamExpenseDetailsPageProps {
 export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseDetailsPageProps>) {
   const [expense, setExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accountSlug, setAccountSlug] = useState<string | null>(null);
   const { data: currentUser } = useCurrentUser();
 
   const fetchExpenseDetails = async () => {
     try {
-      const { id } = await params;
+      const { id, accountSlug: slug } = await params;
+      setAccountSlug(slug);
       const supabase = createClient();
       const { data, error } = await supabase.rpc("get_expense_details", {
         expense_id: id,
@@ -49,7 +52,7 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
 
   useEffect(() => {
     fetchExpenseDetails();
-  }, []);
+  });
 
   if (loading) {
     return (
@@ -143,6 +146,9 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
             </div>
           </CardContent>
         </Card>
+
+        {/* Duplicate Detection Card */}
+        <DuplicateDetectionCard expense={expense} accountSlug={accountSlug ?? undefined} />
 
         {/* Receipts & Line Items with Tabs */}
         <ReceiptsAndLineItems

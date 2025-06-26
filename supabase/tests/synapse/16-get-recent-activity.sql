@@ -51,10 +51,10 @@ END $$;
 select tests.authenticate_as('test1');
 
 -- Create team expenses
-insert into synapse.expenses (id, title, description, amount, status, user_id, account_id, account_expense_id)
+insert into synapse.expenses (id, title, description, amount, status, user_id, account_id, account_expense_id, created_at)
 values 
-  ('44444444-4444-4444-4444-444444444444'::uuid, 'Team Expense 1', 'Team Description 1', 150.00, 'NEW'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 1),
-  ('55555555-5555-5555-5555-555555555555'::uuid, 'Team Expense 2', 'Team Description 2', 250.00, 'PENDING'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 2);
+  ('44444444-4444-4444-4444-444444444444'::uuid, 'Team Expense 1', 'Team Description 1', 150.00, 'NEW'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 1, now() - interval '1 hour'),
+  ('55555555-5555-5555-5555-555555555555'::uuid, 'Team Expense 2', 'Team Description 2', 250.00, 'PENDING'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 2, now());
 
 -- Test function call with account_id (should return team expenses)
 select results_eq(
@@ -76,12 +76,12 @@ select results_eq(
 --- Test 5: Verify limit (max 5 results)
 ------------
 -- Create more than 5 expenses
-insert into synapse.expenses (id, title, description, amount, status, user_id, account_id, account_expense_id)
+insert into synapse.expenses (id, title, description, amount, status, user_id, account_id, account_expense_id, created_at)
 values 
-  ('66666666-6666-6666-6666-666666666666'::uuid, 'Team Expense 3', 'Team Description 3', 350.00, 'APPROVED'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 3),
-  ('77777777-7777-7777-7777-777777777777'::uuid, 'Team Expense 4', 'Team Description 4', 450.00, 'REJECTED'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 4),
-  ('88888888-8888-8888-8888-888888888888'::uuid, 'Team Expense 5', 'Team Description 5', 550.00, 'ANALYZED'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 5),
-  ('99999999-9999-9999-9999-999999999999'::uuid, 'Team Expense 6', 'Team Description 6', 650.00, 'NEW'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 6);
+  ('66666666-6666-6666-6666-666666666666'::uuid, 'Team Expense 3', 'Team Description 3', 350.00, 'APPROVED'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 3, now() - interval '30 minutes'),
+  ('77777777-7777-7777-7777-777777777777'::uuid, 'Team Expense 4', 'Team Description 4', 450.00, 'REJECTED'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 4, now() - interval '15 minutes'),
+  ('88888888-8888-8888-8888-888888888888'::uuid, 'Team Expense 5', 'Team Description 5', 550.00, 'ANALYZED'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 5, now() - interval '5 minutes'),
+  ('99999999-9999-9999-9999-999999999999'::uuid, 'Team Expense 6', 'Team Description 6', 650.00, 'NEW'::synapse.expense_status, tests.get_supabase_uid('test1'), current_setting('test.team_account_id')::uuid, 6, now() - interval '1 minute');
 
 select results_eq(
   $$ SELECT COUNT(*) FROM get_recent_activity(current_setting('test.team_account_id')::uuid) $$,
