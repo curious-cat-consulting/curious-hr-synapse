@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card, CardContent } from "@components/ui/card";
+import { getStatusColor } from "@lib/utils";
 import type { TeamExpense } from "@type/expense";
 
 import { Badge } from "../ui/badge";
@@ -16,21 +17,6 @@ export function TeamExpenseCard({
   showUserName,
   accountSlug,
 }: Readonly<TeamExpenseCardProps>) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "APPROVED":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
-      case "REJECTED":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
-      case "ANALYZED":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
-      case "NEW":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
-      default:
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
-    }
-  };
-
   // Use team-specific route if accountSlug is provided, otherwise fall back to personal route
   const expenseDetailUrl =
     (accountSlug ?? "") !== ""

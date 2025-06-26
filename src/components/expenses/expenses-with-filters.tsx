@@ -14,12 +14,12 @@ import { ExpenseFilters } from "./expense-filters";
 
 interface ExpensesWithFiltersProps {
   expenses: Expense[];
-  compact?: boolean;
+  exportFilename?: string;
 }
 
 export function ExpensesWithFilters({
   expenses,
-  compact = false,
+  exportFilename,
 }: Readonly<ExpensesWithFiltersProps>) {
   const { filters, actions, filterExpenses } = useExpenseFilters({
     includeTeamFeatures: false,
@@ -38,8 +38,9 @@ export function ExpensesWithFilters({
         onSortByChange={actions.setSortBy}
         includeTeamFeatures={false}
         includeUserSort={false}
-        compact={compact}
         onResetFilters={actions.resetFilters}
+        expenses={filteredAndSortedExpenses}
+        exportFilename={exportFilename}
       />
 
       {filteredAndSortedExpenses.length === 0 ? (

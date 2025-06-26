@@ -61,7 +61,7 @@ export default function ExpensesPage() {
         <NewExpenseDrawer onExpenseCreated={handleExpenseCreated} />
       </div>
 
-      <ExpensesWithFilters expenses={expenses} />
+      <ExpensesWithFilters expenses={expenses} exportFilename="personal-expenses" />
     </div>
   );
 }

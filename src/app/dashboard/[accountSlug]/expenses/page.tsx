@@ -36,7 +36,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         return;
       }
 
-      setExpenses(data !== null ? data : []);
+      setExpenses(data !== null && Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching team expenses:", error);
     } finally {
@@ -108,7 +108,11 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         />
       </div>
 
-      <TeamExpensesWithFilters expenses={expenses} accountSlug={accountSlug ?? undefined} />
+      <TeamExpensesWithFilters
+        expenses={expenses}
+        accountSlug={accountSlug ?? undefined}
+        exportFilename={`team-expenses-${accountSlug}`}
+      />
     </div>
   );
 }
