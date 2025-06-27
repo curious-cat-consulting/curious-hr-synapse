@@ -42,7 +42,7 @@ SELECT row_eq(
      from synapse.notifications 
      where user_id = tests.get_supabase_uid('test_user_1') 
        and account_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid 
-       and type = 'TEAM_CREATED' $$,
+       and type = 'TEAM_MEMBER_ADDED' $$,
   ROW (1),
   'Should create team creation notification'
 );
@@ -53,7 +53,7 @@ SELECT row_eq(
      from synapse.notifications 
      where user_id = tests.get_supabase_uid('test_user_1') 
        and account_id = (select id from basejump.accounts where primary_owner_user_id = tests.get_supabase_uid('test_user_1') and personal_account = true)
-       and type = 'POSTING_ACCOUNT_UPDATED' $$,
+       and type = 'POSTING_TEAM_UPDATED' $$,
   ROW (1),
   'Should create posting team update notification when posting team is set'
 );
@@ -96,7 +96,7 @@ SELECT row_eq(
   $$ select count(*)::integer 
      from synapse.notifications 
      where user_id = tests.get_supabase_uid('test_user_2') 
-       and type = 'TEAM_CREATED' $$,
+       and type = 'TEAM_MEMBER_ADDED' $$,
   ROW (2),
   'Should create team creation notifications for both teams'
 );
@@ -106,7 +106,7 @@ SELECT row_eq(
   $$ select count(*)::integer 
      from synapse.notifications 
      where user_id = tests.get_supabase_uid('test_user_2') 
-       and type = 'POSTING_ACCOUNT_UPDATED' $$,
+       and type = 'POSTING_TEAM_UPDATED' $$,
   ROW (1),
   'Should only create posting team update notification for first team'
 );
@@ -140,7 +140,7 @@ SELECT set_config('test.personal_account_id',
 
 -- Count notifications before manual update
 SELECT set_config('test.notifications_before', 
-  (select count(*)::text from synapse.notifications where user_id = tests.get_supabase_uid('test_user_3') and type = 'POSTING_ACCOUNT_UPDATED'), 
+  (select count(*)::text from synapse.notifications where user_id = tests.get_supabase_uid('test_user_3') and type = 'POSTING_TEAM_UPDATED'), 
   false);
 
 -- Manually update posting team to second team
@@ -159,7 +159,7 @@ SELECT row_eq(
      from synapse.notifications 
      where user_id = tests.get_supabase_uid('test_user_3') 
        and account_id = current_setting('test.personal_account_id')::uuid
-       and type = 'POSTING_ACCOUNT_UPDATED' $$,
+       and type = 'POSTING_TEAM_UPDATED' $$,
   ROW ((current_setting('test.notifications_before')::integer + 1)),
   'Should create posting team update notification when manually changed'
 );
@@ -167,14 +167,14 @@ SELECT row_eq(
 -- DEBUG: Print all posting team update notifications for test_user_3's personal account
 SELECT * FROM synapse.notifications 
 WHERE user_id = tests.get_supabase_uid('test_user_3') 
-  AND type = 'POSTING_ACCOUNT_UPDATED' 
+  AND type = 'POSTING_TEAM_UPDATED' 
   AND account_id = current_setting('test.personal_account_id')::uuid
 ORDER BY created_at;
 
--- DEBUG: Print all TEAM_CREATED notifications for test_user_1 and the new team
+-- DEBUG: Print all TEAM_MEMBER_ADDED notifications for test_user_1 and the new team
 SELECT * FROM synapse.notifications 
 WHERE user_id = tests.get_supabase_uid('test_user_1') 
-  AND type = 'TEAM_CREATED' 
+  AND type = 'TEAM_MEMBER_ADDED' 
   AND account_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid
 ORDER BY created_at;
 
@@ -183,7 +183,7 @@ ORDER BY created_at;
 ------------
 -- Count notifications before update
 SELECT set_config('test.notifications_before_other', 
-  (select count(*)::text from synapse.notifications where user_id = tests.get_supabase_uid('test_user_3') and type = 'POSTING_ACCOUNT_UPDATED'), 
+  (select count(*)::text from synapse.notifications where user_id = tests.get_supabase_uid('test_user_3') and type = 'POSTING_TEAM_UPDATED'), 
   false);
 
 -- Update something else in metadata (not posting_team_id)
@@ -201,7 +201,7 @@ SELECT row_eq(
   $$ select count(*)::integer 
      from synapse.notifications 
      where user_id = tests.get_supabase_uid('test_user_3') 
-       and type = 'POSTING_ACCOUNT_UPDATED' $$,
+       and type = 'POSTING_TEAM_UPDATED' $$,
   ROW (current_setting('test.notifications_before_other')::integer),
   'Should not create posting team notification when posting_team_id does not change'
 );

@@ -2,6 +2,7 @@ import { Receipt, Shield, Zap, Users, BarChart3, Star, Check, TrendingUp } from 
 import Link from "next/link";
 
 import { HeroSection } from "@components/landing/hero-section";
+import { ThemeToggle } from "@components/theme-toggle";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@components/ui/card";
@@ -18,6 +19,7 @@ export default function LandingPage() {
             <span className="text-xl font-bold">Synapse</span>
           </div>
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Link href="/login" className="text-sm font-medium hover:text-primary">
               Sign In
             </Link>

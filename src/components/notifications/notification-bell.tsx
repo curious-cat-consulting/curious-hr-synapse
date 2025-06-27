@@ -14,6 +14,7 @@ import {
 import { Separator } from "@components/ui/separator";
 import { createClient } from "@lib/supabase/client";
 
+import { NOTIFICATION_ICONS } from "../../types/notification";
 import type { Notification } from "../../types/notification";
 
 export function NotificationBell() {
@@ -186,22 +187,9 @@ export function NotificationBell() {
   }, [hasLoadedNotifications]);
 
   const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "EXPENSE_CREATED":
-        return "📄";
-      case "EXPENSE_ANALYZED":
-        return "🤖";
-      case "EXPENSE_APPROVED":
-        return "✅";
-      case "EXPENSE_REJECTED":
-        return "❌";
-      case "RECEIPT_PROCESSED":
-        return "🧾";
-      case "TEAM_INVITATION":
-        return "👥";
-      default:
-        return "🔔";
-    }
+    return type in NOTIFICATION_ICONS
+      ? NOTIFICATION_ICONS[type as keyof typeof NOTIFICATION_ICONS]
+      : "🔔";
   };
 
   const getNotificationLink = (notification: Notification) => {
