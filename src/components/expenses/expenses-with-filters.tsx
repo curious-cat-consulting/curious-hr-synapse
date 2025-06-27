@@ -1,16 +1,15 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import Link from "next/link";
 import { useMemo } from "react";
 
 import { useExpenseFilters } from "@/src/lib/hooks/use-expense-filters";
 import { ExpenseCard } from "@components/expenses/expense-card";
-import { Button } from "@components/ui/button";
 import { Card, CardContent } from "@components/ui/card";
 import type { Expense } from "@type/expense";
 
 import { ExpenseFilters } from "./expense-filters";
+import { NewExpenseDrawer } from "./new-expense-drawer";
 
 interface ExpensesWithFiltersProps {
   expenses: Expense[];
@@ -54,12 +53,12 @@ export function ExpensesWithFilters({
                 <h3 className="text-lg font-semibold">No expenses found</h3>
                 <p className="text-muted-foreground">Get started by creating your first expense.</p>
               </div>
-              <Button asChild>
-                <Link href="/expenses/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Expense
-                </Link>
-              </Button>
+              <NewExpenseDrawer
+                onExpenseCreated={() => {
+                  // Refresh the page to show the new expense
+                  window.location.reload();
+                }}
+              />
             </div>
           </CardContent>
         </Card>

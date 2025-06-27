@@ -37,17 +37,23 @@ export function LoadingIndicator({
     // More realistic timing for AI processing
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 95) {
-          // Slow down near the end to simulate real processing
-          return prev + Math.random() * 2 + 0.5;
-        }
-        if (prev >= 80) {
-          return prev + Math.random() * 3 + 1;
-        }
-        if (prev >= 50) {
-          return prev + Math.random() * 5 + 2;
-        }
-        return prev + Math.random() * 8 + 3; // Faster at the beginning
+        const newProgress =
+          prev +
+          (() => {
+            if (prev >= 95) {
+              // Slow down near the end to simulate real processing
+              return Math.random() * 2 + 0.5;
+            }
+            if (prev >= 80) {
+              return Math.random() * 3 + 1;
+            }
+            if (prev >= 50) {
+              return Math.random() * 5 + 2;
+            }
+            return Math.random() * 8 + 3; // Faster at the beginning
+          })();
+
+        return Math.min(newProgress, 99); // Cap at 100%
       });
     }, 1000); // Slower updates for more realistic feel
 

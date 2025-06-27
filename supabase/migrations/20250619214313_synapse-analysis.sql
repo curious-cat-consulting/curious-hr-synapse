@@ -139,7 +139,7 @@ $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM synapse.expenses 
-    WHERE id = synapse.store_receipt_analysis.expense_id AND user_id = auth.uid()
+    WHERE id = expense_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Access denied: expense not found or not owned by user';
   END IF;
@@ -153,7 +153,7 @@ BEGIN
     confidence_score,
     currency_code
   ) VALUES (
-    synapse.store_receipt_analysis.expense_id,
+    expense_id,
     receipt_id,
     analysis_data->>'vendor_name',
     CASE 
@@ -173,7 +173,7 @@ BEGIN
   );
   WITH line_items AS (
     SELECT 
-      synapse.store_receipt_analysis.expense_id,
+      expense_id,
       receipt_id,
       (value->>'description')::text as description,
       CASE 
@@ -249,27 +249,27 @@ DECLARE
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM synapse.expenses 
-    WHERE id = public.store_receipt_analyses.expense_id AND user_id = auth.uid()
+    WHERE id = expense_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Access denied: expense not found or not owned by user';
   END IF;
   SELECT e.* INTO expense_record
   FROM synapse.expenses e
-  WHERE e.id = public.store_receipt_analyses.expense_id;
+  WHERE e.id = expense_id;
   SELECT a.name INTO account_name
   FROM basejump.accounts a
   WHERE a.id = expense_record.account_id;
   FOR analysis_record IN SELECT * FROM jsonb_array_elements(analyses_data)
   LOOP
     PERFORM synapse.store_receipt_analysis(
-      public.store_receipt_analyses.expense_id,
+      expense_id,
       (analysis_record->>'receiptId')::uuid,
       analysis_record->'analysis'
     );
   END LOOP;
   UPDATE synapse.expenses 
   SET status = 'ANALYZED'::synapse.expense_status
-  WHERE id = public.store_receipt_analyses.expense_id;
+  WHERE id = expense_id;
   INSERT INTO synapse.notifications (
     user_id,
     account_id,

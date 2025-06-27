@@ -1,19 +1,18 @@
 "use client";
 
-import { Plus, Users } from "lucide-react";
-import Link from "next/link";
+import { Users } from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
 
 import { useExpenseFilters } from "@/src/lib/hooks/use-expense-filters";
 import { TeamExpenseCard } from "@components/expenses/team-expense-card";
 import { Badge } from "@components/ui/badge";
-import { Button } from "@components/ui/button";
 import { Card, CardContent } from "@components/ui/card";
 import { Tabs, TabsContent } from "@components/ui/tabs";
 import { createClient } from "@lib/supabase/client";
 import type { TeamExpense } from "@type/expense";
 
 import { ExpenseFilters } from "./expense-filters";
+import { NewExpenseDrawer } from "./new-expense-drawer";
 
 interface TeamExpensesWithFiltersProps {
   expenses: TeamExpense[];
@@ -149,12 +148,14 @@ export function TeamExpensesWithFilters({
             </p>
           </div>
           {fraudFilter !== "high" && (
-            <Button asChild>
-              <Link href="/expenses/new">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Team Expense
-              </Link>
-            </Button>
+            <NewExpenseDrawer
+              accountId={accountId}
+              accountName={accountSlug}
+              onExpenseCreated={() => {
+                // Refresh the page to show the new expense
+                window.location.reload();
+              }}
+            />
           )}
         </div>
       </CardContent>
