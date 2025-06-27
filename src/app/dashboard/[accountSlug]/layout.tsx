@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import DashboardHeader from "@components/dashboard/dashboard-header";
-import { getAccountBySlug } from "@lib/actions/accounts";
+import { getAccountBySlug, isUserMember } from "@lib/actions/accounts";
 
 export default async function PersonalAccountDashboard({
   children,
@@ -17,6 +17,9 @@ export default async function PersonalAccountDashboard({
     redirect("/dashboard");
   }
 
+  // Check if user is a member (not an owner)
+  const isMember = await isUserMember(teamAccount.account_id);
+
   const navigation = [
     {
       name: "Overview",
@@ -24,11 +27,15 @@ export default async function PersonalAccountDashboard({
     },
     {
       name: "Expenses",
-      href: `/dashboard/${accountSlug}/expenses`,
+      href: isMember ? "/dashboard/expenses" : `/dashboard/${accountSlug}/expenses`,
+    },
+    {
+      name: "Analytics",
+      href: isMember ? "/dashboard/analytics" : `/dashboard/${accountSlug}/analytics`,
     },
     {
       name: "Settings",
-      href: `/dashboard/${accountSlug}/settings`,
+      href: isMember ? "/dashboard/settings" : `/dashboard/${accountSlug}/settings`,
     },
   ];
 

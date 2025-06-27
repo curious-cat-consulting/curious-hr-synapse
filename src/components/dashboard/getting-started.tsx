@@ -54,8 +54,8 @@ export const teamGettingStartedSteps = (accountSlug: string): GettingStartedStep
   },
   {
     number: 2,
-    title: "Configure Workflows",
-    description: "Set up approval workflows and spending limits for your team.",
+    title: "Configure Team Settings",
+    description: "Setup organization settings and rates.",
     link: {
       href: `/dashboard/${accountSlug}/settings`,
       text: "Team Settings →",

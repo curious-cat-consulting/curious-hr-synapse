@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Check, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
@@ -14,7 +14,11 @@ import {
 import { Separator } from "@components/ui/separator";
 import { createClient } from "@lib/supabase/client";
 
+import { NOTIFICATION_ICONS } from "../../types/notification";
 import type { Notification } from "../../types/notification";
+
+// Global channel tracking to prevent duplicate subscriptions
+const activeChannels = new Set<string>();
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -24,6 +28,9 @@ export function NotificationBell() {
   const [hasLoadedNotifications, setHasLoadedNotifications] = useState(false);
 
   const supabase = createClient();
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const channelIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
 
   const fetchUnreadCount = async () => {
     try {
@@ -112,11 +119,80 @@ export function NotificationBell() {
     }
   };
 
+  const cleanupChannel = () => {
+    if (channelRef.current != null && channelIdRef.current != null) {
+      try {
+        supabase.removeChannel(channelRef.current);
+        activeChannels.delete(channelIdRef.current);
+      } catch (error) {
+        console.error("Error removing channel:", error);
+      }
+      channelRef.current = null;
+      channelIdRef.current = null;
+    }
+  };
+
+  const setupChannel = (userId: string) => {
+    // Clean up any existing channel first
+    cleanupChannel();
+
+    // Create a unique channel ID for this user and tab
+    const channelId = `notifications-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    // Check if this channel is already active globally
+    if (activeChannels.has(channelId)) {
+      console.warn("Channel already active, skipping subscription");
+      return;
+    }
+
+    try {
+      const channel = supabase
+        .channel(channelId)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "synapse",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
+          () => {
+            // Only refresh unread count when notifications change
+            fetchUnreadCount();
+            // If notifications are currently loaded, refresh them too
+            if (hasLoadedNotifications) {
+              refreshNotifications();
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "CLOSED" && isMountedRef.current) {
+            // Remove from active channels when closed
+            activeChannels.delete(channelId);
+            channelRef.current = null;
+            channelIdRef.current = null;
+
+            // Only retry if component is still mounted
+            setTimeout(() => {
+              if (isMountedRef.current) {
+                setupChannel(userId);
+              }
+            }, 2000);
+          }
+        });
+
+      // Store references and mark as active
+      channelRef.current = channel;
+      channelIdRef.current = channelId;
+      activeChannels.add(channelId);
+    } catch (error) {
+      console.error("Error setting up notification channel:", error);
+      activeChannels.delete(channelId);
+    }
+  };
+
   useEffect(() => {
     fetchUnreadCount();
-
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let isMounted = true;
 
     // Set up auth state listener to handle subscription properly
     const {
@@ -125,83 +201,26 @@ export function NotificationBell() {
       if (
         (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
         session?.user != null &&
-        isMounted
+        isMountedRef.current
       ) {
-        // Clean up existing channel
-        if (channel != null) {
-          supabase.removeChannel(channel);
-          channel = null;
-        }
-
         // Wait a bit for the session to be fully established
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!isMounted) return;
-
-        // Create new subscription with retry logic
-        const setupChannel = () => {
-          channel = supabase
-            .channel(`notifications-${session.user.id}-${Date.now()}`) // Unique channel name
-            .on(
-              "postgres_changes",
-              {
-                event: "*",
-                schema: "synapse",
-                table: "notifications",
-                filter: `user_id=eq.${session.user.id}`,
-              },
-              () => {
-                // Only refresh unread count when notifications change
-                fetchUnreadCount();
-                // If notifications are currently loaded, refresh them too
-                if (hasLoadedNotifications) {
-                  refreshNotifications();
-                }
-              }
-            )
-            .subscribe((status) => {
-              if (status === "CLOSED") {
-                setTimeout(() => {
-                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                  if (isMounted && session.user !== null) {
-                    setupChannel();
-                  }
-                }, 2000);
-              }
-            });
-        };
-
-        setupChannel();
+        setupChannel(session.user.id);
       }
     });
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       authSubscription.unsubscribe();
-      if (channel !== null) {
-        supabase.removeChannel(channel);
-      }
+      cleanupChannel();
     };
   }, [hasLoadedNotifications]);
 
   const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "EXPENSE_CREATED":
-        return "📄";
-      case "EXPENSE_ANALYZED":
-        return "🤖";
-      case "EXPENSE_APPROVED":
-        return "✅";
-      case "EXPENSE_REJECTED":
-        return "❌";
-      case "RECEIPT_PROCESSED":
-        return "🧾";
-      case "TEAM_INVITATION":
-        return "👥";
-      default:
-        return "🔔";
-    }
+    return type in NOTIFICATION_ICONS
+      ? NOTIFICATION_ICONS[type as keyof typeof NOTIFICATION_ICONS]
+      : "🔔";
   };
 
   const getNotificationLink = (notification: Notification) => {

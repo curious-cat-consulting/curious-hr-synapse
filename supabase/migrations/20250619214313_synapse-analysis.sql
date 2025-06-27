@@ -11,6 +11,7 @@
 CREATE OR REPLACE FUNCTION public.get_receipts_to_process(expense_id uuid)
   RETURNS json
   LANGUAGE sql
+  SET search_path = ''
 AS
 $$
 SELECT COALESCE(json_agg(
@@ -39,6 +40,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_expense_details(expense_id uuid)
   RETURNS json
   LANGUAGE sql
+  SET search_path = ''
 AS
 $$
 SELECT json_build_object(
@@ -131,18 +133,16 @@ CREATE OR REPLACE FUNCTION synapse.store_receipt_analysis(
 )
   RETURNS void
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 BEGIN
-  -- Verify the user has access to this expense
   IF NOT EXISTS (
     SELECT 1 FROM synapse.expenses 
-    WHERE id = store_receipt_analysis.expense_id AND user_id = auth.uid()
+    WHERE id = expense_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Access denied: expense not found or not owned by user';
   END IF;
-
-  -- Insert receipt metadata
   INSERT INTO synapse.receipt_metadata (
     expense_id,
     receipt_id,
@@ -153,7 +153,7 @@ BEGIN
     confidence_score,
     currency_code
   ) VALUES (
-    store_receipt_analysis.expense_id,
+    expense_id,
     receipt_id,
     analysis_data->>'vendor_name',
     CASE 
@@ -171,11 +171,9 @@ BEGIN
     (analysis_data->>'confidence_score')::decimal,
     COALESCE(analysis_data->>'currency', 'USD')
   );
-
-  -- Insert line items
   WITH line_items AS (
     SELECT 
-      store_receipt_analysis.expense_id,
+      expense_id,
       receipt_id,
       (value->>'description')::text as description,
       CASE 
@@ -241,6 +239,7 @@ CREATE OR REPLACE FUNCTION public.store_receipt_analyses(
 )
   RETURNS void
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
@@ -248,40 +247,29 @@ DECLARE
   expense_record synapse.expenses;
   account_name text;
 BEGIN
-  -- Verify the user has access to this expense
   IF NOT EXISTS (
     SELECT 1 FROM synapse.expenses 
-    WHERE id = store_receipt_analyses.expense_id AND user_id = auth.uid()
+    WHERE id = expense_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Access denied: expense not found or not owned by user';
   END IF;
-
-  -- Get expense details for notification
   SELECT e.* INTO expense_record
   FROM synapse.expenses e
-  WHERE e.id = store_receipt_analyses.expense_id;
-
-  -- Get account name for notification
+  WHERE e.id = expense_id;
   SELECT a.name INTO account_name
   FROM basejump.accounts a
   WHERE a.id = expense_record.account_id;
-
-  -- Process each analysis
   FOR analysis_record IN SELECT * FROM jsonb_array_elements(analyses_data)
   LOOP
     PERFORM synapse.store_receipt_analysis(
-      store_receipt_analyses.expense_id,
+      expense_id,
       (analysis_record->>'receiptId')::uuid,
       analysis_record->'analysis'
     );
   END LOOP;
-
-  -- Mark expense as analyzed
   UPDATE synapse.expenses 
   SET status = 'ANALYZED'::synapse.expense_status
-  WHERE id = store_receipt_analyses.expense_id;
-
-  -- Create notification for AI analysis completion
+  WHERE id = expense_id;
   INSERT INTO synapse.notifications (
     user_id,
     account_id,

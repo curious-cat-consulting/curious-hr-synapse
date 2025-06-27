@@ -12,7 +12,7 @@ select has_type('synapse', 'notification_type', 'Notification type enum should e
 select has_type('synapse', 'notification_status', 'Notification status enum should exist');
 
 select enum_has_labels('synapse', 'notification_type', 
-    ARRAY['EXPENSE_CREATED', 'EXPENSE_ANALYZED', 'EXPENSE_APPROVED', 'EXPENSE_REJECTED', 'RECEIPT_PROCESSED', 'TEAM_INVITATION', 'GENERAL'],
+    ARRAY['EXPENSE_CREATED', 'EXPENSE_ANALYZED', 'EXPENSE_APPROVED', 'EXPENSE_REJECTED', 'RECEIPT_PROCESSED', 'TEAM_INVITATION', 'TEAM_MEMBER_ADDED', 'TEAM_MEMBER_REMOVED', 'POSTING_TEAM_UPDATED', 'GENERAL'],
     'Notification type enum should have correct labels');
 
 select enum_has_labels('synapse', 'notification_status', 

@@ -61,7 +61,7 @@ export const teamFeatures: Feature[] = [
     description: "Manage members and roles",
     features: [
       "Invite and manage team members",
-      "Set approval workflows",
+      "Approve and reject expenses",
       "Role-based permissions",
     ],
     iconBgColor: "bg-primary/10",

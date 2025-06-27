@@ -1,6 +1,6 @@
 "use client";
 
-import { Filter, RotateCcw, Users, ListOrdered } from "lucide-react";
+import { AlertTriangle, Filter, RotateCcw, Users, ListOrdered } from "lucide-react";
 import * as React from "react";
 
 import {
@@ -8,6 +8,7 @@ import {
   type ExpenseSortOption,
 } from "@components/expenses/expense-sort-control";
 import { ExportExpenseButton } from "@components/expenses/export-expense-button";
+import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { Card, CardContent } from "@components/ui/card";
 import { Label } from "@components/ui/label";
@@ -55,6 +56,9 @@ interface ExpenseFiltersProps {
   // Export
   expenses?: (Expense | TeamExpense)[];
   exportFilename?: string;
+
+  // Fraud Filter
+  fraudFilter?: string | null;
 }
 
 const STATUS_OPTIONS: MultiSelectOption[] = [
@@ -81,6 +85,7 @@ export function ExpenseFilters({
   onResetFilters,
   expenses = [],
   exportFilename,
+  fraudFilter,
 }: ExpenseFiltersProps) {
   const hasActiveFilters = React.useMemo(() => {
     const defaultStatuses = ["NEW", "PENDING", "ANALYZED"];
@@ -89,12 +94,39 @@ export function ExpenseFilters({
       statusFilters.length !== defaultStatuses.length;
     const hasUserFilter = includeTeamFeatures && selectedUser !== "all";
     const hasNonDefaultSort = sortBy !== "created_date";
+    const hasFraudFilter = fraudFilter === "high";
 
-    return hasNonDefaultStatus || hasUserFilter || hasNonDefaultSort;
-  }, [statusFilters, selectedUser, sortBy, includeTeamFeatures]);
+    return hasNonDefaultStatus || hasUserFilter || hasNonDefaultSort || hasFraudFilter;
+  }, [statusFilters, selectedUser, sortBy, includeTeamFeatures, fraudFilter]);
 
   return (
     <div className={cn("space-y-6", className)}>
+      {/* Fraud Filter Indicator */}
+      {fraudFilter === "high" && (
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-800 dark:text-amber-200">
+                  Fraud Detection Active
+                </h3>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Showing expenses flagged by fraud detection system. Review these expenses
+                  carefully.
+                </p>
+              </div>
+              <Badge
+                variant="outline"
+                className="border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-300"
+              >
+                High Risk
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-0 bg-gradient-to-r from-muted/50 to-muted/30">
         <CardContent className="p-6">
           {/* Reset Filters Button - Top Right */}

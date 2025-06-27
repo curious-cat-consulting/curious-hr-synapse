@@ -2,6 +2,7 @@ import { Receipt, Shield, Zap, Users, BarChart3, Star, Check, TrendingUp } from 
 import Link from "next/link";
 
 import { HeroSection } from "@components/landing/hero-section";
+import { ThemeToggle } from "@components/theme-toggle";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@components/ui/card";
@@ -18,6 +19,7 @@ export default function LandingPage() {
             <span className="text-xl font-bold">Synapse</span>
           </div>
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Link href="/login" className="text-sm font-medium hover:text-primary">
               Sign In
             </Link>
@@ -289,8 +291,8 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="mb-4 text-muted-foreground">
-                  "Synapse has completely transformed our expense management. What used to take
-                  hours now takes minutes."
+                  &ldquo;Synapse has completely transformed our expense management. What used to
+                  take hours now takes minutes.&rdquo;
                 </p>
                 <p className="font-semibold">Sarah Johnson</p>
                 <p className="text-sm text-muted-foreground">CFO, TechCorp</p>
@@ -305,7 +307,8 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="mb-4 text-muted-foreground">
-                  "The AI accuracy is incredible. We've reduced our expense processing time by 80%."
+                  &ldquo;The AI accuracy is incredible. We&rsquo;ve reduced our expense processing
+                  time by 80%.&rdquo;
                 </p>
                 <p className="font-semibold">Mike Chen</p>
                 <p className="text-sm text-muted-foreground">Operations Manager, StartupXYZ</p>
@@ -320,8 +323,8 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="mb-4 text-muted-foreground">
-                  "Best expense management solution we've used. The team collaboration features are
-                  game-changing."
+                  &ldquo;Best expense management solution we&rsquo;ve used. The team collaboration
+                  features are game-changing.&rdquo;
                 </p>
                 <p className="font-semibold">Lisa Rodriguez</p>
                 <p className="text-sm text-muted-foreground">Finance Director, GlobalCo</p>

@@ -1,72 +1,61 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { Suspense } from "react";
 
 import { TeamExpensesWithFilters } from "@/src/components/expenses/team-expenses-with-filters";
-import { NewExpenseDrawer } from "@components/expenses/new-expense-drawer";
-import { useAccountBySlug } from "@lib/hooks/use-accounts";
-import { createClient } from "@lib/supabase/client";
-import type { TeamExpense } from "@type/expense";
+import { ExpensesPageHeader } from "@components/expenses/expenses-page-header";
+import { getAccountBySlug } from "@lib/actions/accounts";
+import { getFraudDetectionData } from "@lib/actions/fraud-detection";
+import { createClient } from "@lib/supabase/server";
 
 interface TeamExpensesPageProps {
   params: Promise<{
     accountSlug: string;
   }>;
+  searchParams: Promise<{
+    fraud?: string;
+  }>;
 }
 
-export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPageProps>) {
-  const [expenses, setExpenses] = useState<TeamExpense[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [accountSlug, setAccountSlug] = useState<string | null>(null);
+// Server component for data fetching
+async function TeamExpensesContent({
+  accountSlug,
+  fraudFilter,
+}: {
+  accountSlug: string;
+  fraudFilter?: string;
+}) {
+  // Fetch account data using server-side action
+  let accountData;
+  let accountError;
+  try {
+    accountData = await getAccountBySlug(accountSlug);
+  } catch (error) {
+    accountError = error as Error;
+  }
 
-  // Use the cached hook instead of manual fetching
-  const { data: accountData, error: accountError } = useAccountBySlug(accountSlug);
-  const accountId = accountData?.account_id ?? null;
-  const accountName = accountData?.name ?? null;
+  const accountId = accountData?.account_id;
+  const accountName = accountData?.name;
 
-  const fetchTeamExpenses = async (slug: string) => {
+  // Fetch team expenses
+  const supabase = createClient();
+  const { data: expensesData, error: expensesError } = await supabase.rpc("get_team_expenses", {
+    team_account_slug: accountSlug,
+  });
+
+  const expenses = expensesData ?? [];
+
+  // Fetch fraud data server-side if fraud filter is active
+  let fraudData = null;
+  if (fraudFilter === "high" && accountId != null) {
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.rpc("get_team_expenses", {
-        team_account_slug: slug,
-      });
-
-      if (error !== null) {
-        console.error("Error fetching team expenses:", error);
-        return;
-      }
-
-      setExpenses(data !== null && Array.isArray(data) ? data : []);
+      const { fraudIndicators } = await getFraudDetectionData(accountId);
+      fraudData = fraudIndicators;
     } catch (error) {
-      console.error("Error fetching team expenses:", error);
-    } finally {
-      setIsLoading(false);
+      console.error("Error fetching fraud data:", error);
     }
-  };
-
-  useEffect(() => {
-    const loadParams = async () => {
-      const { accountSlug: slug } = await params;
-      setAccountSlug(slug);
-    };
-    loadParams();
-  }, [params]);
-
-  useEffect(() => {
-    if (accountSlug !== null) {
-      fetchTeamExpenses(accountSlug);
-    }
-  }, [accountSlug]);
-
-  const handleExpenseCreated = (_expenseId: string) => {
-    // Refresh the expense list after creating a new expense
-    if (accountSlug !== null) {
-      fetchTeamExpenses(accountSlug);
-    }
-  };
+  }
 
   // Handle account error
-  if (accountError) {
+  if (accountError != null) {
     return (
       <div className="container mx-auto py-8">
         <div className="mb-6 flex items-center justify-between">
@@ -81,7 +70,8 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
     );
   }
 
-  if (isLoading) {
+  // Handle expenses error
+  if (expensesError != null) {
     return (
       <div className="container mx-auto py-8">
         <div className="mb-6 flex items-center justify-between">
@@ -89,8 +79,7 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
         </div>
         <div className="flex items-center justify-center py-16">
           <div className="text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
-            <p className="text-gray-600">Loading team expenses...</p>
+            <p className="text-red-600">Error loading expenses: {expensesError.message}</p>
           </div>
         </div>
       </div>
@@ -99,20 +88,48 @@ export default function TeamExpensesPage({ params }: Readonly<TeamExpensesPagePr
 
   return (
     <div className="container mx-auto py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Team Expenses</h1>
-        <NewExpenseDrawer
-          onExpenseCreated={handleExpenseCreated}
-          accountId={accountId ?? undefined}
-          accountName={accountName ?? undefined}
-        />
-      </div>
+      <ExpensesPageHeader
+        fraudFilter={fraudFilter}
+        accountId={accountId}
+        accountName={accountName}
+      />
 
       <TeamExpensesWithFilters
         expenses={expenses}
-        accountSlug={accountSlug ?? undefined}
+        accountSlug={accountSlug}
         exportFilename={`team-expenses-${accountSlug}`}
+        fraudFilter={fraudFilter}
+        accountId={accountId}
+        initialFraudData={fraudData}
       />
     </div>
+  );
+}
+
+export default async function TeamExpensesPage({
+  params,
+  searchParams,
+}: Readonly<TeamExpensesPageProps>) {
+  const { accountSlug } = await params;
+  const { fraud } = await searchParams;
+
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto py-8">
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Team Expenses</h1>
+          </div>
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+              <p className="text-gray-600">Loading team expenses...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <TeamExpensesContent accountSlug={accountSlug} fraudFilter={fraud} />
+    </Suspense>
   );
 }

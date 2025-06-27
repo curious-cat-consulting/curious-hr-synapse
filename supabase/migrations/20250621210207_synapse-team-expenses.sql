@@ -8,7 +8,7 @@ $$
 DECLARE
   team_account_id uuid;
 BEGIN
-  -- Get the account ID from the slug using Basejump's API
+  -- Get the account ID from the slug
   team_account_id := public.get_account_id(team_account_slug);
 
   -- Check if account exists
@@ -21,7 +21,7 @@ BEGIN
     RAISE EXCEPTION 'Only account owners can access this function';
   END IF;
 
-  -- Get all expenses from team members (following Basejump's pattern from get_account_members)
+  -- Simply get all expenses for this team account
   RETURN (
     SELECT COALESCE(json_agg(
       json_build_object(
@@ -33,16 +33,11 @@ BEGIN
         'status', e.status,
         'created_at', e.created_at,
         'user_id', e.user_id,
-        'user_name', e.name
+        'user_name', (SELECT name FROM basejump.accounts WHERE primary_owner_user_id = e.user_id AND personal_account = true)
       ) ORDER BY e.created_at DESC
     ), '[]'::json)
-    FROM (
-      SELECT DISTINCT ON (e.id) e.*, p.name
-      FROM synapse.expenses e
-      INNER JOIN basejump.account_user au ON au.user_id = e.user_id AND au.account_id = team_account_id
-      INNER JOIN basejump.accounts p ON p.primary_owner_user_id = e.user_id AND p.personal_account = true
-      ORDER BY e.id, p.name
-    ) e
+    FROM synapse.expenses e
+    WHERE e.account_id = team_account_id
   );
 END;
 $$;
@@ -55,6 +50,22 @@ GRANT EXECUTE ON FUNCTION public.get_team_expenses(text) TO authenticated;
                               TEAM OWNER POLICIES
 ===============================================================================
 */
+
+-- Add team owner policy for expenses
+CREATE POLICY "Team owners can view member expenses"
+ON synapse.expenses FOR SELECT
+TO authenticated
+USING (
+    -- Check if the expense is from a team account (not personal)
+    account_id IN (
+        SELECT a.id
+        FROM basejump.accounts a
+        WHERE a.personal_account = false
+    )
+    AND
+    -- Check if current user is an owner of the team account
+    basejump.has_role_on_account(account_id, 'owner')
+);
 
 -- Add team owner policy for receipt metadata
 CREATE POLICY "Team owners can view member receipt metadata"
@@ -108,7 +119,7 @@ CREATE OR REPLACE FUNCTION public.update_expense_status(
 )
   RETURNS json
   LANGUAGE plpgsql
-  SET search_path = public, basejump
+  SET search_path = ''
 AS
 $$
 DECLARE

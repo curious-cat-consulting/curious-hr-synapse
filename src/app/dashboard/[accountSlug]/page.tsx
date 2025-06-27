@@ -1,8 +1,7 @@
-import { FeaturesOverview, teamFeatures } from "@components/dashboard/features-overview";
-import { GettingStarted, teamGettingStartedSteps } from "@components/dashboard/getting-started";
-import { QuickActions, teamQuickActions } from "@components/dashboard/quick-actions";
-import { RecentActivity } from "@components/dashboard/recent-activity";
+import { MemberDashboard } from "@components/dashboard/member-dashboard";
+import { OwnerDashboard } from "@components/dashboard/owner-dashboard";
 import { getAccountBySlug } from "@lib/actions/accounts";
+import { createClient } from "@lib/supabase/server";
 
 interface TeamAccountPageProps {
   params: Promise<{
@@ -14,27 +13,19 @@ export default async function TeamAccountPage({ params }: Readonly<TeamAccountPa
   const { accountSlug } = await params;
   const teamAccount = await getAccountBySlug(accountSlug);
 
-  return (
-    <div className="container mx-auto max-w-7xl p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Team Dashboard</h1>
-        <p className="text-muted-foreground">
-          Manage team expenses, track approvals, and monitor spending patterns
-        </p>
-      </div>
+  // Get current user's role on this account
+  const supabaseClient = createClient();
+  const { data: userRole } = await supabaseClient.rpc("current_user_account_role", {
+    account_id: teamAccount.account_id,
+  });
 
-      {/* Quick Actions */}
-      <QuickActions actions={teamQuickActions(accountSlug)} />
+  const isOwner = userRole?.account_role === "owner";
 
-      {/* Team Features Overview */}
-      <FeaturesOverview title="Team Features" features={teamFeatures} />
+  // If user is not an owner, show simplified member dashboard
+  if (!isOwner) {
+    return <MemberDashboard teamAccount={teamAccount} userRole={userRole} />;
+  }
 
-      {/* Getting Started Guide */}
-      <GettingStarted title="Getting Started" steps={teamGettingStartedSteps(accountSlug)} />
-
-      {/* Recent Activity */}
-      <RecentActivity title="Recent Activity" accountId={teamAccount.account_id} />
-    </div>
-  );
+  // Show owner dashboard
+  return <OwnerDashboard accountSlug={accountSlug} teamAccount={teamAccount} />;
 }

@@ -506,7 +506,7 @@ $$
 BEGIN
     -- check if the user is a member of the account or a service_role user
     if current_user IN ('anon', 'authenticated') and
-       (select current_user_account_role(get_account.account_id) ->> 'account_role' IS NULL) then
+       (select public.current_user_account_role(get_account.account_id) ->> 'account_role' IS NULL) then
         raise exception 'You must be a member of an account to access it';
     end if;
 
@@ -622,7 +622,7 @@ BEGIN
 
     -- check if postgres role is service_role
     if current_user IN ('anon', 'authenticated') and
-       not (select current_user_account_role(update_account.account_id) ->> 'account_role' = 'owner') then
+       not (select public.current_user_account_role(update_account.account_id) ->> 'account_role' = 'owner') then
         raise exception 'Only account owners can update an account';
     end if;
 

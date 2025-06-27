@@ -89,58 +89,45 @@ CREATE OR REPLACE FUNCTION public.add_mileage_line_item(
 )
   RETURNS json
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
   new_line_item synapse.mileage_line_items;
 BEGIN
-  -- Check authentication
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
   END IF;
-
-  -- Validate input
   IF expense_id IS NULL THEN
     RAISE EXCEPTION 'Expense ID is required';
   END IF;
-
   IF from_address IS NULL OR trim(from_address) = '' THEN
     RAISE EXCEPTION 'From address is required';
   END IF;
-
   IF to_address IS NULL OR trim(to_address) = '' THEN
     RAISE EXCEPTION 'To address is required';
   END IF;
-
   IF miles_driven IS NULL OR miles_driven <= 0 THEN
     RAISE EXCEPTION 'Miles driven must be greater than 0';
   END IF;
-
   IF total_amount IS NULL OR total_amount <= 0 THEN
     RAISE EXCEPTION 'Total amount must be greater than 0';
   END IF;
-
   IF mileage_rate IS NULL OR mileage_rate <= 0 THEN
     RAISE EXCEPTION 'Mileage rate must be greater than 0';
   END IF;
-
-  -- Verify the expense exists and belongs to the user
   IF NOT EXISTS (
     SELECT 1 FROM synapse.expenses 
     WHERE id = expense_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Expense not found or access denied';
   END IF;
-
-  -- Check if the expense is in a state that allows adding line items
   IF EXISTS (
     SELECT 1 FROM synapse.expenses 
     WHERE id = expense_id AND status IN ('APPROVED', 'REJECTED')
   ) THEN
     RAISE EXCEPTION 'Cannot add line items to expenses in this state';
   END IF;
-
-  -- Create the mileage line item
   INSERT INTO synapse.mileage_line_items (
     expense_id,
     from_address,
@@ -161,8 +148,6 @@ BEGIN
     mileage_rate
   )
   RETURNING * INTO new_line_item;
-
-  -- Return the created mileage line item
   RETURN json_build_object(
     'id', new_line_item.id,
     'from_address', new_line_item.from_address,
@@ -184,54 +169,39 @@ $$;
 CREATE OR REPLACE FUNCTION public.delete_mileage_line_item(line_item_id uuid)
   RETURNS json
   LANGUAGE plpgsql
+  SET search_path = ''
 AS
 $$
 DECLARE
   line_item_record synapse.mileage_line_items;
   expense_record synapse.expenses;
 BEGIN
-  -- Check authentication
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
   END IF;
-
-  -- Validate input
   IF line_item_id IS NULL THEN
     RAISE EXCEPTION 'Line item ID is required';
   END IF;
-
-  -- Get the line item
   SELECT * INTO line_item_record
   FROM synapse.mileage_line_items
   WHERE id = line_item_id;
-
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Mileage line item not found';
   END IF;
-
-  -- Get the expense to check permissions and status
   SELECT * INTO expense_record
   FROM synapse.expenses
   WHERE id = line_item_record.expense_id;
-
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Expense not found';
   END IF;
-
-  -- Check if the expense belongs to the user
   IF expense_record.user_id != auth.uid() THEN
     RAISE EXCEPTION 'Access denied';
   END IF;
-
-  -- Check if the expense is in a state that allows deletion
   IF expense_record.status IN ('APPROVED', 'REJECTED') THEN
     RAISE EXCEPTION 'Cannot delete line items in this state';
   END IF;
-
-  -- Delete the mileage line item
   DELETE FROM synapse.mileage_line_items
   WHERE id = line_item_id;
-
   RETURN json_build_object('success', true);
 END;
 $$;

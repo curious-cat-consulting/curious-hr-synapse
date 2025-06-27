@@ -19,8 +19,14 @@ export function StatusBreakdownChart({ data }: Readonly<StatusBreakdownChartProp
     { name: "Rejected", value: data.rejected, color: "#ef4444" },
   ].filter((item) => item.value > 0);
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload?.length) {
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: Array<{ name: string; value: number }>;
+  }) => {
+    if (active === true && payload != null && payload.length > 0) {
       const data = payload[0];
       const total = chartData.reduce((sum, item) => sum + item.value, 0);
       const percentage = ((data.value / total) * 100).toFixed(1);
@@ -65,7 +71,9 @@ export function StatusBreakdownChart({ data }: Readonly<StatusBreakdownChartProp
         <Legend
           verticalAlign="bottom"
           height={36}
-          formatter={(value, entry: any) => <span style={{ color: entry.color }}>{value}</span>}
+          formatter={(value, entry) => (
+            <span style={{ color: entry.color ?? "#000" }}>{value}</span>
+          )}
         />
       </PieChart>
     </ResponsiveContainer>
