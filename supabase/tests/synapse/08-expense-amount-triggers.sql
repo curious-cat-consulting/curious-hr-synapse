@@ -7,32 +7,20 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-SELECT plan(12);
+SELECT plan(11);
 
--- Test setup: Create test user and expense
-select tests.create_supabase_user('testuser', 'testuser@example.com');
-select tests.authenticate_as('testuser');
-DO $$
-DECLARE
-  exp json;
-BEGIN
-  SELECT public.create_expense('Trigger Test Expense', tests.get_supabase_uid('testuser'), 'Trigger test') INTO exp;
-  PERFORM set_config('test.expense_id', (exp->>'id')::text, false);
-END $$;
+-- Setup: Create expense with receipt metadata using helper
+SELECT synapse_tests.create_expense_with_receipt_metadata(
+  'triggertest@example.com',
+  'Trigger Test Expense',
+  'Test Vendor',
+  0.00,  -- Start with 0 total
+  'trigger-test-receipt.png'
+) as test_setup \gset
 
--- Insert dummy object for receipt_id foreign key
-select lives_ok(
-  $$ insert into storage.objects (id, bucket_id, name, owner_id, created_at, updated_at)
-     values (
-       'cccccccc-cccc-cccc-cccc-cccccccccccc',
-       'receipts',
-       concat(tests.get_supabase_uid('testuser'), '/', current_setting('test.expense_id'), '/test-object'),
-       tests.get_supabase_uid('testuser'),
-       NOW(),
-       NOW()
-     ) $$,
-  'User should be able to create storage object for receipt foreign key'
-);
+-- Store the IDs for easy reference
+SELECT set_config('test.expense_id', (:'test_setup'::json)->'expense'->>'id', false);
+SELECT set_config('test.receipt_id', (:'test_setup'::json)->>'receipt_id', false);
 
 -- Test 1: Initial expense amount should be 0
 SELECT results_eq(
@@ -42,13 +30,15 @@ SELECT results_eq(
 );
 
 -- Test 2: Adding receipt line item should update expense amount
-INSERT INTO synapse.receipt_line_items (expense_id, receipt_id, description, total_amount)
-VALUES (
+SELECT synapse_tests.create_line_item_for_testing(
   current_setting('test.expense_id')::uuid,
-  'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  current_setting('test.receipt_id')::uuid,
   'Test Item',
-  100.00
-);
+  1,
+  100.00,
+  'Office Supplies',
+  false
+) as receipt_item_id \gset
 
 SELECT results_eq(
   'SELECT amount FROM synapse.expenses WHERE id = current_setting(''test.expense_id'')::uuid',
@@ -76,7 +66,7 @@ SELECT results_eq(
 -- Test 4: Updating receipt line item amount should update expense amount
 UPDATE synapse.receipt_line_items 
 SET total_amount = 150.00 
-WHERE expense_id = current_setting('test.expense_id')::uuid;
+WHERE id = (:'receipt_item_id')::uuid;
 
 SELECT results_eq(
   'SELECT amount FROM synapse.expenses WHERE id = current_setting(''test.expense_id'')::uuid',
@@ -98,7 +88,7 @@ SELECT results_eq(
 -- Test 6: Soft deleting receipt line item should exclude it from expense amount
 UPDATE synapse.receipt_line_items 
 SET is_deleted = true 
-WHERE expense_id = current_setting('test.expense_id')::uuid;
+WHERE id = (:'receipt_item_id')::uuid;
 
 SELECT results_eq(
   'SELECT amount FROM synapse.expenses WHERE id = current_setting(''test.expense_id'')::uuid',
@@ -127,11 +117,27 @@ SELECT results_eq(
 );
 
 -- Test 9: Adding multiple line items should sum correctly
-INSERT INTO synapse.receipt_line_items (expense_id, receipt_id, description, total_amount)
-VALUES 
-  (current_setting('test.expense_id')::uuid, 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Item 1', 50.00),
-  (current_setting('test.expense_id')::uuid, 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Item 2', 75.00);
+SELECT synapse_tests.create_line_item_for_testing(
+  current_setting('test.expense_id')::uuid,
+  current_setting('test.receipt_id')::uuid,
+  'Item 1',
+  1,
+  50.00,
+  'Office Supplies',
+  false
+) as item1_id \gset
 
+SELECT synapse_tests.create_line_item_for_testing(
+  current_setting('test.expense_id')::uuid,
+  current_setting('test.receipt_id')::uuid,
+  'Item 2',
+  1,
+  75.00,
+  'Meals',
+  false
+) as item2_id \gset
+
+-- Add mileage items
 INSERT INTO synapse.mileage_line_items (expense_id, from_address, to_address, miles_driven, mileage_rate, total_amount)
 VALUES 
   (current_setting('test.expense_id')::uuid, 'A', 'B', 25.0, 0.655, 16.38),
@@ -146,7 +152,7 @@ SELECT results_eq(
 -- Test 10: Mixed soft deleted and active items should only count active ones
 UPDATE synapse.receipt_line_items 
 SET is_deleted = true 
-WHERE description = 'Item 1';
+WHERE id = (:'item1_id')::uuid;
 
 SELECT results_eq(
   'SELECT amount FROM synapse.expenses WHERE id = current_setting(''test.expense_id'')::uuid',
@@ -168,17 +174,6 @@ SELECT results_eq(
   'All soft deleted items should result in 0 amount'
 );
 
--- Cleanup
--- DELETE FROM synapse.receipt_line_items WHERE expense_id = current_setting('test.expense_id')::uuid;
--- DELETE FROM synapse.mileage_line_items WHERE expense_id = current_setting('test.expense_id')::uuid;
--- DELETE FROM synapse.expenses WHERE id = current_setting('test.expense_id')::uuid;
--- DELETE FROM storage.objects WHERE id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
--- DELETE FROM storage.buckets WHERE id = 'test-bucket';
--- Clean up any accounts that might have been created for this user
--- DELETE FROM basejump.account_user WHERE user_id = tests.get_supabase_uid('testuser');
--- DELETE FROM basejump.accounts WHERE primary_owner_user_id = tests.get_supabase_uid('testuser');
--- DELETE FROM auth.users WHERE id = tests.get_supabase_uid('testuser');
-
 SELECT * FROM finish();
 
-ROLLBACK; 
+ROLLBACK;

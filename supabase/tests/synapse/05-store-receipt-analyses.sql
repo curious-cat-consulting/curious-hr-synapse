@@ -3,24 +3,16 @@ create extension "basejump-supabase_test_helpers" version '0.0.6';
 
 select plan(9);
 
--- Create test users
-select tests.create_supabase_user('test1', 'test1@test.com');
+-- Create test expense with unprocessed receipt (storage only)
+SELECT synapse_tests.create_random_expense('test1@test.com', 'Receipt Analysis Test') as test_expense \gset
+SELECT set_config('test.expense_id', (:'test_expense'::json)->>'id', false);
 
--- Create test expense
+-- Add storage object manually (simulates uploaded but unprocessed receipt)
 select tests.authenticate_as('test1');
-DO $$
-DECLARE
-  exp json;
-BEGIN
-  SELECT public.create_expense('Test Expense', tests.get_supabase_uid('test1'), 'Test Description') INTO exp;
-  PERFORM set_config('test.expense_id', (exp->>'id')::text, false);
-END $$;
-
--- Create test receipt in storage
 INSERT INTO storage.objects (bucket_id, name, owner_id)
 VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt1.png'), tests.get_supabase_uid('test1'));
 
--- Get the storage object ID for the receipt
+-- Store the receipt object ID for later use
 DO $$
 DECLARE
     receipt_obj_id uuid;
@@ -28,8 +20,6 @@ BEGIN
     SELECT id INTO receipt_obj_id FROM storage.objects 
     WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt1.png')
     LIMIT 1;
-    
-    -- Store for later use
     PERFORM set_config('test.receipt_obj_id', receipt_obj_id::text, false);
 END $$;
 
@@ -111,12 +101,11 @@ select is(
   'Expense status should be updated to ANALYZED'
 );
 
--- Test 8: Test multiple receipt analyses
--- Create another receipt in storage
+-- Test 8: Test multiple receipt analyses - add second storage object
 INSERT INTO storage.objects (bucket_id, name, owner_id)
 VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt2.png'), tests.get_supabase_uid('test1'));
 
--- Get the second storage object ID
+-- Store the second receipt object ID
 DO $$
 DECLARE
     receipt_obj_id2 uuid;
@@ -124,8 +113,6 @@ BEGIN
     SELECT id INTO receipt_obj_id2 FROM storage.objects 
     WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/receipt2.png')
     LIMIT 1;
-    
-    -- Store for later use
     PERFORM set_config('test.receipt_obj_id2', receipt_obj_id2::text, false);
 END $$;
 
@@ -158,12 +145,11 @@ select lives_ok(
   'Should be able to store multiple receipt analyses'
 );
 
--- Test handling empty receipt dates
--- Create a storage object for the test UUID
+-- Test 9: Test handling empty receipt dates - add third storage object
 INSERT INTO storage.objects (bucket_id, name, owner_id)
 VALUES ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/test-receipt.png'), tests.get_supabase_uid('test1'));
 
--- Get the test storage object ID
+-- Store the test receipt object ID
 DO $$
 DECLARE
     test_receipt_obj_id uuid;
@@ -171,8 +157,6 @@ BEGIN
     SELECT id INTO test_receipt_obj_id FROM storage.objects 
     WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/test-receipt.png')
     LIMIT 1;
-    
-    -- Store for later use
     PERFORM set_config('test.test_receipt_obj_id', test_receipt_obj_id::text, false);
 END $$;
 
@@ -202,7 +186,5 @@ SELECT lives_ok(
   'Function should handle empty receipt dates without error'
 );
 
-SELECT *
-FROM finish();
-
-ROLLBACK; 
+SELECT * FROM finish();
+ROLLBACK;

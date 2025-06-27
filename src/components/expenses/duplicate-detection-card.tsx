@@ -1,8 +1,11 @@
+"use client";
+
 import { AlertTriangle, ExternalLink, Receipt } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
-import { getDuplicateDetectionData } from "@lib/actions/duplicate-detection";
+import { createClient } from "@lib/supabase/client";
 
 interface DuplicateReceipt {
   receipt_id: string;
@@ -21,90 +24,123 @@ interface DuplicateDetectionCardProps {
   accountSlug?: string;
 }
 
-export async function DuplicateDetectionCard({
+export function DuplicateDetectionCard({
   expenseId,
   accountSlug,
 }: Readonly<DuplicateDetectionCardProps>) {
-  try {
-    const duplicates = await getDuplicateDetectionData(expenseId);
+  const [duplicates, setDuplicates] = useState<DuplicateReceipt[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    if (duplicates.length === 0) {
-      return null;
-    }
+  useEffect(() => {
+    const fetchDuplicates = async () => {
+      try {
+        const supabase = createClient();
+        const { data: duplicateData, error: fetchError } = await supabase.rpc(
+          "detect_receipt_duplicates",
+          {
+            expense_id: expenseId,
+          }
+        );
 
-    const highConfidenceDuplicates = duplicates.filter(
-      (d: DuplicateReceipt) => d.similarity_score >= 0.8
-    );
-    const mediumConfidenceDuplicates = duplicates.filter(
-      (d: DuplicateReceipt) => d.similarity_score >= 0.5 && d.similarity_score < 0.8
-    );
+        if (fetchError != null) {
+          setError(fetchError.message);
+          return;
+        }
 
-    return (
-      <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-            <AlertTriangle className="h-5 w-5" />
-            Potential Duplicates Detected
-            <span className="ml-auto text-sm font-normal text-amber-600 dark:text-amber-300">
-              {duplicates.length} found
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {/* High confidence duplicates */}
-          {highConfidenceDuplicates.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                High Confidence Matches ({highConfidenceDuplicates.length})
-              </h4>
-              {highConfidenceDuplicates.slice(0, 2).map((duplicate: DuplicateReceipt) => (
-                <DuplicateReceiptItem
-                  key={`high-${duplicate.receipt_id}-${duplicate.expense_id}`}
-                  duplicate={duplicate}
-                  accountSlug={accountSlug}
-                  isHighConfidence={true}
-                />
-              ))}
-            </div>
-          )}
+        setDuplicates(duplicateData ?? []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch duplicate data");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-          {/* Medium confidence duplicates */}
-          {mediumConfidenceDuplicates.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                Medium Confidence Matches ({mediumConfidenceDuplicates.length})
-              </h4>
-              {mediumConfidenceDuplicates.slice(0, 2).map((duplicate: DuplicateReceipt) => (
-                <DuplicateReceiptItem
-                  key={`medium-${duplicate.receipt_id}-${duplicate.expense_id}`}
-                  duplicate={duplicate}
-                  accountSlug={accountSlug}
-                  isHighConfidence={false}
-                />
-              ))}
-            </div>
-          )}
+    fetchDuplicates();
+  }, [expenseId]);
 
-          {/* Show more button - links to filtered view */}
-          {duplicates.length > 4 && accountSlug != null && (
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="w-full text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
-            >
-              <a href={`/dashboard/${accountSlug}/expenses?duplicates=true`}>
-                View All {duplicates.length} Potential Duplicates
-              </a>
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  } catch (error) {
+  if (loading) {
+    return null; // Don't show anything while loading
+  }
+
+  if (error != null) {
     console.error("Error fetching duplicate detection data:", error);
     return null;
   }
+
+  if (duplicates.length === 0) {
+    return null;
+  }
+
+  const highConfidenceDuplicates = duplicates.filter(
+    (d: DuplicateReceipt) => d.similarity_score >= 0.8
+  );
+  const mediumConfidenceDuplicates = duplicates.filter(
+    (d: DuplicateReceipt) => d.similarity_score >= 0.5 && d.similarity_score < 0.8
+  );
+
+  return (
+    <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+          <AlertTriangle className="h-5 w-5" />
+          Potential Duplicates Detected
+          <span className="ml-auto text-sm font-normal text-amber-600 dark:text-amber-300">
+            {duplicates.length} found
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* High confidence duplicates */}
+        {highConfidenceDuplicates.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-amber-700 dark:text-amber-300">
+              High Confidence Matches ({highConfidenceDuplicates.length})
+            </h4>
+            {highConfidenceDuplicates.slice(0, 2).map((duplicate: DuplicateReceipt) => (
+              <DuplicateReceiptItem
+                key={`high-${duplicate.receipt_id}-${duplicate.expense_id}`}
+                duplicate={duplicate}
+                accountSlug={accountSlug}
+                isHighConfidence={true}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Medium confidence duplicates */}
+        {mediumConfidenceDuplicates.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400">
+              Medium Confidence Matches ({mediumConfidenceDuplicates.length})
+            </h4>
+            {mediumConfidenceDuplicates.slice(0, 2).map((duplicate: DuplicateReceipt) => (
+              <DuplicateReceiptItem
+                key={`medium-${duplicate.receipt_id}-${duplicate.expense_id}`}
+                duplicate={duplicate}
+                accountSlug={accountSlug}
+                isHighConfidence={false}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Show more button - links to filtered view */}
+        {duplicates.length > 4 && accountSlug != null && (
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="w-full text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+          >
+            <a href={`/dashboard/${accountSlug}/expenses?duplicates=true`}>
+              View All {duplicates.length} Potential Duplicates
+            </a>
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 interface DuplicateReceiptItemProps {

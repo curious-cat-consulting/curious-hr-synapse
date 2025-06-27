@@ -1,7 +1,9 @@
 -- This function returns expenses for all members of a team account
+-- It's a security definer because it requries us to lookup personal_accounts for existing members so we can get their names.
 CREATE OR REPLACE FUNCTION public.get_team_expenses(team_account_slug text)
   RETURNS json
   LANGUAGE plpgsql
+  SECURITY definer
   SET search_path = public, basejump
 AS
 $$
@@ -33,10 +35,11 @@ BEGIN
         'status', e.status,
         'created_at', e.created_at,
         'user_id', e.user_id,
-        'user_name', (SELECT name FROM basejump.accounts WHERE primary_owner_user_id = e.user_id AND personal_account = true)
+        'user_name', user_account.name
       ) ORDER BY e.created_at DESC
     ), '[]'::json)
     FROM synapse.expenses e
+    INNER JOIN basejump.accounts user_account ON user_account.id = e.user_id AND user_account.personal_account
     WHERE e.account_id = team_account_id
   );
 END;

@@ -1,7 +1,6 @@
-import { Target } from "lucide-react";
 import Link from "next/link";
 
-import { Badge } from "@components/ui/badge";
+import { AccountBadge } from "@components/ui/account-badge";
 import { Card, CardContent } from "@components/ui/card";
 import { getStatusColor } from "@lib/utils";
 import type { Expense } from "@type/expense";
@@ -23,10 +22,12 @@ export function ExpenseCard({ expense }: Readonly<ExpenseCardProps>) {
                 </span>
                 <h3 className="font-semibold">{expense.title}</h3>
                 {!expense.account_personal && (
-                  <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                    <Target className="h-3 w-3" />
-                    {expense.account_name}
-                  </Badge>
+                  <AccountBadge
+                    accountName={expense.account_name}
+                    isPersonal={false}
+                    variant="outline"
+                    className="text-xs"
+                  />
                 )}
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">{expense.description}</p>
