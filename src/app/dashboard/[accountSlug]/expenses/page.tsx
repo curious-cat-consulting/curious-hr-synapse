@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 
 import { TeamExpensesWithFilters } from "@/src/components/expenses/team-expenses-with-filters";
-import { ExpensesPageHeader } from "@components/expenses/expenses-page-header";
 import { getAccountBySlug } from "@lib/actions/accounts";
 import { getFraudDetectionData } from "@lib/actions/fraud-detection";
 import { createClient } from "@lib/supabase/server";
@@ -88,12 +87,6 @@ async function TeamExpensesContent({
 
   return (
     <div className="container mx-auto py-8">
-      <ExpensesPageHeader
-        fraudFilter={fraudFilter}
-        accountId={accountId}
-        accountName={accountName}
-      />
-
       <TeamExpensesWithFilters
         expenses={expenses}
         accountSlug={accountSlug}
@@ -101,6 +94,7 @@ async function TeamExpensesContent({
         fraudFilter={fraudFilter}
         accountId={accountId}
         initialFraudData={fraudData}
+        accountName={accountName}
       />
     </div>
   );

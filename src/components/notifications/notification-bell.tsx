@@ -4,6 +4,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Bell, Check, Trash2 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import {
@@ -311,26 +312,35 @@ export function NotificationBell() {
           <h4 className="font-semibold">Notifications</h4>
           {notifications.length > 0 && (
             <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                disabled={isLoading || safeUnreadCount === 0}
-                className="text-xs"
-              >
-                <Check className="mr-1 h-3 w-3" />
-                Mark all read
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={deleteAllNotifications}
-                disabled={isLoading}
-                className="text-xs text-destructive hover:text-destructive"
-              >
-                <Trash2 className="mr-1 h-3 w-3" />
-                Clear all
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={markAllAsRead}
+                    disabled={isLoading || safeUnreadCount === 0}
+                    aria-label="Mark all as read"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={6}>Mark all as read</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={deleteAllNotifications}
+                    disabled={isLoading}
+                    aria-label="Clear all notifications"
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={6}>Clear all notifications</TooltipContent>
+              </Tooltip>
             </div>
           )}
         </div>

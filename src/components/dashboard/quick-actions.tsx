@@ -44,16 +44,21 @@ export function QuickActions({ actions }: QuickActionsProps) {
 }
 
 // Predefined action sets for different dashboard types
-export const teamQuickActions = (accountSlug: string): QuickAction[] => [
+export const teamQuickActions = (
+  accountSlug: string,
+  teamAccount?: { account_id: string; name: string }
+): QuickAction[] => [
   {
     icon: <Receipt className="h-5 w-5 text-primary" />,
     title: "Submit Expense",
     description: "Upload receipts and let AI extract the details",
     badge: { text: "New", variant: "secondary" },
     action: (
-      <Button asChild className="w-full" size="sm">
-        <Link href={`/dashboard/${accountSlug}/expenses`}>Create Expense</Link>
-      </Button>
+      <NewExpenseDrawer
+        fullWidth={true}
+        accountId={teamAccount?.account_id}
+        accountName={teamAccount?.name}
+      />
     ),
   },
   {

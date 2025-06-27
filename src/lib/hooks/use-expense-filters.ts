@@ -71,7 +71,6 @@ const saveFiltersToCookie = (filters: SavedFilters, includeTeamFeatures: boolean
   });
 };
 
-// In your useExpenseFilters function, replace the useState calls:
 export function useExpenseFilters({
   initialStatusFilters = ["NEW", "PENDING", "ANALYZED"],
   initialSelectedUser = "all",
@@ -79,19 +78,31 @@ export function useExpenseFilters({
   initialSortBy = "created_date",
   includeTeamFeatures = false,
 }: UseExpenseFiltersProps = {}): UseExpenseFiltersReturn {
-  // Load from cookies on initial render
-  const savedFilters = loadFiltersFromCookie(includeTeamFeatures);
+  // Always start with initial values to prevent hydration mismatch
+  const [statusFilters, setStatusFilters] = useState<ExpenseStatus[]>(initialStatusFilters);
+  const [selectedUser, setSelectedUser] = useState<string>(initialSelectedUser);
+  const [viewMode, setViewMode] = useState<"chronological" | "byUser">(initialViewMode);
+  const [sortBy, setSortBy] = useState<ExpenseSortOption>(initialSortBy);
 
-  const [statusFilters, setStatusFilters] = useState<ExpenseStatus[]>(
-    savedFilters?.statusFilters ?? initialStatusFilters
-  );
-  const [selectedUser, setSelectedUser] = useState<string>(
-    savedFilters?.selectedUser ?? initialSelectedUser
-  );
-  const [viewMode, setViewMode] = useState<"chronological" | "byUser">(
-    savedFilters?.viewMode ?? initialViewMode
-  );
-  const [sortBy, setSortBy] = useState<ExpenseSortOption>(savedFilters?.sortBy ?? initialSortBy);
+  // Load from cookies only on client side after hydration
+  useEffect(() => {
+    const savedFilters = loadFiltersFromCookie(includeTeamFeatures);
+
+    if (savedFilters != null) {
+      if (savedFilters.statusFilters != null) {
+        setStatusFilters(savedFilters.statusFilters);
+      }
+      if (savedFilters.selectedUser != null) {
+        setSelectedUser(savedFilters.selectedUser);
+      }
+      if (savedFilters.viewMode != null) {
+        setViewMode(savedFilters.viewMode);
+      }
+      if (savedFilters.sortBy != null) {
+        setSortBy(savedFilters.sortBy);
+      }
+    }
+  }, [includeTeamFeatures]);
 
   // Save to cookies whenever filters change
   useEffect(() => {

@@ -1,11 +1,12 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import { useExpenseFilters } from "@/src/lib/hooks/use-expense-filters";
 import { ExpenseCard } from "@components/expenses/expense-card";
 import { Card, CardContent } from "@components/ui/card";
+import { createClient } from "@lib/supabase/client";
 import type { Expense } from "@type/expense";
 
 import { ExpenseFilters } from "./expense-filters";
@@ -17,9 +18,16 @@ interface ExpensesWithFiltersProps {
 }
 
 export function ExpensesWithFilters({
-  expenses,
+  expenses: initialExpenses,
   exportFilename,
 }: Readonly<ExpensesWithFiltersProps>) {
+  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+
+  // Update expenses when initialExpenses changes (e.g., from server props)
+  useEffect(() => {
+    setExpenses(initialExpenses);
+  }, [initialExpenses]);
+
   const { filters, actions, filterExpenses } = useExpenseFilters({
     includeTeamFeatures: false,
   });
@@ -27,6 +35,30 @@ export function ExpensesWithFilters({
   const filteredAndSortedExpenses = useMemo(() => {
     return filterExpenses(expenses);
   }, [expenses, filterExpenses]);
+
+  // Handle new expense creation
+  const handleExpenseCreated = async (expenseId: string) => {
+    try {
+      // Fetch the newly created expense to add to the list
+      const supabase = createClient();
+      const { data: newExpense, error } = await supabase.rpc("get_expenses");
+
+      if (error != null) {
+        console.error("Error fetching new expense:", error);
+        return;
+      }
+
+      // Find the newly created expense in the fetched data
+      const createdExpense = newExpense?.find((expense: Expense) => expense.id === expenseId);
+
+      if (createdExpense != null) {
+        // Add the new expense to the beginning of the list
+        setExpenses((prevExpenses) => [createdExpense, ...prevExpenses]);
+      }
+    } catch (error) {
+      console.error("Error handling new expense:", error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -53,12 +85,7 @@ export function ExpensesWithFilters({
                 <h3 className="text-lg font-semibold">No expenses found</h3>
                 <p className="text-muted-foreground">Get started by creating your first expense.</p>
               </div>
-              <NewExpenseDrawer
-                onExpenseCreated={() => {
-                  // Refresh the page to show the new expense
-                  window.location.reload();
-                }}
-              />
+              <NewExpenseDrawer onExpenseCreated={handleExpenseCreated} />
             </div>
           </CardContent>
         </Card>
