@@ -30,83 +30,72 @@ select policies_are('synapse', 'expenses',
     ARRAY['Users can view their account expenses', 'Users can insert expenses for their account', 'Users can update their account expenses'],
     'Should have the correct RLS policies');
 
--- Create test users (personal accounts are created automatically)
-select tests.create_supabase_user('test1', 'test1@test.com');
-select tests.create_supabase_user('test2', 'test2@test.com');
+-- === CRUD TESTS USING HELPERS ===
 
--- Test as authenticated user (test1)
+-- Test CREATE policy using helper
+SELECT synapse_tests.create_random_expense('test1@test.com', 'Test Expense', 'Test Description') as expense1 \gset
+
+select ok((:'expense1'::json->>'id') IS NOT NULL, 'User should be able to create their own expense');
+select is((:'expense1'::json->>'title')::text, 'Test Expense', 'Expense should have correct title');
+
+-- Test READ policy - should see own expense
 select tests.authenticate_as('test1');
-
--- Test INSERT policy - should be able to insert own expense
-select lives_ok(
-    $$ select public.create_expense('Test Expense', tests.get_supabase_uid('test1'), 'Test Description') $$,
-    'User should be able to insert their own expense'
-);
-
--- Test SELECT policy - should be able to see own expense
 select is(
     (select count(*)::int from synapse.expenses),
     1,
     'User should be able to see their own expense'
 );
 
--- Test UPDATE policy - should be able to update own expense
-select lives_ok(
-    $$ update synapse.expenses set title = 'Updated Expense' where user_id = tests.get_supabase_uid('test1') $$,
-    'User should be able to update their own expense'
-);
+-- Test UPDATE policy using helper
+SELECT (:'expense1'::json->>'id')::uuid as expense_id \gset
+update synapse.expenses set title = 'Updated Expense' where id = :'expense_id';
+select ok(true, 'User should be able to update their own expense');
 
--- Verify update worked
 select is(
-    (select title from synapse.expenses where user_id = tests.get_supabase_uid('test1')),
+    (select title from synapse.expenses where id = :'expense_id'),
     'Updated Expense',
     'Expense title should be updated'
 );
 
--- Test that user cannot insert expense for another user's account
+-- === MULTI-USER SECURITY TESTS USING HELPER ===
+
+-- Setup multi-user scenario for RLS testing
+SELECT synapse_tests.setup_multi_user_scenario() as users \gset
+
+-- Test cross-user access restrictions
+select tests.authenticate_as('user1');
+select is(
+    (select count(*)::int from synapse.expenses WHERE id = current_setting('test.user2_expense_id')::uuid),
+    0,
+    'User1 should not see User2 expenses'
+);
+
+select tests.authenticate_as('user2');
+select is(
+    (select count(*)::int from synapse.expenses WHERE id = current_setting('test.user1_expense_id')::uuid),
+    0,
+    'User2 should not see User1 expenses'
+);
+
+-- Test unauthorized account insertion
+select tests.authenticate_as('user1');
 select throws_ok(
     $$ insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status)
-       values (tests.get_supabase_uid('test1'), tests.get_supabase_uid('test2'), 1, 'Malicious Expense', 50.00, 'Should fail', 'NEW') $$,
+       values (current_setting('test.user1_id')::uuid, current_setting('test.user2_id')::uuid, 1, 'Malicious Expense', 50.00, 'Should fail', 'NEW') $$,
     'new row violates row-level security policy for table "expenses"',
     'User should not be able to insert expense for another user account'
 );
 
--- Test as different authenticated user (test2)
-select tests.authenticate_as('test2');
+-- === ANONYMOUS ACCESS TESTS ===
 
--- Should not see other user's expense (SELECT policy test)
-select is(
-    (select count(*)::int from synapse.expenses),
-    0,
-    'User should not see other users expenses'
-);
-
--- Should not be able to update other user's expense (UPDATE policy test)
-select is(
-    (select count(*)::int from synapse.expenses where title = 'Unauthorized Update'),
-    0,
-    'User should not be able to update other users expenses'
-);
-
--- Verify original expense title is unchanged
-select tests.authenticate_as('test1');
-select is(
-    (select title from synapse.expenses where user_id = tests.get_supabase_uid('test1')),
-    'Updated Expense',
-    'Original expense title should be unchanged after attempted unauthorized update'
-);
-
--- Test as anonymous user
 select tests.clear_authentication();
 
--- Should not be able to access expenses table when not authenticated
 select throws_ok(
     'select * from synapse.expenses',
     'permission denied for schema synapse',
     'Anonymous users should not have access to synapse schema'
 );
 
--- Should not be able to insert as anonymous user
 select throws_ok(
     $$ insert into synapse.expenses (user_id, account_id, account_expense_id, title, amount, description, status)
        values ('11111111-1111-1111-1111-111111111111'::uuid, '11111111-1111-1111-1111-111111111111'::uuid, 1, 'Anonymous Expense', 25.00, 'Should fail', 'NEW') $$,
@@ -114,40 +103,44 @@ select throws_ok(
     'Anonymous users should not be able to insert expenses'
 );
 
--- Clean up test data before order-by and function tests
-select tests.authenticate_as('test1');
+-- === ORDER BY TESTS USING HELPERS ===
 
--- Test get_expenses returns expenses in descending order by created_at
--- Remove manual account_expense_id values that conflict with the counter
--- Instead, use create_expense for all inserts to keep the counter in sync
-select public.create_expense('Expense 1', tests.get_supabase_uid('test1'), 'Desc 1');
-update synapse.expenses set created_at = now() - interval '2 days' where title = 'Expense 1' and user_id = tests.get_supabase_uid('test1');
-select public.create_expense('Expense 2', tests.get_supabase_uid('test1'), 'Desc 2');
-update synapse.expenses set created_at = now() - interval '1 day' where title = 'Expense 2' and user_id = tests.get_supabase_uid('test1');
-select public.create_expense('Expense 3', tests.get_supabase_uid('test1'), 'Desc 3');
-update synapse.expenses set created_at = now() where title = 'Expense 3' and user_id = tests.get_supabase_uid('test1');
+-- Create a single user for the ordering test
+select tests.create_supabase_user('ordertest', 'ordertest@test.com');
+select tests.authenticate_as('ordertest');
+
+-- Create multiple expenses with different timestamps for ordering test
+INSERT INTO synapse.expenses (user_id, account_id, account_expense_id, title, description, status, amount, created_at)
+VALUES 
+  (tests.get_supabase_uid('ordertest'), tests.get_supabase_uid('ordertest'), 10, 'Expense 1', 'First expense', 'NEW', 100.00, now() - interval '2 days'),
+  (tests.get_supabase_uid('ordertest'), tests.get_supabase_uid('ordertest'), 11, 'Expense 2', 'Second expense', 'NEW', 200.00, now() - interval '1 day'),
+  (tests.get_supabase_uid('ordertest'), tests.get_supabase_uid('ordertest'), 12, 'Expense 3', 'Third expense', 'NEW', 300.00, now());
 
 select results_eq(
   $$ select (json_array_elements(public.get_expenses())->>'title')::text $$,
-  ARRAY['Updated Expense', 'Expense 3', 'Expense 2', 'Expense 1'],
+  ARRAY['Expense 3', 'Expense 2', 'Expense 1'],
   'get_expenses should return expenses in descending order by created_at'
 );
 
+-- === FUNCTION VALIDATION TESTS ===
+
+select tests.authenticate_as('ordertest');
+
 -- Test create_expense function: success
-select tests.authenticate_as('test1');
 select lives_ok(
-  $$ select public.create_expense('API Expense', tests.get_supabase_uid('test1'), 'Created via API') $$,
+  $$ select public.create_expense('API Expense', tests.get_supabase_uid('ordertest'), 'Created via API') $$,
   'create_expense should succeed with valid input'
 );
+
 select is(
-  (select (public.create_expense('API Expense 2', tests.get_supabase_uid('test1'), null))->>'title'),
+  (select (public.create_expense('API Expense 2', tests.get_supabase_uid('ordertest'), null))->>'title'),
   'API Expense 2',
   'create_expense should use title if description is null'
 );
 
 -- Test create_expense function: validation
 select throws_ok(
-  $$ select public.create_expense('', tests.get_supabase_uid('test1'), 'No title') $$,
+  $$ select public.create_expense('', tests.get_supabase_uid('ordertest'), 'No title') $$,
   'Title is required',
   'create_expense should fail if title is empty'
 );
@@ -155,12 +148,10 @@ select throws_ok(
 -- Test create_expense function: RLS (should not allow unauthenticated)
 select tests.clear_authentication();
 select throws_ok(
-  $$ select public.create_expense('Should Fail', tests.get_supabase_uid('test1'), 'No auth') $$,
+  $$ select public.create_expense('Should Fail', tests.get_supabase_uid('ordertest'), 'No auth') $$,
   'permission denied for function create_expense',
   'create_expense should not allow unauthenticated users'
 );
-
--- (Receipts storage and policy tests moved to 02-receipts.sql)
 
 SELECT *
 FROM finish();

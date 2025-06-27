@@ -1,0 +1,237 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Cursor Rules for Synapse Database Testing
+
+## Test Helper Usage Priority
+
+### Always Use Test Helpers First
+When writing database tests for the Synapse expense management system:
+
+1. **ALWAYS check if a test helper exists** before writing manual setup code
+2. **PREFER test helpers over manual database inserts** for common scenarios
+3. **UPDATE existing helpers** instead of creating duplicate setup code
+4. **CREATE new helpers** when you find yourself repeating setup patterns
+
+### Available Test Helpers (Use These!)
+
+#### Expense Creation Helpers
+- `tests.create_random_expense()` - Basic expense with realistic random data
+- `tests.create_expense_with_receipt_metadata()` - Expense + storage + receipt metadata
+- `tests.create_expense_with_line_items()` - Expense + receipt + multiple line items
+- `tests.create_expense_with_mileage()` - Expense with mileage line items
+
+#### Multi-User & Security Testing
+- `tests.setup_multi_user_scenario()` - Two users with expenses for RLS testing
+- `tests.setup_storage_dependencies()` - Storage buckets and objects setup
+
+#### Utilities
+- `tests.assert_expense_amount()` - Clean expense amount assertions
+- `tests.cleanup_synapse_test_data()` - Proper cleanup in dependency order
+
+### Code Patterns to AVOID
+
+❌ **Manual expense creation when helpers exist:**
+```sql
+-- DON'T DO THIS
+select tests.create_supabase_user('test1', 'test1@test.com');
+select tests.authenticate_as('test1');
+select public.create_expense('Test Expense', tests.get_supabase_uid('test1'), 'Description');
+DO $$
+DECLARE
+    expense_id uuid;
+BEGIN
+    SELECT id INTO expense_id FROM synapse.expenses WHERE user_id = tests.get_supabase_uid('test1') LIMIT 1;
+    PERFORM set_config('test.expense_id', expense_id::text, false);
+END $$;
+```
+
+❌ **Manual storage object creation:**
+```sql
+-- DON'T DO THIS
+insert into storage.objects (bucket_id, name, owner_id)
+values ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense_id'), '/test-receipt.png'), tests.get_supabase_uid('test1'));
+DO $$
+DECLARE
+    receipt_obj_id uuid;
+BEGIN
+    SELECT id INTO receipt_obj_id FROM storage.objects WHERE name = '...' LIMIT 1;
+    PERFORM set_config('test.receipt_obj_id', receipt_obj_id::text, false);
+END $$;
+```
+
+❌ **Verbose expense amount assertions:**
+```sql
+-- DON'T DO THIS
+SELECT results_eq(
+  'SELECT amount FROM synapse.expenses WHERE id = current_setting(''test.expense_id'')::uuid',
+  ARRAY[100.00::decimal],
+  'Expense amount should be 100.00'
+);
+```
+
+### Code Patterns to PREFER
+
+✅ **Use helpers for expense creation:**
+```sql
+-- DO THIS INSTEAD
+SELECT tests.create_random_expense('test1@test.com') as expense \gset
+-- Or for more complex scenarios:
+SELECT tests.create_expense_with_receipt_metadata('test1@test.com', 'Office Supplies', 'Staples', 75.50) as result \gset
+```
+
+✅ **Use helpers for line items:**
+```sql
+-- DO THIS
+SELECT tests.create_expense_with_line_items('user@test.com', 'Conference Expenses', '[
+  {"description": "Registration", "quantity": 1, "unit_price": 499.00, "category": "Conference"},
+  {"description": "Hotel", "quantity": 2, "unit_price": 120.00, "category": "Lodging"}
+]'::jsonb) as conference \gset
+```
+
+✅ **Use clean assertions:**
+```sql
+-- DO THIS
+SELECT tests.assert_expense_amount(expense_id, 100.00, 'Should calculate total correctly');
+```
+
+✅ **Use multi-user helpers for RLS testing:**
+```sql
+-- DO THIS
+SELECT tests.setup_multi_user_scenario() as users \gset
+SELECT tests.authenticate_as('user1');
+SELECT is((SELECT count(*) FROM synapse.expenses WHERE id = current_setting('test.user2_expense_id')::uuid), 0, 'Cross-user access denied');
+```
+
+### When to Create New Helpers
+
+Create a new helper function when you find yourself:
+
+1. **Repeating the same setup** in 3+ test files
+2. **Creating complex multi-table relationships** manually
+3. **Writing more than 10 lines** of setup code for a common scenario
+4. **Setting up the same user/authentication pattern** repeatedly
+
+### Helper Function Naming Convention
+
+Follow this pattern for new helpers:
+- `tests.create_{entity}_{optional_qualifier}()` - For creation helpers
+- `tests.setup_{scenario}()` - For multi-step scenario setup
+- `tests.assert_{specific_check}()` - For custom assertions
+- `tests.cleanup_{scope}()` - For cleanup utilities
+
+### Test File Structure Requirements
+
+Every test file should follow this structure:
+
+```sql
+BEGIN;
+create extension "basejump-supabase_test_helpers" version '0.0.6';
+
+select plan(X); -- Replace X with actual test count
+
+-- Use helpers for setup
+SELECT tests.create_expense_with_line_items('user@test.com') as test_data \gset
+
+-- Your actual tests here using the helpers
+SELECT ok((:'test_data'->>'expense') IS NOT NULL, 'Expense should be created');
+
+-- More tests...
+
+SELECT * FROM finish();
+ROLLBACK;
+```
+
+### Helper Result Handling
+
+Always capture helper results in variables:
+
+```sql
+-- GOOD: Capture results for later use
+SELECT tests.create_expense_with_receipt_metadata('user@test.com', 'Title', 'Vendor', 100.00) as result \gset
+
+-- Then access components:
+SELECT set_config('test.expense_id', (:'result'->'expense'->>'id'), false);
+SELECT ok((:'result'->>'receipt_id') IS NOT NULL, 'Receipt should exist');
+```
+
+### Before Adding Manual Setup Code
+
+Ask yourself:
+1. Is there already a helper for this scenario?
+2. Would this setup be useful in other tests?
+3. Am I recreating something that exists in another test file?
+4. Could I extend an existing helper instead of writing new code?
+
+### Helper Documentation Requirements
+
+When creating new helpers, always:
+1. Add comprehensive JSDoc-style comments
+2. Include parameter descriptions and types
+3. Add usage examples in the helper file
+4. Update the README with examples
+5. Add the new helper to this rules file
+
+### Error Handling in Tests
+
+When using helpers:
+- Let helpers handle authentication and user creation
+- Don't try to manually manage user IDs when helpers provide them
+- Use the helper's return values instead of querying for IDs
+- Trust that helpers create proper relationships and dependencies
+
+### Performance Considerations
+
+- Helpers are designed for test clarity, not production performance
+- Use ROLLBACK instead of cleanup helpers when possible
+- Don't optimize helper code unless it significantly impacts test run time
+- Focus on test readability and maintainability over minor performance gains
+
+## Examples for Common Scenarios
+
+### Testing CRUD Operations
+```sql
+-- Setup with helper
+SELECT tests.create_expense_with_line_items('user@test.com') as expense \gset
+
+-- Test READ
+SELECT ok((:'expense'->'expense'->>'id') IS NOT NULL, 'Should create expense');
+
+-- Test UPDATE (via business logic)
+UPDATE synapse.receipt_line_items SET total_amount = 999.99 
+WHERE expense_id = (:'expense'->'expense'->>'id')::uuid LIMIT 1;
+
+-- Test the trigger fired
+SELECT tests.assert_expense_amount((:'expense'->'expense'->>'id')::uuid, expected_new_total, 'Amount should update');
+
+-- Test DELETE
+DELETE FROM synapse.receipt_line_items WHERE expense_id = (:'expense'->'expense'->>'id')::uuid;
+SELECT tests.assert_expense_amount((:'expense'->'expense'->>'id')::uuid, 0, 'Should be 0 when no line items');
+```
+
+### Testing RLS Policies
+```sql
+-- Use multi-user helper
+SELECT tests.setup_multi_user_scenario() as users \gset
+
+-- Test user isolation
+SELECT tests.authenticate_as('user1');
+SELECT is((SELECT count(*) FROM synapse.expenses WHERE id = current_setting('test.user2_expense_id')::uuid), 0, 'No cross-user access');
+```
+
+### Testing Business Logic
+```sql
+-- Setup complex scenario
+SELECT tests.create_expense_with_receipt_metadata('manager@co.com', 'Team Dinner', 'Restaurant', 200.00) as dinner \gset
+
+-- Add custom line items for specific business logic test
+INSERT INTO synapse.receipt_line_items (expense_id, receipt_id, description, total_amount, category, is_ai_generated)
+VALUES ((:'dinner'->'expense'->>'id')::uuid, (:'dinner'->>'receipt_id')::uuid, 'Wine', 50.00, 'Alcohol', true);
+
+-- Test business rule: AI-generated alcohol items require approval
+SELECT is((SELECT status FROM synapse.expenses WHERE id = (:'dinner'->'expense'->>'id')::uuid), 'PENDING', 'Alcohol should trigger pending status');
+```
+
+Remember: The goal is readable, maintainable tests that clearly express business intent. Use helpers to eliminate boilerplate and focus on what you're actually testing.
