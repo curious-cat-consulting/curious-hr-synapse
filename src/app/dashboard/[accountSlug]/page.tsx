@@ -1,7 +1,8 @@
+import { notFound } from "next/navigation";
+
 import { MemberDashboard } from "@components/dashboard/member-dashboard";
 import { OwnerDashboard } from "@components/dashboard/owner-dashboard";
-import { getAccountBySlug } from "@lib/actions/accounts";
-import { createClient } from "@lib/supabase/server";
+import { getAccountBySlug, isUserOwner } from "@lib/actions/accounts";
 
 interface TeamAccountPageProps {
   params: Promise<{
@@ -11,19 +12,27 @@ interface TeamAccountPageProps {
 
 export default async function TeamAccountPage({ params }: Readonly<TeamAccountPageProps>) {
   const { accountSlug } = await params;
-  const teamAccount = await getAccountBySlug(accountSlug);
 
-  // Get current user's role on this account
-  const supabaseClient = createClient();
-  const { data: userRole } = await supabaseClient.rpc("current_user_account_role", {
-    account_id: teamAccount.account_id,
-  });
+  // Get account data - if it doesn't exist or user doesn't have access, this will throw
+  let teamAccount;
+  try {
+    teamAccount = await getAccountBySlug(accountSlug);
+  } catch {
+    // If account doesn't exist or user doesn't have access, return 404
+    notFound();
+  }
 
-  const isOwner = userRole?.account_role === "owner";
+  // Check if user is an owner
+  const isOwner = await isUserOwner(teamAccount.account_id);
 
   // If user is not an owner, show simplified member dashboard
   if (!isOwner) {
-    return <MemberDashboard teamAccount={teamAccount} userRole={userRole} />;
+    return (
+      <MemberDashboard
+        teamAccount={teamAccount}
+        userRole={{ account_role: "member", is_primary_owner: false }}
+      />
+    );
   }
 
   // Show owner dashboard

@@ -23,7 +23,7 @@ export function MemberDashboard({ teamAccount, userRole }: Readonly<MemberDashbo
     <div className="container mx-auto max-w-7xl p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Team Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Team Member Dashboard</h1>
         <p className="text-muted-foreground">
           Welcome to {teamAccount.name} - Your team expense management hub
         </p>
@@ -102,7 +102,7 @@ export function MemberDashboard({ teamAccount, userRole }: Readonly<MemberDashbo
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Latest Updates</CardTitle>
-              <CardDescription>Recent activity from your team</CardDescription>
+              <CardDescription>Recent activity for your team</CardDescription>
             </CardHeader>
             <CardContent>
               <RecentActivity title="" accountId={teamAccount.account_id} />

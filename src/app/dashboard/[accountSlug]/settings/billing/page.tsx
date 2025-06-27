@@ -1,6 +1,5 @@
 import AccountBillingStatus from "@components/basejump/account-billing-status";
-import { Alert } from "@components/ui/alert";
-import { getAccountBySlug } from "@lib/actions/accounts";
+import { requireOwnerAccess } from "@lib/utils/owner-only";
 
 const returnUrl = process.env.NEXT_PUBLIC_URL as string;
 
@@ -10,11 +9,7 @@ export default async function TeamBillingPage({
   params: Promise<{ accountSlug: string }>;
 }) {
   const { accountSlug } = await params;
-  const teamAccount = await getAccountBySlug(accountSlug);
-
-  if (teamAccount.account_role !== "owner") {
-    return <Alert variant="destructive">You do not have permission to access this page</Alert>;
-  }
+  const teamAccount = await requireOwnerAccess(accountSlug);
 
   return (
     <div>
