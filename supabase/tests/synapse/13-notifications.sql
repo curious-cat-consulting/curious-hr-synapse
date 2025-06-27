@@ -34,7 +34,7 @@ select tests.rls_enabled('synapse', 'notifications');
 
 -- Test that RLS policies exist
 select policies_are('synapse', 'notifications', 
-    ARRAY['Users can view their own notifications', 'Users can insert their own notifications', 'Users can update their own notifications', 'Users can delete their own notifications'],
+    ARRAY['Users can view their own notifications', 'Users can insert their own notifications', 'Users can update their own notifications', 'Users can delete their own notifications', 'Team owners can insert notifications for team members'],
     'Should have the correct RLS policies');
 
 -- Create test users

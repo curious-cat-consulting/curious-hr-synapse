@@ -88,3 +88,27 @@ export async function updateMileageRate(prevState: unknown, formData: FormData) 
     message: "Mileage rate updated successfully",
   };
 }
+
+export async function updateSelfApprovals(prevState: unknown, formData: FormData) {
+  "use server";
+
+  const selfApprovalsEnabled = formData.get("selfApprovalsEnabled") === "on";
+  const accountId = formData.get("accountId") as string;
+  const supabase = createClient();
+
+  const { error } = await supabase.rpc("update_account", {
+    account_id: accountId,
+    public_metadata: { self_approvals_enabled: selfApprovalsEnabled },
+    replace_metadata: false,
+  });
+
+  if (error !== null) {
+    return {
+      message: error.message,
+    };
+  }
+
+  return {
+    message: "Self approvals setting updated successfully",
+  };
+}

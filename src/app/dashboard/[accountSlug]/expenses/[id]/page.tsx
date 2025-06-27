@@ -23,27 +23,49 @@ interface TeamExpenseDetailsPageProps {
   }>;
 }
 
+interface AccountData {
+  account_id: string;
+  name: string;
+  metadata?: {
+    self_approvals_enabled?: boolean;
+  };
+}
+
 export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseDetailsPageProps>) {
   const [expense, setExpense] = useState<Expense | null>(null);
+  const [accountData, setAccountData] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const { data: currentUser } = useCurrentUser();
 
   const fetchExpenseDetails = async () => {
     try {
-      const { id } = await params;
+      const { id, accountSlug } = await params;
       const supabase = createClient();
-      const { data, error } = await supabase.rpc("get_expense_details", {
+
+      // Fetch expense details
+      const { data: expenseData, error: expenseError } = await supabase.rpc("get_expense_details", {
         expense_id: id,
       });
 
-      if (error !== null) {
-        console.error("Error fetching expense:", error);
+      if (expenseError !== null) {
+        console.error("Error fetching expense:", expenseError);
         return;
       }
 
-      setExpense(data as Expense);
+      // Fetch account data to check self approvals setting
+      const { data: accountData, error: accountError } = await supabase.rpc("get_account_by_slug", {
+        slug: accountSlug,
+      });
+
+      if (accountError !== null) {
+        console.error("Error fetching account:", accountError);
+        return;
+      }
+
+      setExpense(expenseData as Expense);
+      setAccountData(accountData as AccountData);
     } catch (error) {
-      console.error("Error fetching expense:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -74,6 +96,15 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
   // Get current user to check if they're the expense owner
   const isExpenseOwner = currentUser?.id === expenseData.user_id;
 
+  // Check if self approvals are enabled for this account
+  const selfApprovalsEnabled = accountData?.metadata?.self_approvals_enabled ?? false;
+
+  // Show approval buttons if:
+  // 1. User is not the expense owner (existing logic), OR
+  // 2. User is the expense owner AND self approvals are enabled
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const shouldShowApprovalButtons = !isExpenseOwner || (isExpenseOwner && selfApprovalsEnabled);
+
   return (
     <div className="space-y-8">
       {/* Main Content */}
@@ -89,8 +120,8 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
                   </span>
                   <h1 className="text-3xl font-bold">{expenseData.title}</h1>
                   <AccountBadge
-                    accountName={expenseData.account_name}
-                    isPersonal={expenseData.account_personal}
+                    accountName={expenseData.user_name}
+                    isPersonal={true}
                     className="text-xs"
                   />
                 </div>
@@ -109,7 +140,7 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
             </div>
 
             {/* Approval Buttons for Team Owners */}
-            {!isExpenseOwner && (
+            {shouldShowApprovalButtons && (
               <div className="mb-6">
                 <ExpenseApprovalButtons
                   expense={expenseData}

@@ -96,6 +96,22 @@ USING (
   account_id IN (SELECT basejump.get_accounts_with_role())
 );
 
+-- Policy: Team owners can insert notifications for their team members
+CREATE POLICY "Team owners can insert notifications for team members"
+ON synapse.notifications FOR INSERT
+TO authenticated
+WITH CHECK (
+  -- The notification is for a user in the team
+  user_id IN (
+    SELECT au.user_id 
+    FROM basejump.account_user au 
+    WHERE au.account_id = synapse.notifications.account_id
+  )
+  AND 
+  -- The current user is an owner of the account
+  basejump.has_role_on_account(account_id, 'owner')
+);
+
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE synapse.notifications TO authenticated;
 

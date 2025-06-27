@@ -1,4 +1,5 @@
 import EditMileageRate from "@components/basejump/edit-mileage-rate";
+import EditSelfApprovals from "@components/basejump/edit-self-approvals";
 import EditTeamName from "@components/basejump/edit-team-name";
 import EditTeamSlug from "@components/basejump/edit-team-slug";
 import { getAccountBySlug } from "@lib/actions/accounts";
@@ -16,6 +17,7 @@ export default async function TeamSettingsPage({
       <EditTeamName account={teamAccount} />
       <EditTeamSlug account={teamAccount} />
       <EditMileageRate account={teamAccount} />
+      <EditSelfApprovals account={teamAccount} />
     </div>
   );
 }

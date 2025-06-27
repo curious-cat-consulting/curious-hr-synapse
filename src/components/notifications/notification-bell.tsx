@@ -1,5 +1,6 @@
 "use client";
 
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Bell, Check, Trash2 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
@@ -17,8 +18,15 @@ import { createClient } from "@lib/supabase/client";
 import { NOTIFICATION_ICONS } from "../../types/notification";
 import type { Notification } from "../../types/notification";
 
-// Global channel tracking to prevent duplicate subscriptions
-const activeChannels = new Set<string>();
+// Global subscription management per user across all tabs
+const globalSubscriptions = new Map<
+  string,
+  {
+    channel: RealtimeChannel | null;
+    refCount: number;
+    subscribers: Set<() => void>; // Functions to call when notifications change
+  }
+>();
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -28,9 +36,9 @@ export function NotificationBell() {
   const [hasLoadedNotifications, setHasLoadedNotifications] = useState(false);
 
   const supabase = createClient();
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const channelIdRef = useRef<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
+  const updateCallbackRef = useRef<(() => void) | null>(null);
 
   const fetchUnreadCount = async () => {
     try {
@@ -42,7 +50,7 @@ export function NotificationBell() {
   };
 
   const fetchNotifications = async () => {
-    if (hasLoadedNotifications) return; // Don't refetch if already loaded
+    if (hasLoadedNotifications) return;
 
     try {
       const { data: notificationsData } = await supabase.rpc("get_notifications", {
@@ -69,6 +77,129 @@ export function NotificationBell() {
       console.error("Error fetching notifications:", error);
     }
   };
+
+  // Create a callback that this component instance will use
+  const createUpdateCallback = () => {
+    return () => {
+      if (isMountedRef.current) {
+        fetchUnreadCount();
+        if (hasLoadedNotifications) {
+          refreshNotifications();
+        }
+      }
+    };
+  };
+
+  const setupOrJoinSubscription = (userId: string) => {
+    userIdRef.current = userId;
+    const channelName = `notifications-${userId}`;
+
+    // Create the update callback for this component instance
+    updateCallbackRef.current = createUpdateCallback();
+
+    let subscription = globalSubscriptions.get(channelName);
+
+    if (subscription != null) {
+      // Join existing subscription
+      subscription.refCount++;
+      subscription.subscribers.add(updateCallbackRef.current);
+
+      return;
+    }
+
+    try {
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "synapse",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
+          (_) => {
+            // Notify all subscribers (all component instances for this user)
+            const sub = globalSubscriptions.get(channelName);
+            if (sub != null) {
+              sub.subscribers.forEach((callback) => {
+                try {
+                  callback();
+                } catch (error) {
+                  console.error("Error in notification callback:", error);
+                }
+              });
+            }
+          }
+        )
+        .subscribe((_) => {});
+
+      // Store the new subscription
+      globalSubscriptions.set(channelName, {
+        channel,
+        refCount: 1,
+        subscribers: new Set([updateCallbackRef.current]),
+      });
+    } catch (error) {
+      console.error("Error setting up notification channel:", error);
+    }
+  };
+
+  const leaveSubscription = async () => {
+    if (userIdRef.current == null || updateCallbackRef.current == null) return;
+
+    const channelName = `notifications-${userIdRef.current}`;
+    const subscription = globalSubscriptions.get(channelName);
+
+    if (subscription != null) {
+      // Remove this component's callback
+      subscription.subscribers.delete(updateCallbackRef.current);
+      subscription.refCount--;
+
+      // If no more subscribers, clean up the channel
+      if (subscription.refCount <= 0 || subscription.subscribers.size === 0) {
+        try {
+          if (subscription.channel != null) {
+            await supabase.removeChannel(subscription.channel);
+          }
+        } catch (error) {
+          console.error("Error removing channel:", error);
+        }
+        globalSubscriptions.delete(channelName);
+      }
+    }
+
+    userIdRef.current = null;
+    updateCallbackRef.current = null;
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+
+    // Set up auth state listener
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        session?.user != null &&
+        isMountedRef.current
+      ) {
+        // Small delay to ensure session is fully established
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        setupOrJoinSubscription(session.user.id);
+      } else if (event === "SIGNED_OUT") {
+        // Clean up subscription when user signs out
+        await leaveSubscription();
+      }
+    });
+
+    return () => {
+      isMountedRef.current = false;
+      authSubscription.unsubscribe();
+      leaveSubscription();
+    };
+  }, []);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -119,104 +250,6 @@ export function NotificationBell() {
     }
   };
 
-  const cleanupChannel = () => {
-    if (channelRef.current != null && channelIdRef.current != null) {
-      try {
-        supabase.removeChannel(channelRef.current);
-        activeChannels.delete(channelIdRef.current);
-      } catch (error) {
-        console.error("Error removing channel:", error);
-      }
-      channelRef.current = null;
-      channelIdRef.current = null;
-    }
-  };
-
-  const setupChannel = (userId: string) => {
-    // Clean up any existing channel first
-    cleanupChannel();
-
-    // Create a unique channel ID for this user and tab
-    const channelId = `notifications-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-
-    // Check if this channel is already active globally
-    if (activeChannels.has(channelId)) {
-      console.warn("Channel already active, skipping subscription");
-      return;
-    }
-
-    try {
-      const channel = supabase
-        .channel(channelId)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "synapse",
-            table: "notifications",
-            filter: `user_id=eq.${userId}`,
-          },
-          () => {
-            // Only refresh unread count when notifications change
-            fetchUnreadCount();
-            // If notifications are currently loaded, refresh them too
-            if (hasLoadedNotifications) {
-              refreshNotifications();
-            }
-          }
-        )
-        .subscribe((status) => {
-          if (status === "CLOSED" && isMountedRef.current) {
-            // Remove from active channels when closed
-            activeChannels.delete(channelId);
-            channelRef.current = null;
-            channelIdRef.current = null;
-
-            // Only retry if component is still mounted
-            setTimeout(() => {
-              if (isMountedRef.current) {
-                setupChannel(userId);
-              }
-            }, 2000);
-          }
-        });
-
-      // Store references and mark as active
-      channelRef.current = channel;
-      channelIdRef.current = channelId;
-      activeChannels.add(channelId);
-    } catch (error) {
-      console.error("Error setting up notification channel:", error);
-      activeChannels.delete(channelId);
-    }
-  };
-
-  useEffect(() => {
-    fetchUnreadCount();
-
-    // Set up auth state listener to handle subscription properly
-    const {
-      data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (
-        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
-        session?.user != null &&
-        isMountedRef.current
-      ) {
-        // Wait a bit for the session to be fully established
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        setupChannel(session.user.id);
-      }
-    });
-
-    return () => {
-      isMountedRef.current = false;
-      authSubscription.unsubscribe();
-      cleanupChannel();
-    };
-  }, [hasLoadedNotifications]);
-
   const getNotificationIcon = (type: string) => {
     return type in NOTIFICATION_ICONS
       ? NOTIFICATION_ICONS[type as keyof typeof NOTIFICATION_ICONS]
@@ -260,42 +293,43 @@ export function NotificationBell() {
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpenChange}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
-          {Math.max(0, safeUnreadCount) > 0 && (
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-4 w-4" />
+          {safeUnreadCount > 0 && (
             <Badge
               variant="destructive"
               className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
             >
-              {Math.max(0, safeUnreadCount) > 99 ? "99+" : Math.max(0, safeUnreadCount)}
+              {safeUnreadCount > 99 ? "99+" : safeUnreadCount}
             </Badge>
           )}
+          <span className="sr-only">Notifications</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
-        <div className="flex items-center justify-between p-2">
-          <h3 className="text-sm font-semibold">Notifications</h3>
+        <div className="flex items-center justify-between p-4">
+          <h4 className="font-semibold">Notifications</h4>
           {notifications.length > 0 && (
-            <div className="flex gap-1">
-              {Math.max(0, safeUnreadCount) > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={markAllAsRead}
-                  disabled={isLoading}
-                  className="h-auto p-1 text-xs"
-                >
-                  Mark all read
-                </Button>
-              )}
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                disabled={isLoading || safeUnreadCount === 0}
+                className="text-xs"
+              >
+                <Check className="mr-1 h-3 w-3" />
+                Mark all read
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={deleteAllNotifications}
                 disabled={isLoading}
-                className="h-auto p-1 text-xs text-destructive hover:text-destructive"
+                className="text-xs text-destructive hover:text-destructive"
               >
-                Delete all
+                <Trash2 className="mr-1 h-3 w-3" />
+                Clear all
               </Button>
             </div>
           )}
@@ -303,80 +337,63 @@ export function NotificationBell() {
         <Separator />
         <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-              <Bell className="h-8 w-8 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">No notifications</p>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              No notifications yet
             </div>
           ) : (
-            <div className="space-y-1 p-1">
-              {notifications.map((notification) => {
-                const link = getNotificationLink(notification);
-                const NotificationContent = (
-                  <div className="flex items-start gap-3 p-2">
-                    <span className="text-lg">{getNotificationIcon(notification.type)}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium leading-tight">{notification.title}</p>
-                      <p className="mt-1 text-xs leading-tight text-muted-foreground">
-                        {notification.message}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatTimeAgo(notification.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      {notification.status === "UNREAD" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notification.id);
-                          }}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(notification.id);
-                        }}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                );
+            notifications.map((notification) => {
+              const link = getNotificationLink(notification);
+              const icon = getNotificationIcon(notification.type);
+              const isUnread = notification.status === "UNREAD";
 
-                return (
-                  <DropdownMenuItem
-                    key={notification.id}
-                    className={`cursor-pointer ${
-                      notification.status === "UNREAD" ? "bg-muted/50" : ""
-                    }`}
-                    onClick={() => {
-                      if (notification.status === "UNREAD") {
-                        markAsRead(notification.id);
-                      }
-                      if (typeof link === "string" && link.length > 0) {
-                        window.location.href = link;
-                      }
-                      setIsOpen(false);
-                    }}
-                  >
-                    {typeof link === "string" && link.length > 0 ? (
-                      <div className="w-full">{NotificationContent}</div>
-                    ) : (
-                      NotificationContent
-                    )}
-                  </DropdownMenuItem>
-                );
-              })}
-            </div>
+              return (
+                <DropdownMenuItem
+                  key={notification.id}
+                  className={`flex cursor-pointer flex-col items-start gap-2 p-4 ${
+                    isUnread ? "bg-muted/50" : ""
+                  }`}
+                  onClick={() => {
+                    if (link != null) {
+                      window.location.href = link;
+                    }
+                    if (isUnread) {
+                      markAsRead(notification.id);
+                    }
+                  }}
+                >
+                  <div className="flex w-full items-start justify-between">
+                    <div className="flex flex-1 items-start gap-3">
+                      <span className="text-lg">{icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-medium">{notification.title}</p>
+                          {isUnread && (
+                            <div className="h-2 w-2 flex-shrink-0 rounded-full bg-blue-600" />
+                          )}
+                        </div>
+                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                          {notification.message}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatTimeAgo(notification.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notification.id);
+                      }}
+                      className="opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </DropdownMenuItem>
+              );
+            })
           )}
         </div>
       </DropdownMenuContent>
