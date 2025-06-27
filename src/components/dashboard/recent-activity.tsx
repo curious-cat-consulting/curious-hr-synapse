@@ -1,6 +1,7 @@
 import { Clock } from "lucide-react";
 import React from "react";
 
+import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
 import { createClient } from "@lib/supabase/server";
 
@@ -8,6 +9,21 @@ interface RecentActivityProps {
   title: string;
   accountId?: string;
 }
+
+const getStatusStyles = (status: string): string => {
+  switch (status) {
+    case "APPROVED":
+      return "bg-green-100 text-green-600";
+    case "REJECTED":
+      return "bg-red-100 text-red-600";
+    case "PENDING":
+      return "bg-yellow-100 text-yellow-700";
+    case "ANALYZED":
+      return "bg-blue-100 text-blue-700";
+    default:
+      return "text-gray-600";
+  }
+};
 
 export async function RecentActivity({ title, accountId }: RecentActivityProps) {
   // Fetch recent activity using the new RPC
@@ -32,32 +48,30 @@ export async function RecentActivity({ title, accountId }: RecentActivityProps) 
         {expenses.map(
           (expense: {
             id: string;
+            account_expense_id: number;
             title: string;
             amount: number;
             status: string;
             created_at: string;
+            user_name: string;
           }) => (
             <li key={expense.id} className="flex items-center justify-between py-3">
-              <div>
-                <div className="font-medium">{expense.title}</div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(expense.created_at).toLocaleDateString()}
+              <div className="flex items-center gap-4">
+                <span className="min-w-[60px] font-mono text-sm text-muted-foreground">
+                  #{expense.account_expense_id}
+                </span>
+                <div>
+                  <div className="font-medium">{expense.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(expense.created_at).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                {accountId != null && <Badge variant="secondary">{expense.user_name}</Badge>}
                 <span className="font-semibold">${expense.amount.toFixed(2)}</span>
                 <span
-                  className={`rounded-full bg-gray-100 px-2 py-1 text-xs ${
-                    expense.status === "APPROVED"
-                      ? "bg-green-100 text-green-600"
-                      : expense.status === "REJECTED"
-                        ? "bg-red-100 text-red-600"
-                        : expense.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : expense.status === "ANALYZED"
-                            ? "bg-blue-100 text-blue-700"
-                            : "text-gray-600"
-                  }`}
+                  className={`rounded-full bg-gray-100 px-2 py-1 text-xs ${getStatusStyles(expense.status)}`}
                 >
                   {expense.status}
                 </span>

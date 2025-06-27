@@ -58,12 +58,12 @@ CREATE INDEX idx_expenses_account_expense_id ON synapse.expenses(account_id, acc
 ALTER TABLE synapse.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE synapse.account_expense_counters ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can view expenses for accounts they are a member of
-CREATE POLICY "Users can view their account expenses"
+-- Policy: Users can view expenses for their own accounts
+CREATE POLICY "Users can view their own expenses"
 ON synapse.expenses FOR SELECT
 TO authenticated
 USING (
-  account_id IN (SELECT basejump.get_accounts_with_role())
+  user_id = auth.uid() AND account_id IN (SELECT basejump.get_accounts_with_role())
 );
 
 -- Policy: Users can insert expenses for accounts they are a member of
@@ -156,7 +156,7 @@ SELECT COALESCE(json_agg(
 ), '[]'::json)
 FROM synapse.expenses e
 INNER JOIN basejump.accounts a ON e.account_id = a.id
-WHERE e.account_id IN (SELECT basejump.get_accounts_with_role());
+WHERE e.user_id = auth.uid() AND e.account_id IN (SELECT basejump.get_accounts_with_role());
 $$;
 
 /**
