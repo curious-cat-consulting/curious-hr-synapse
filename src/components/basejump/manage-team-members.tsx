@@ -1,3 +1,5 @@
+import type { GetAccountMembersResponse } from "@usebasejump/shared";
+
 import { createClient } from "@lib/supabase/server";
 
 import { Badge } from "../ui/badge";
@@ -5,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Table, TableRow, TableBody, TableCell } from "../ui/table";
 
 import TeamMemberOptions from "./team-member-options";
-
 
 type Props = {
   accountId: string;
@@ -20,7 +21,7 @@ export default async function ManageTeamMembers({ accountId }: Props) {
 
   const { data } = await supabaseClient.auth.getUser();
   const isPrimaryOwner = members?.find(
-    (member: any) => member.user_id === data?.user?.id
+    (member: GetAccountMembersResponse[0]) => member.user_id === data.user?.id
   )?.is_primary_owner;
 
   return (
@@ -32,7 +33,7 @@ export default async function ManageTeamMembers({ accountId }: Props) {
       <CardContent>
         <Table>
           <TableBody>
-            {members?.map((member: any) => (
+            {members?.map((member: GetAccountMembersResponse[0]) => (
               <TableRow key={member.user_id}>
                 <TableCell>
                   <div className="flex gap-x-2">
@@ -43,11 +44,11 @@ export default async function ManageTeamMembers({ accountId }: Props) {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  {!Boolean(member.is_primary_owner) && (
+                  {!member.is_primary_owner && (
                     <TeamMemberOptions
                       teamMember={member}
                       accountId={accountId}
-                      isPrimaryOwner={isPrimaryOwner}
+                      isPrimaryOwner={isPrimaryOwner ?? false}
                     />
                   )}
                 </TableCell>

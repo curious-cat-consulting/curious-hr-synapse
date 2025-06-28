@@ -34,7 +34,7 @@ export default function EditSelfApprovals({ account }: Readonly<EditSelfApproval
   // Update local state when form submission is successful
   useEffect(() => {
     if (
-      state?.message &&
+      state?.message != null &&
       state.message !== "" &&
       state.message.includes("successfully") &&
       pendingValueRef.current !== null

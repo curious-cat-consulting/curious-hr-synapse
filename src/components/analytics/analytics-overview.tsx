@@ -28,9 +28,9 @@ export function AnalyticsOverview({ data }: Readonly<AnalyticsOverviewProps>) {
 
   const getTimeRange = () => {
     if (
-      !data.first_expense_date ||
+      data.first_expense_date.length === 0 ||
       data.first_expense_date === "" ||
-      !data.last_expense_date ||
+      data.last_expense_date.length === 0 ||
       data.last_expense_date === ""
     ) {
       return "No data";
@@ -107,9 +107,9 @@ export function AnalyticsOverview({ data }: Readonly<AnalyticsOverviewProps>) {
         <CardContent>
           <div className="text-2xl font-bold">{getTimeRange()}</div>
           <p className="text-xs text-muted-foreground">
-            {data.first_expense_date &&
+            {data.first_expense_date.length > 0 &&
               data.first_expense_date !== "" &&
-              data.last_expense_date &&
+              data.last_expense_date.length > 0 &&
               data.last_expense_date !== "" && (
                 <>
                   {formatDate(data.first_expense_date)} - {formatDate(data.last_expense_date)}
@@ -127,7 +127,7 @@ export function AnalyticsOverview({ data }: Readonly<AnalyticsOverviewProps>) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {data.last_expense_date && data.last_expense_date !== ""
+            {data.last_expense_date.length > 0 && data.last_expense_date !== ""
               ? formatDate(data.last_expense_date)
               : "N/A"}
           </div>

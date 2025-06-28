@@ -4,7 +4,6 @@ import { createTeam } from "@lib/actions/teams";
 import { Label } from "../ui/label";
 import { SubmitButton } from "../ui/submit-button";
 
-
 export default function NewTeamForm() {
   return (
     <form className="flex w-full flex-1 flex-col justify-center gap-y-6 text-foreground animate-in">

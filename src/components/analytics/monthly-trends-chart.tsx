@@ -42,7 +42,10 @@ export function MonthlyTrendsChart({ data }: Readonly<MonthlyTrendsChartProps>) 
     label,
   }: {
     active?: boolean;
-    payload?: Array<any>;
+    payload?: Array<{
+      value: number;
+      dataKey: string;
+    }>;
     label?: string;
   }) => {
     if (active === true && payload != null && payload.length > 0) {

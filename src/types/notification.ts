@@ -31,7 +31,7 @@ export interface Notification {
   title: string;
   message: string;
   status: NotificationStatus;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   read_at?: string;
 }
@@ -41,5 +41,5 @@ export interface NotificationMetadata {
   receipt_id?: string;
   account_id?: string;
   link?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

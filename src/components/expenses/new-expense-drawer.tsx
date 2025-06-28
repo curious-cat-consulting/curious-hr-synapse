@@ -157,7 +157,7 @@ export function NewExpenseDrawer({
       const data = (await response.json()) as ExpenseApiResponse;
 
       if (!response.ok) {
-        throw new Error((data as any).error ?? "Failed to create expense report");
+        throw new Error((data as { error?: string }).error ?? "Failed to create expense report");
       }
 
       // Notify parent with expense ID immediately

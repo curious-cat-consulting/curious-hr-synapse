@@ -17,7 +17,6 @@ import { deleteInvitation } from "@lib/actions/invitations";
 
 import { SubmitButton } from "../ui/submit-button";
 
-
 type Props = {
   invitationId: string;
 };

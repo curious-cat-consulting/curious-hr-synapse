@@ -10,26 +10,18 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
-  DialogPortal,
-  DialogOverlay,
 } from "@components/ui/dialog";
-import { removeTeamMember as removeTeamMemberAction } from "@lib/actions/members";
 
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { SubmitButton } from "../ui/submit-button";
 
 import DeleteTeamMemberForm from "./delete-team-member-form";
 import EditTeamMemberRoleForm from "./edit-team-member-role-form";
-
 
 type Props = {
   accountId: string;
@@ -45,7 +37,7 @@ export default function TeamMemberOptions({ teamMember, accountId, isPrimaryOwne
     if (updateTeamRole) {
       toggleUpdateTeamRole(false);
     }
-  }, [teamMember.account_role]);
+  }, [updateTeamRole]);
   return (
     <>
       <DropdownMenu>
@@ -67,7 +59,7 @@ export default function TeamMemberOptions({ teamMember, accountId, isPrimaryOwne
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Update team member role</DialogTitle>
-            <DialogDescription>Update a member's role in your team</DialogDescription>
+            <DialogDescription>Update a member&apos;s role in your team</DialogDescription>
           </DialogHeader>
           <EditTeamMemberRoleForm
             teamMember={teamMember}

@@ -6,16 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { Progress } from "@components/ui/progress";
 import { getFraudDetectionSummary } from "@lib/actions/fraud-detection";
 
-interface FraudSummary {
-  total_expenses: number;
-  high_risk_count: number;
-  medium_risk_count: number;
-  low_risk_count: number;
-  avg_risk_score: number;
-  max_risk_score: number;
-  risk_percentage: number;
-}
-
 interface FraudDetectionOverviewProps {
   accountId: string;
   accountSlug: string;

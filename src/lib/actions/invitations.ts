@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "../supabase/server";
 
 export async function createInvitation(
-  prevState: any,
+  prevState: unknown,
   formData: FormData
 ): Promise<{ token?: string; message?: string }> {
   "use server";
@@ -23,7 +23,7 @@ export async function createInvitation(
     account_role: accountRole,
   });
 
-  if (error) {
+  if (error != null) {
     return {
       message: error.message,
     };
@@ -36,7 +36,7 @@ export async function createInvitation(
   };
 }
 
-export async function deleteInvitation(prevState: any, formData: FormData) {
+export async function deleteInvitation(prevState: unknown, formData: FormData) {
   "use server";
 
   const invitationId = formData.get("invitationId") as string;
@@ -48,7 +48,7 @@ export async function deleteInvitation(prevState: any, formData: FormData) {
     invitation_id: invitationId,
   });
 
-  if (error) {
+  if (error != null) {
     return {
       message: error.message,
     };
@@ -56,7 +56,7 @@ export async function deleteInvitation(prevState: any, formData: FormData) {
   redirect(returnPath);
 }
 
-export async function acceptInvitation(prevState: any, formData: FormData) {
+export async function acceptInvitation(prevState: unknown, formData: FormData) {
   "use server";
 
   const token = formData.get("token") as string;
@@ -67,7 +67,7 @@ export async function acceptInvitation(prevState: any, formData: FormData) {
     lookup_invitation_token: token,
   });
 
-  if (error) {
+  if (error != null) {
     return {
       message: error.message,
     };

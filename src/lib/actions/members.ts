@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "../supabase/server";
 
-export async function removeTeamMember(prevState: any, formData: FormData) {
+export async function removeTeamMember(prevState: unknown, formData: FormData) {
   "use server";
 
   const userId = formData.get("userId") as string;
@@ -17,7 +17,7 @@ export async function removeTeamMember(prevState: any, formData: FormData) {
     account_id: accountId,
   });
 
-  if (error) {
+  if (error != null) {
     return {
       message: error.message,
     };
@@ -26,7 +26,7 @@ export async function removeTeamMember(prevState: any, formData: FormData) {
   redirect(returnUrl);
 }
 
-export async function updateTeamMemberRole(prevState: any, formData: FormData) {
+export async function updateTeamMemberRole(prevState: unknown, formData: FormData) {
   "use server";
 
   const userId = formData.get("userId") as string;
@@ -44,7 +44,7 @@ export async function updateTeamMemberRole(prevState: any, formData: FormData) {
     make_primary_owner: makePrimaryOwner,
   });
 
-  if (error) {
+  if (error != null) {
     return {
       message: error.message,
     };

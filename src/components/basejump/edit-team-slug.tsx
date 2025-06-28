@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "../ui/label";
 import { SubmitButton } from "../ui/submit-button";
 
-
 type Props = {
   account: GetAccountResponse;
 };

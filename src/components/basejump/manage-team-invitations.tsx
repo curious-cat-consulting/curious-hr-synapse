@@ -9,10 +9,16 @@ import { Table, TableRow, TableBody, TableCell } from "../ui/table";
 import CreateTeamInvitationButton from "./create-team-invitation-button";
 import DeleteTeamInvitationButton from "./delete-team-invitation-button";
 
-
 type Props = {
   accountId: string;
 };
+
+interface Invitation {
+  invitation_id: string;
+  created_at: string;
+  invitation_type: string;
+  account_role: string;
+}
 
 export default async function ManageTeamInvitations({ accountId }: Props) {
   const supabaseClient = createClient();
@@ -36,7 +42,7 @@ export default async function ManageTeamInvitations({ accountId }: Props) {
         <CardContent>
           <Table>
             <TableBody>
-              {invitations?.map((invitation: any) => (
+              {invitations?.map((invitation: Invitation) => (
                 <TableRow key={invitation.invitation_id}>
                   <TableCell>
                     <div className="flex gap-x-2">

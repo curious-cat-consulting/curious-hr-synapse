@@ -8,7 +8,7 @@ export default async function AcceptInvitationPage({
   searchParams: Promise<{ token?: string }>;
 }) {
   const { token } = await searchParams;
-  if (!token) {
+  if (token == null) {
     redirect("/");
   }
 

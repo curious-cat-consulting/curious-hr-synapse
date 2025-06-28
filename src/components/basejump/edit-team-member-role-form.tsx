@@ -17,7 +17,6 @@ import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { SubmitButton } from "../ui/submit-button";
 
-
 type Props = {
   accountId: string;
   isPrimaryOwner: boolean;

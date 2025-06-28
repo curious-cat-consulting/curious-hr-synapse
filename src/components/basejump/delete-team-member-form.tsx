@@ -5,7 +5,6 @@ import { removeTeamMember } from "@lib/actions/members";
 
 import { SubmitButton } from "../ui/submit-button";
 
-
 type Props = {
   accountId: string;
   teamMember: GetAccountMembersResponse[0];

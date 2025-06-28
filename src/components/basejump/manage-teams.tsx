@@ -10,13 +10,22 @@ import { Table, TableRow, TableBody, TableCell } from "../ui/table";
 
 import { SetPostingTeamButton } from "./set-posting-team-button";
 
+interface Team {
+  account_id: string;
+  name: string;
+  slug: string;
+  personal_account: boolean;
+  account_role: string;
+  is_primary_owner: boolean;
+}
+
 export default async function ManageTeams() {
   const supabaseClient = createClient();
 
   const { data } = await supabaseClient.rpc("get_accounts");
   const { data: personalAccount } = await supabaseClient.rpc("get_personal_account");
 
-  const teams: any[] = data?.filter((team: any) => team.personal_account === false) ?? [];
+  const teams: Team[] = data?.filter((team: Team) => !team.personal_account) ?? [];
   const currentPostingTeamId =
     personalAccount?.metadata?.posting_team_id ?? personalAccount?.account_id;
 
@@ -38,7 +47,7 @@ export default async function ManageTeams() {
                     <div className="flex gap-x-2">
                       {team.name}
                       <Badge variant={team.account_role === "owner" ? "default" : "outline"}>
-                        {team.is_primary_owner === true ? "Primary Owner" : team.account_role}
+                        {team.is_primary_owner ? "Primary Owner" : team.account_role}
                       </Badge>
                       {isPostingTeam && (
                         <Badge variant="secondary" className="bg-green-100 text-green-800">

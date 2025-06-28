@@ -47,7 +47,7 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
 
   useEffect(() => {
     fetchExpenseDetails();
-  }, []);
+  }, [fetchExpenseDetails]);
 
   if (loading) {
     return (

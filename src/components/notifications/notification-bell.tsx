@@ -200,7 +200,7 @@ export function NotificationBell() {
       authSubscription.unsubscribe();
       leaveSubscription();
     };
-  }, []);
+  });
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -258,7 +258,7 @@ export function NotificationBell() {
   };
 
   const getNotificationLink = (notification: Notification) => {
-    const metadata = notification.metadata as Record<string, unknown>;
+    const metadata = notification.metadata;
     const expenseId = metadata.expense_id;
     const link = metadata.link;
 

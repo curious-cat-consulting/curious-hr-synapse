@@ -5,7 +5,6 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { SubmitButton } from "../ui/submit-button";
 
-
 type Props = {
   accountId: string;
   returnUrl: string;
@@ -14,7 +13,7 @@ type Props = {
 export default async function AccountBillingStatus({ accountId, returnUrl }: Props) {
   const supabaseClient = createClient();
 
-  const { data, error } = await supabaseClient.functions.invoke("billing-functions", {
+  const { data } = await supabaseClient.functions.invoke("billing-functions", {
     body: {
       action: "get_billing_status",
       args: {
@@ -34,7 +33,7 @@ export default async function AccountBillingStatus({ accountId, returnUrl }: Pro
           <Alert variant="destructive">
             <AlertDescription>
               Billing is not enabled for this account. Check out usebasejump.com for more info or
-              remove this component if you don't plan on enabling billing.
+              remove this component if you don&apos;t plan on enabling billing.
             </AlertDescription>
           </Alert>
         ) : (

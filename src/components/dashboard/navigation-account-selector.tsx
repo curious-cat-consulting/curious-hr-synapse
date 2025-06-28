@@ -14,7 +14,7 @@ export default function NavigatingAccountSelector({ accountId }: Props) {
     <AccountSelector
       accountId={accountId}
       onAccountSelected={(account) =>
-        router.push(account?.personal_account ? `/dashboard` : `/dashboard/${account?.slug}`)
+        router.push(account.personal_account ? `/dashboard` : `/dashboard/${account.slug}`)
       }
     />
   );

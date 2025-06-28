@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import handleEdgeFunctionError from "../supabase/handle-edge-error";
 import { createClient } from "../supabase/server";
 
-export async function setupNewSubscription(prevState: any, formData: FormData) {
+export async function setupNewSubscription(prevState: unknown, formData: FormData) {
   "use server";
 
   const accountId = formData.get("accountId") as string;
@@ -21,14 +21,14 @@ export async function setupNewSubscription(prevState: any, formData: FormData) {
     },
   });
 
-  if (error) {
+  if (error != null) {
     return await handleEdgeFunctionError(error);
   }
 
   redirect(data.url);
 }
 
-export async function manageSubscription(prevState: any, formData: FormData) {
+export async function manageSubscription(prevState: unknown, formData: FormData) {
   "use server";
 
   const accountId = formData.get("accountId") as string;
@@ -45,7 +45,7 @@ export async function manageSubscription(prevState: any, formData: FormData) {
     },
   });
 
-  if (error) {
+  if (error != null) {
     return await handleEdgeFunctionError(error);
   }
 

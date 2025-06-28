@@ -88,7 +88,20 @@ export function AddLineItemDrawer({
     }
   }, [receipts, selectedReceiptId, type, open]);
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: {
+    receiptId?: string;
+    description?: string;
+    quantity?: string;
+    unitPrice?: string;
+    totalAmount?: string;
+    category?: string;
+    fromAddress?: string;
+    toAddress?: string;
+    milesDriven?: string;
+    milesTotalAmount?: string;
+    mileageRate?: number;
+    milesCategory?: string;
+  }) => {
     setIsSubmitting(true);
     setOpen(false);
 
@@ -126,9 +139,10 @@ export function AddLineItemDrawer({
       }
 
       onLineItemAdded?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error adding line item:", error);
-      toast.error(error.message ?? "Failed to add line item");
+      const errorMessage = error instanceof Error ? error.message : "Failed to add line item";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

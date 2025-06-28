@@ -6,8 +6,6 @@ import {
   SelectTrigger,
   SelectValue,
   SelectContent,
-  SelectGroup,
-  SelectLabel,
   SelectItem,
 } from "@components/ui/select";
 import { createInvitation } from "@lib/actions/invitations";
@@ -15,7 +13,6 @@ import fullInvitationUrl from "@lib/full-invitation-url";
 
 import { Label } from "../ui/label";
 import { SubmitButton } from "../ui/submit-button";
-
 
 type Props = {
   accountId: string;
@@ -41,8 +38,8 @@ export default function NewInvitationForm({ accountId }: Props) {
 
   return (
     <form className="flex w-full flex-1 flex-col justify-center gap-y-6 text-foreground animate-in">
-      {Boolean(state?.token) ? (
-        <div className="text-sm">{fullInvitationUrl(state.token!)}</div>
+      {Boolean(state.token) && state.token != null ? (
+        <div className="text-sm">{fullInvitationUrl(state.token)}</div>
       ) : (
         <>
           <input type="hidden" name="accountId" value={accountId} />
@@ -77,8 +74,8 @@ export default function NewInvitationForm({ accountId }: Props) {
             </Select>
           </div>
           <SubmitButton
-            formAction={async (prevState: any, formData: FormData) => formAction(formData)}
-            errorMessage={state?.message}
+            formAction={async (prevState: unknown, formData: FormData) => formAction(formData)}
+            errorMessage={state.message}
             pendingText="Creating..."
           >
             Create invitation

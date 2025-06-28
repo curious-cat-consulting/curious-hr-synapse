@@ -18,7 +18,14 @@ interface RegularLineItemFormProps {
   receipts: ReceiptMetadata[];
   selectedReceiptId?: string;
   categories: string[];
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: {
+    receiptId: string;
+    description: string;
+    category: string;
+    quantity: string;
+    unitPrice: string;
+    totalAmount: string;
+  }) => void;
   isSubmitting: boolean;
   onTotalChange?: (total: number) => void;
   expenseId?: string;

@@ -73,7 +73,7 @@ export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseD
 
   useEffect(() => {
     fetchExpenseDetails();
-  }, []);
+  }, [fetchExpenseDetails]);
 
   if (loading) {
     return (

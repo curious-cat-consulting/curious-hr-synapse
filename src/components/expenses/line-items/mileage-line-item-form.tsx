@@ -16,7 +16,14 @@ import {
 interface MileageLineItemFormProps {
   categories: string[];
   mileageRate: number;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: {
+    fromAddress: string;
+    toAddress: string;
+    milesCategory: string;
+    milesDriven: string;
+    milesTotalAmount: string;
+    mileageRate: number;
+  }) => void;
   isSubmitting: boolean;
   onTotalChange?: (total: number) => void;
 }

@@ -45,9 +45,10 @@ export function LineItemsList({
 
       toast.success("Line item deleted successfully");
       onLineItemDeleted?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting line item:", error);
-      toast.error(error.message ?? "Failed to delete line item");
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete line item";
+      toast.error(errorMessage);
     }
   };
 

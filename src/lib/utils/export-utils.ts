@@ -66,14 +66,12 @@ export function prepareExpenseDataForExport(
       id: expense.id,
       accountExpenseId: expense.account_expense_id,
       title: expense.title,
-      description: expense.description ?? "",
+      description: expense.description,
       amount: expense.amount,
       status: expense.status,
       createdAt: new Date(expense.created_at).toLocaleDateString(),
       updatedAt:
-        "updated_at" in expense && expense.updated_at != null
-          ? new Date(expense.updated_at).toLocaleDateString()
-          : undefined,
+        "updated_at" in expense ? new Date(expense.updated_at).toLocaleDateString() : undefined,
       userId: expense.user_id,
       userName: "user_name" in expense ? expense.user_name : undefined,
       accountName: expense.account_name,
@@ -142,7 +140,7 @@ export function prepareExpenseDataForExport(
 /**
  * Exports data to Excel/CSV file
  */
-export function exportToFile(data: any[], options: ExportOptions): void {
+export function exportToFile(data: unknown[], options: ExportOptions): void {
   if (data.length === 0) {
     throw new Error("No data to export");
   }
@@ -174,7 +172,7 @@ export function exportExpenses(expenses: (Expense | TeamExpense)[], options: Exp
     options.includeLineItems
   );
 
-  if (options.includeLineItems && lineItems.length > 0) {
+  if ((options.includeLineItems ?? false) && lineItems.length > 0) {
     // Create a workbook with multiple sheets
     const workbook = XLSX.utils.book_new();
 
@@ -229,7 +227,7 @@ export function exportExpenseDetails(expense: Expense, options: ExportOptions): 
     const receiptData = expense.receipt_metadata.map((rm) => ({
       receiptId: rm.receipt_id,
       vendorName: rm.vendor_name,
-      receiptDate: rm.receipt_date != null ? new Date(rm.receipt_date).toLocaleDateString() : "",
+      receiptDate: new Date(rm.receipt_date).toLocaleDateString(),
       receiptTotal: rm.receipt_total,
       taxAmount: rm.tax_amount,
       currencyCode: rm.currency_code,
