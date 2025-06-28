@@ -32,7 +32,7 @@ export function HeroSection() {
         </div>
         <div className="mt-12">
           <Image
-            src="/images/basejump-team-page.png"
+            src="/images/owner-dashboard.png"
             alt="Synapse Dashboard Preview"
             width={800}
             height={400}

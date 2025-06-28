@@ -1,7 +1,6 @@
 import ManageTeamInvitations from "@components/basejump/manage-team-invitations";
 import ManageTeamMembers from "@components/basejump/manage-team-members";
-import { Alert } from "@components/ui/alert";
-import { getAccountBySlug } from "@lib/actions/accounts";
+import { requireOwnerAccess } from "@lib/utils/owner-only";
 
 export default async function TeamMembersPage({
   params,
@@ -9,11 +8,7 @@ export default async function TeamMembersPage({
   params: Promise<{ accountSlug: string }>;
 }) {
   const { accountSlug } = await params;
-  const teamAccount = await getAccountBySlug(accountSlug);
-
-  if (teamAccount.account_role !== "owner") {
-    return <Alert variant="destructive">You do not have permission to access this page</Alert>;
-  }
+  const teamAccount = await requireOwnerAccess(accountSlug);
 
   return (
     <div className="flex flex-col gap-y-8">

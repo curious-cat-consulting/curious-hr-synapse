@@ -24,7 +24,7 @@ export function OwnerDashboard({ accountSlug, teamAccount }: Readonly<OwnerDashb
       </div>
 
       {/* Quick Actions */}
-      <QuickActions actions={teamQuickActions(accountSlug)} />
+      <QuickActions actions={teamQuickActions(accountSlug, teamAccount)} />
 
       {/* Dashboard Grid */}
       <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">

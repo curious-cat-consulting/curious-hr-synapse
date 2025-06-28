@@ -33,7 +33,7 @@ BEGIN
         'status', e.status,
         'created_at', e.created_at,
         'user_id', e.user_id,
-        'user_name', (SELECT name FROM basejump.accounts WHERE primary_owner_user_id = e.user_id AND personal_account = true)
+        'user_name', synapse.get_username(e.user_id)
       ) ORDER BY e.created_at DESC
     ), '[]'::json)
     FROM synapse.expenses e
@@ -54,6 +54,22 @@ GRANT EXECUTE ON FUNCTION public.get_team_expenses(text) TO authenticated;
 -- Add team owner policy for expenses
 CREATE POLICY "Team owners can view member expenses"
 ON synapse.expenses FOR SELECT
+TO authenticated
+USING (
+    -- Check if the expense is from a team account (not personal)
+    account_id IN (
+        SELECT a.id
+        FROM basejump.accounts a
+        WHERE a.personal_account = false
+    )
+    AND
+    -- Check if current user is an owner of the team account
+    basejump.has_role_on_account(account_id, 'owner')
+);
+
+-- Add team owner policy for updating member expenses
+CREATE POLICY "Team owners can update member expenses"
+ON synapse.expenses FOR UPDATE
 TO authenticated
 USING (
     -- Check if the expense is from a team account (not personal)
@@ -124,7 +140,7 @@ AS
 $$
 DECLARE
   expense_user_id uuid;
-  team_account_id uuid;
+  expense_account_id uuid;
   updated_expense synapse.expenses;
 BEGIN
   -- Check authentication
@@ -133,7 +149,7 @@ BEGIN
   END IF;
 
   -- Get the expense and verify it exists
-  SELECT user_id INTO expense_user_id
+  SELECT user_id, account_id INTO expense_user_id, expense_account_id
   FROM synapse.expenses
   WHERE id = update_expense_status.expense_id;
 
@@ -149,19 +165,8 @@ BEGIN
     WHERE id = update_expense_status.expense_id
     RETURNING * INTO updated_expense;
   ELSE
-    -- Check if the current user is a team owner and the expense belongs to a team member
-    SELECT au.account_id INTO team_account_id
-    FROM basejump.account_user au
-    WHERE au.user_id = expense_user_id
-    AND au.account_id IN (SELECT basejump.get_accounts_with_role('owner'))
-    LIMIT 1;
-
-    IF team_account_id IS NULL THEN
-      RAISE EXCEPTION 'Access denied: you can only update your own expenses or expenses of team members';
-    END IF;
-
-    -- Verify the current user is an owner of the team account
-    IF NOT basejump.has_role_on_account(team_account_id, 'owner') THEN
+    -- Check if the current user is a team owner of the expense's account
+    IF NOT basejump.has_role_on_account(expense_account_id, 'owner') THEN
       RAISE EXCEPTION 'Access denied: only team owners can update member expenses';
     END IF;
 

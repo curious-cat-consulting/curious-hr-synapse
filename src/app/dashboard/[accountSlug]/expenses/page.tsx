@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 
 import { TeamExpensesWithFilters } from "@/src/components/expenses/team-expenses-with-filters";
-import { ExpensesPageHeader } from "@components/expenses/expenses-page-header";
 import { getAccountBySlug } from "@lib/actions/accounts";
 import { getFraudDetectionData } from "@lib/actions/fraud-detection";
 import { createClient } from "@lib/supabase/server";
+import { OwnerOnlyPage } from "@lib/utils/owner-only";
 
 interface TeamExpensesPageProps {
   params: Promise<{
@@ -88,12 +88,6 @@ async function TeamExpensesContent({
 
   return (
     <div className="container mx-auto py-8">
-      <ExpensesPageHeader
-        fraudFilter={fraudFilter}
-        accountId={accountId}
-        accountName={accountName}
-      />
-
       <TeamExpensesWithFilters
         expenses={expenses}
         accountSlug={accountSlug}
@@ -101,6 +95,7 @@ async function TeamExpensesContent({
         fraudFilter={fraudFilter}
         accountId={accountId}
         initialFraudData={fraudData}
+        accountName={accountName}
       />
     </div>
   );
@@ -114,22 +109,24 @@ export default async function TeamExpensesPage({
   const { fraud } = await searchParams;
 
   return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto py-8">
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Team Expenses</h1>
-          </div>
-          <div className="flex items-center justify-center py-16">
-            <div className="text-center">
-              <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
-              <p className="text-gray-600">Loading team expenses...</p>
+    <OwnerOnlyPage accountSlug={accountSlug}>
+      <Suspense
+        fallback={
+          <div className="container mx-auto py-8">
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-2xl font-bold">Team Expenses</h1>
+            </div>
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+                <p className="text-gray-600">Loading team expenses...</p>
+              </div>
             </div>
           </div>
-        </div>
-      }
-    >
-      <TeamExpensesContent accountSlug={accountSlug} fraudFilter={fraud} />
-    </Suspense>
+        }
+      >
+        <TeamExpensesContent accountSlug={accountSlug} fraudFilter={fraud} />
+      </Suspense>
+    </OwnerOnlyPage>
   );
 }

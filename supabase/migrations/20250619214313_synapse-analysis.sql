@@ -1,5 +1,27 @@
 /*
 ===============================================================================
+                              HELPER FUNCTIONS
+===============================================================================
+*/
+
+/**
+  Small helper function to get username from user_id.
+  Uses SECURITY DEFINER to access personal account names.
+ */
+CREATE OR REPLACE FUNCTION synapse.get_username(user_id uuid)
+  RETURNS text
+  LANGUAGE sql
+  SECURITY DEFINER
+  SET search_path = ''
+AS
+$$
+SELECT u.name
+FROM basejump.accounts u 
+WHERE u.id = user_id AND u.personal_account;
+$$;
+
+/*
+===============================================================================
                               RPC FUNCTIONS
 ===============================================================================
 */
@@ -53,6 +75,7 @@ SELECT json_build_object(
   'created_at', e.created_at,
   'updated_at', e.updated_at,
   'user_id', e.user_id,
+  'user_name', synapse.get_username(e.user_id),
   'account_id', e.account_id,
   'account_name', a.name,
   'account_personal', a.personal_account,
@@ -294,8 +317,30 @@ BEGIN
 END;
 $$;
 
+/**
+  Gets storage object name for a specific receipt ID, ensuring user has access
+ */
+CREATE OR REPLACE FUNCTION public.get_receipt_download_info(expense_id uuid, receipt_id uuid)
+  RETURNS json
+  LANGUAGE sql
+  SET search_path = ''
+AS
+$$
+SELECT json_build_object(
+  'storage_name', obj.name,
+  'file_name', split_part(obj.name, '/', 3),
+  'mime_type', COALESCE(obj.metadata->>'mimetype', 'application/octet-stream')
+)
+FROM storage.objects obj
+WHERE obj.id = receipt_id
+  AND obj.bucket_id = 'receipts'
+  AND obj.owner_id::uuid = auth.uid();
+$$;
+
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expense_details(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_receipts_to_process(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.store_receipt_analyses(uuid, jsonb) TO authenticated;
-GRANT EXECUTE ON FUNCTION synapse.store_receipt_analysis(uuid, uuid, jsonb) TO authenticated; 
+GRANT EXECUTE ON FUNCTION synapse.store_receipt_analysis(uuid, uuid, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION synapse.get_username(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_receipt_download_info(uuid, uuid) TO authenticated; 

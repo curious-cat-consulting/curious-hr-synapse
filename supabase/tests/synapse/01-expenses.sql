@@ -27,7 +27,7 @@ select tests.rls_enabled('synapse', 'expenses');
 
 -- Test that RLS policies exist (updated for account-based policies)
 select policies_are('synapse', 'expenses', 
-    ARRAY['Users can view their own expenses', 'Users can insert expenses for their account', 'Users can update their account expenses', 'Team owners can view member expenses'],
+    ARRAY['Users can view their own expenses', 'Users can insert expenses for their account', 'Users can update their account expenses', 'Team owners can view member expenses', 'Team owners can update member expenses'],
     'Should have the correct RLS policies');
 
 -- === CRUD TESTS USING HELPERS ===

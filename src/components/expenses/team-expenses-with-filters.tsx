@@ -4,6 +4,7 @@ import { Users } from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
 
 import { useExpenseFilters } from "@/src/lib/hooks/use-expense-filters";
+import { ExpensesPageHeader } from "@components/expenses/expenses-page-header";
 import { TeamExpenseCard } from "@components/expenses/team-expense-card";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
@@ -18,9 +19,10 @@ interface TeamExpensesWithFiltersProps {
   expenses: TeamExpense[];
   accountSlug?: string;
   exportFilename?: string;
-  fraudFilter?: string | null;
+  fraudFilter?: string;
   accountId?: string;
   initialFraudData?: FraudData[] | null;
+  accountName?: string;
 }
 
 interface FraudData {
@@ -38,15 +40,22 @@ interface FraudData {
 }
 
 export function TeamExpensesWithFilters({
-  expenses,
+  expenses: initialExpenses,
   accountSlug,
   exportFilename,
   fraudFilter,
   accountId,
   initialFraudData,
+  accountName,
 }: Readonly<TeamExpensesWithFiltersProps>) {
+  const [expenses, setExpenses] = useState<TeamExpense[]>(initialExpenses);
   const [fraudData, setFraudData] = useState<FraudData[]>([]);
   const [isLoadingFraud, setIsLoadingFraud] = useState(false);
+
+  // Update expenses when initialExpenses changes (e.g., from server props)
+  useEffect(() => {
+    setExpenses(initialExpenses);
+  }, [initialExpenses]);
 
   const { filters, actions, filterExpenses, getUniqueUsers } = useExpenseFilters({
     includeTeamFeatures: true,
@@ -128,6 +137,32 @@ export function TeamExpensesWithFilters({
     }
   };
 
+  // Handle new expense creation
+  const handleExpenseCreated = async (expenseId: string) => {
+    try {
+      // Fetch the newly created expense to add to the list
+      const supabase = createClient();
+      const { data: newExpense, error } = await supabase.rpc("get_team_expenses", {
+        team_account_slug: accountSlug ?? "",
+      });
+
+      if (error != null) {
+        console.error("Error fetching new expense:", error);
+        return;
+      }
+
+      // Find the newly created expense in the fetched data
+      const createdExpense = newExpense?.find((expense: TeamExpense) => expense.id === expenseId);
+
+      if (createdExpense != null) {
+        // Add the new expense to the beginning of the list
+        setExpenses((prevExpenses) => [createdExpense, ...prevExpenses]);
+      }
+    } catch (error) {
+      console.error("Error handling new expense:", error);
+    }
+  };
+
   const EmptyState = () => (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-16">
@@ -151,10 +186,7 @@ export function TeamExpensesWithFilters({
             <NewExpenseDrawer
               accountId={accountId}
               accountName={accountSlug}
-              onExpenseCreated={() => {
-                // Refresh the page to show the new expense
-                window.location.reload();
-              }}
+              onExpenseCreated={handleExpenseCreated}
             />
           )}
         </div>
@@ -197,6 +229,13 @@ export function TeamExpensesWithFilters({
 
   return (
     <div className="space-y-6">
+      <ExpensesPageHeader
+        fraudFilter={fraudFilter ?? undefined}
+        accountId={accountId}
+        accountName={accountName}
+        onExpenseCreated={handleExpenseCreated}
+      />
+
       <ExpenseFilters
         statusFilters={filters.statusFilters}
         onStatusFiltersChange={actions.setStatusFilters}
@@ -213,6 +252,9 @@ export function TeamExpensesWithFilters({
         expenses={filteredAndSortedExpenses}
         exportFilename={exportFilename}
         fraudFilter={fraudFilter}
+        currentPage={1}
+        pageSize={filteredAndSortedExpenses.length}
+        totalCount={expenses.length}
       />
 
       {filteredAndSortedExpenses.length === 0 ? (

@@ -1,7 +1,7 @@
 import { Clock } from "lucide-react";
 import React from "react";
 
-import { Badge } from "@components/ui/badge";
+import { AccountBadge } from "@components/ui/account-badge";
 import { Card, CardContent } from "@components/ui/card";
 import { createClient } from "@lib/supabase/server";
 
@@ -68,7 +68,9 @@ export async function RecentActivity({ title, accountId }: RecentActivityProps) 
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                {accountId != null && <Badge variant="secondary">{expense.user_name}</Badge>}
+                {accountId != null && (
+                  <AccountBadge accountName={expense.user_name} isPersonal={true} />
+                )}
                 <span className="font-semibold">${expense.amount.toFixed(2)}</span>
                 <span
                   className={`rounded-full bg-gray-100 px-2 py-1 text-xs ${getStatusStyles(expense.status)}`}

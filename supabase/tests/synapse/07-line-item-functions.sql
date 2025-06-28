@@ -7,73 +7,52 @@ select plan(19);
 select has_function('public', 'add_receipt_line_item', ARRAY['uuid', 'uuid', 'text', 'decimal', 'decimal', 'decimal', 'text', 'date'], 'add_receipt_line_item function should exist');
 select has_function('public', 'delete_receipt_line_item', ARRAY['uuid'], 'delete_receipt_line_item function should exist');
 
--- Create test users
-select tests.create_supabase_user('test1', 'test1@test.com');
-select tests.create_supabase_user('test2', 'test2@test.com');
+-- Setup multi-user scenario using helper
+SELECT synapse_tests.setup_multi_user_scenario() as users \gset
 
--- Create test expenses for the users
-select tests.authenticate_as('test1');
-select public.create_expense('Test Expense 1', tests.get_supabase_uid('test1'), 'Test Description 1');
+-- Store user IDs for easy reference
+SELECT set_config('test.expense1_id', current_setting('test.user1_expense_id'), false);
+SELECT set_config('test.expense2_id', current_setting('test.user2_expense_id'), false);
 
-select tests.authenticate_as('test2');
-select public.create_expense('Test Expense 2', tests.get_supabase_uid('test2'), 'Test Description 2');
-
--- Set expense2_id while authenticated as test2
-DO $$
-DECLARE
-    expense2_id uuid;
-BEGIN
-    SELECT id INTO expense2_id FROM synapse.expenses WHERE user_id = tests.get_supabase_uid('test2') LIMIT 1;
-    PERFORM set_config('test.expense2_id', expense2_id::text, false);
-END $$;
-
--- Get expense IDs for testing
-select tests.authenticate_as('test1');
-DO $$
-DECLARE
-    expense1_id uuid;
-BEGIN
-    SELECT id INTO expense1_id FROM synapse.expenses WHERE user_id = tests.get_supabase_uid('test1') LIMIT 1;
-    
-    -- Store for later use
-    PERFORM set_config('test.expense1_id', expense1_id::text, false);
-END $$;
-
--- Insert storage.objects for both users and get the IDs
-select tests.authenticate_as('test1');
+-- Create receipt storage objects for both users using helper results
+select tests.authenticate_as('user1');
 select lives_ok(
     $$ insert into storage.objects (bucket_id, name, owner_id)
-       values ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense1_id'), '/test-receipt.png'), tests.get_supabase_uid('test1')) $$,
+       values ('receipts', concat(tests.get_supabase_uid('user1'), '/', current_setting('test.expense1_id'), '/test-receipt.png'), tests.get_supabase_uid('user1')) $$,
     'User1 should be able to create storage object for receipt'
 );
+
+-- Store receipt ID for user1
 DO $$
 DECLARE
     receipt1_obj_id uuid;
 BEGIN
     SELECT id INTO receipt1_obj_id FROM storage.objects 
-    WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense1_id'), '/test-receipt.png')
+    WHERE name = concat(tests.get_supabase_uid('user1'), '/', current_setting('test.expense1_id'), '/test-receipt.png')
     LIMIT 1;
     PERFORM set_config('test.receipt1_obj_id', receipt1_obj_id::text, false);
 END $$;
 
-select tests.authenticate_as('test2');
+select tests.authenticate_as('user2');
 select lives_ok(
     $$ insert into storage.objects (bucket_id, name, owner_id)
-       values ('receipts', concat(tests.get_supabase_uid('test2'), '/', current_setting('test.expense2_id'), '/test-receipt.png'), tests.get_supabase_uid('test2')) $$,
+       values ('receipts', concat(tests.get_supabase_uid('user2'), '/', current_setting('test.expense2_id'), '/test-receipt.png'), tests.get_supabase_uid('user2')) $$,
     'User2 should be able to create storage object for receipt'
 );
+
+-- Store receipt ID for user2
 DO $$
 DECLARE
     receipt2_obj_id uuid;
 BEGIN
     SELECT id INTO receipt2_obj_id FROM storage.objects 
-    WHERE name = concat(tests.get_supabase_uid('test2'), '/', current_setting('test.expense2_id'), '/test-receipt.png')
+    WHERE name = concat(tests.get_supabase_uid('user2'), '/', current_setting('test.expense2_id'), '/test-receipt.png')
     LIMIT 1;
     PERFORM set_config('test.receipt2_obj_id', receipt2_obj_id::text, false);
 END $$;
 
 -- Test add_receipt_line_item function - Success cases
-select tests.authenticate_as('test1');
+select tests.authenticate_as('user1');
 select lives_ok(
     $$ select public.add_receipt_line_item(
         current_setting('test.expense1_id')::uuid,
@@ -127,15 +106,16 @@ select throws_ok(
     'Should require positive total amount'
 );
 
-select throws_ok(
-    $$ select public.add_receipt_line_item(
-        current_setting('test.expense2_id')::uuid,
-        current_setting('test.receipt2_obj_id')::uuid,
-        'Test Item',
-        50.00
-    ) $$,
-    'Expense not found or access denied',
-    'Should not allow access to other user expense'
+-- Test cross-user access using helper
+select tests.authenticate_as('user2');
+SELECT synapse_tests.test_line_item_cross_user_access(
+  current_setting('test.expense1_id')::uuid,
+  current_setting('test.receipt1_obj_id')::uuid
+) as security_test \gset
+
+select ok(
+  (:'security_test'::json->>'success')::boolean,
+  'Cross-user access should be properly denied'
 );
 
 select tests.clear_authentication();
@@ -157,7 +137,7 @@ select throws_ok(
     'Should require authentication for deletion'
 );
 
-select tests.authenticate_as('test1');
+select tests.authenticate_as('user1');
 select throws_ok(
     $$ select public.delete_receipt_line_item('00000000-0000-0000-0000-000000000000'::uuid) $$,
     'Line item not found',
@@ -178,6 +158,8 @@ select lives_ok(
     ) $$,
     'Should be able to create manual line item for deletion test'
 );
+
+-- Store manual line item ID for deletion test
 DO $$
 DECLARE
     line_item_id uuid;
@@ -187,42 +169,48 @@ BEGIN
     LIMIT 1;
     PERFORM set_config('test.line_item_id', line_item_id::text, false);
 END $$;
+
 select lives_ok(
     $$ select public.delete_receipt_line_item(current_setting('test.line_item_id')::uuid) $$,
     'Should be able to delete manual line item'
 );
+
 select is(
     (select count(*)::int from synapse.receipt_line_items where id = current_setting('test.line_item_id')::uuid),
     0,
     'Manual line item should be hard deleted'
 );
 
--- Test soft deletion of AI-generated line item
-select lives_ok(
-    $$ insert into synapse.receipt_line_items (expense_id, receipt_id, description, quantity, unit_price, total_amount, category, is_ai_generated)
-       values (current_setting('test.expense1_id')::uuid, current_setting('test.receipt1_obj_id')::uuid, 'AI Item to Soft Delete', 1, 30.00, 30.00, 'Office Supplies', true) $$,
-    'Should be able to create AI-generated line item for soft deletion test'
+-- Test soft deletion of AI-generated line item using helper
+SELECT synapse_tests.create_line_item_for_testing(
+  current_setting('test.expense1_id')::uuid,
+  current_setting('test.receipt1_obj_id')::uuid,
+  'AI Item to Soft Delete',
+  1,
+  30.00,
+  'Office Supplies',
+  true  -- is_ai_generated = true
+) as ai_line_item_id \gset
+
+-- Test soft delete behavior using helper
+SELECT synapse_tests.test_line_item_soft_delete(:'ai_line_item_id'::uuid) as soft_delete_result \gset
+
+select ok(
+  (:'soft_delete_result'::json->>'soft_delete_worked')::boolean,
+  'AI-generated line item should be soft deleted correctly'
 );
-DO $$
-DECLARE
-    ai_line_item_id uuid;
-BEGIN
-    SELECT id INTO ai_line_item_id FROM synapse.receipt_line_items 
-    WHERE description = 'AI Item to Soft Delete' AND expense_id = current_setting('test.expense1_id')::uuid
-    LIMIT 1;
-    PERFORM set_config('test.ai_line_item_id', ai_line_item_id::text, false);
-END $$;
-select lives_ok(
-    $$ select public.delete_receipt_line_item(current_setting('test.ai_line_item_id')::uuid) $$,
-    'Should be able to soft delete AI-generated line item'
-);
+
 select is(
-    (select is_deleted from synapse.receipt_line_items where id = current_setting('test.ai_line_item_id')::uuid),
-    true,
-    'AI-generated line item should be soft deleted'
+  (:'soft_delete_result'::json->>'before_count')::int,
+  1,
+  'Item should exist before delete'
 );
 
-SELECT *
-FROM finish();
+select is(
+  (:'soft_delete_result'::json->>'after_count')::int,
+  0,
+  'Item should be hidden after delete'
+);
 
-ROLLBACK; 
+SELECT * FROM finish();
+ROLLBACK;

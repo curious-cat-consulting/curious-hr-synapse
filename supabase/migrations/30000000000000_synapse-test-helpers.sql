@@ -20,6 +20,7 @@ AS $$
 DECLARE
   user_id uuid;
   expense_result json;
+  username text;
   random_titles text[] := ARRAY[
     'Office Supplies Purchase',
     'Client Lunch Meeting',
@@ -41,12 +42,20 @@ DECLARE
     'Online course and certification fees'
   ];
 BEGIN
-  -- Create user if not exists and get user_id
-  PERFORM tests.create_supabase_user(split_part(p_user_email, '@', 1), p_user_email);
-  SELECT tests.get_supabase_uid(split_part(p_user_email, '@', 1)) INTO user_id;
+  -- Extract username from email
+  username := split_part(p_user_email, '@', 1);
+  
+  -- Check if user exists, create only if needed
+  BEGIN
+    SELECT tests.get_supabase_uid(username) INTO user_id;
+  EXCEPTION WHEN OTHERS THEN
+    -- User doesn't exist, create them
+    PERFORM tests.create_supabase_user(username, p_user_email);
+    SELECT tests.get_supabase_uid(username) INTO user_id;
+  END;
   
   -- Authenticate as the user
-  PERFORM tests.authenticate_as(split_part(p_user_email, '@', 1));
+  PERFORM tests.authenticate_as(username);
   
   -- Use provided title/description or generate random ones
   SELECT public.create_expense(
@@ -73,16 +82,21 @@ DECLARE
   user_id uuid;
   username text;
   expense_result json;
-  expense_id uuid;
+  v_expense_id uuid;
   receipt_obj_id uuid;
   storage_name text;
 BEGIN
   -- Extract username from email
   username := split_part(p_user_email, '@', 1);
   
-  -- Create user and get user_id
-  PERFORM tests.create_supabase_user(username, p_user_email);
-  SELECT tests.get_supabase_uid(username) INTO user_id;
+  -- Check if user exists, create only if needed
+  BEGIN
+    SELECT tests.get_supabase_uid(username) INTO user_id;
+  EXCEPTION WHEN OTHERS THEN
+    -- User doesn't exist, create them
+    PERFORM tests.create_supabase_user(username, p_user_email);
+    SELECT tests.get_supabase_uid(username) INTO user_id;
+  END;
   
   -- Authenticate as the user
   PERFORM tests.authenticate_as(username);
@@ -90,10 +104,10 @@ BEGIN
   -- Create expense
   SELECT public.create_expense(p_expense_title, user_id, 'Expense with receipt metadata') 
   INTO expense_result;
-  expense_id := (expense_result->>'id')::uuid;
+  v_expense_id := (expense_result->>'id')::uuid;
   
   -- Create storage object for receipt
-  storage_name := concat(user_id, '/', expense_id, '/', p_receipt_filename);
+  storage_name := concat(user_id, '/', v_expense_id, '/', p_receipt_filename);
   INSERT INTO storage.objects (bucket_id, name, owner_id)
   VALUES ('receipts', storage_name, user_id)
   RETURNING id INTO receipt_obj_id;
@@ -109,7 +123,7 @@ BEGIN
     currency_code
   )
   VALUES (
-    expense_id,
+    v_expense_id,
     receipt_obj_id,
     p_vendor_name,
     CURRENT_DATE - (random() * 30)::int,  -- Random date within last 30 days
@@ -145,7 +159,7 @@ DECLARE
   user_id uuid;
   username text;
   expense_result json;
-  expense_id uuid;
+  v_expense_id uuid;
   receipt_obj_id uuid;
   storage_name text;
   line_item jsonb;
@@ -155,9 +169,14 @@ BEGIN
   -- Extract username from email
   username := split_part(p_user_email, '@', 1);
   
-  -- Create user and get user_id
-  PERFORM tests.create_supabase_user(username, p_user_email);
-  SELECT tests.get_supabase_uid(username) INTO user_id;
+  -- Check if user exists, create only if needed
+  BEGIN
+    SELECT tests.get_supabase_uid(username) INTO user_id;
+  EXCEPTION WHEN OTHERS THEN
+    -- User doesn't exist, create them
+    PERFORM tests.create_supabase_user(username, p_user_email);
+    SELECT tests.get_supabase_uid(username) INTO user_id;
+  END;
   
   -- Authenticate as the user
   PERFORM tests.authenticate_as(username);
@@ -165,10 +184,10 @@ BEGIN
   -- Create expense
   SELECT public.create_expense(p_expense_title, user_id, 'Expense with line items') 
   INTO expense_result;
-  expense_id := (expense_result->>'id')::uuid;
+  v_expense_id := (expense_result->>'id')::uuid;
   
   -- Create storage object for receipt
-  storage_name := concat(user_id, '/', expense_id, '/receipt-with-items.png');
+  storage_name := concat(user_id, '/', v_expense_id, '/receipt-with-items.png');
   INSERT INTO storage.objects (bucket_id, name, owner_id)
   VALUES ('receipts', storage_name, user_id)
   RETURNING id INTO receipt_obj_id;
@@ -184,7 +203,7 @@ BEGIN
     currency_code
   )
   VALUES (
-    expense_id,
+    v_expense_id,
     receipt_obj_id,
     'Multi-Item Vendor',
     CURRENT_DATE,
@@ -208,7 +227,7 @@ BEGIN
       line_item_date
     )
     VALUES (
-      expense_id,
+      v_expense_id,
       receipt_obj_id,
       line_item->>'description',
       (line_item->>'quantity')::decimal,
@@ -224,9 +243,9 @@ BEGIN
   END LOOP;
   
   -- Update receipt metadata with correct total
-  UPDATE synapse.receipt_metadata 
+  UPDATE synapse.receipt_metadata rm
   SET receipt_total = total_amount
-  WHERE expense_id = expense_id AND receipt_id = receipt_obj_id;
+  WHERE rm.expense_id = v_expense_id AND rm.receipt_id = receipt_obj_id;
   
   -- Return comprehensive result
   RETURN json_build_object(
@@ -395,7 +414,7 @@ DECLARE
   user_id uuid;
   username text;
   expense_result json;
-  expense_id uuid;
+  v_expense_id uuid;
   mileage_total decimal;
 BEGIN
   -- Extract username and setup user
@@ -407,7 +426,7 @@ BEGIN
   -- Create expense
   SELECT public.create_expense(p_expense_title, user_id, 'Mileage expense') 
   INTO expense_result;
-  expense_id := (expense_result->>'id')::uuid;
+  v_expense_id := (expense_result->>'id')::uuid;
   
   -- Calculate mileage total
   mileage_total := p_miles * p_rate_per_mile;
@@ -425,7 +444,7 @@ BEGIN
     business_purpose
   )
   VALUES (
-    expense_id,
+    v_expense_id,
     format('Business trip - %.1f miles', p_miles),
     p_miles,
     p_rate_per_mile,
@@ -529,7 +548,7 @@ AS $$
 DECLARE
   username text;
   expense_result json;
-  expense_id uuid;
+  v_expense_id uuid;
   receipt_obj_id uuid;
   ai_line_item_id uuid;
   manual_line_item_id uuid;
@@ -542,7 +561,7 @@ BEGIN
     150.00
   ) INTO expense_result;
   
-  expense_id := (expense_result->'expense'->>'id')::uuid;
+  v_expense_id := (expense_result->'expense'->>'id')::uuid;
   receipt_obj_id := (expense_result->>'receipt_id')::uuid;
   
   -- Authenticate as user
@@ -551,7 +570,7 @@ BEGIN
   
   -- Create AI-generated line item
   SELECT synapse_tests.create_line_item_for_testing(
-    expense_id,
+    v_expense_id,
     receipt_obj_id,
     'AI Generated Item',
     2,
@@ -562,7 +581,7 @@ BEGIN
   
   -- Create manual line item
   SELECT synapse_tests.create_line_item_for_testing(
-    expense_id,
+    v_expense_id,
     receipt_obj_id,
     'Manual Item',
     1,

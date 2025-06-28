@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AccountBadge } from "@components/ui/account-badge";
 import { Card, CardContent } from "@components/ui/card";
 import { getStatusColor } from "@lib/utils";
 import type { TeamExpense } from "@type/expense";
@@ -75,7 +76,6 @@ export function TeamExpenseCard({
                   </div>
                   {Object.entries(fraudData.indicators).map(
                     ([key, value]) =>
-                      value != null &&
                       value !== "" && (
                         <div key={key} className="text-xs text-gray-600 dark:text-gray-400">
                           • {key.replace(/_/g, " ").toLowerCase()}: {value}
@@ -88,7 +88,13 @@ export function TeamExpenseCard({
             <div className="flex flex-col items-end gap-2 text-right">
               <p className="font-semibold">${expense.amount.toFixed(2)}</p>
               <div className="flex items-center gap-2">
-                {showUserName === true && <Badge variant="secondary">{expense.user_name}</Badge>}
+                {showUserName === true && (
+                  <AccountBadge
+                    accountName={expense.user_name}
+                    isPersonal={true}
+                    className="text-xs"
+                  />
+                )}
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
                     expense.status

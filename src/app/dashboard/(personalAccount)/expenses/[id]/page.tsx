@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ReceiptsAndLineItems } from "@/src/components/expenses/receipts-and-line-items";
 import { ExpenseApprovalButtons } from "@components/expenses/expense-approval-buttons";
 import { ExportExpenseDetailsButton } from "@components/expenses/export-expense-details-button";
+import { AccountBadge } from "@components/ui/account-badge";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
 import { LoadingSpinner } from "@components/ui/loading-spinner";
@@ -81,12 +82,11 @@ export default function ExpenseDetailsPage({ params }: Readonly<ExpenseDetailsPa
                     {expense.account_expense_id}
                   </span>
                   <h1 className="text-3xl font-bold">{expense.title}</h1>
-                  <Badge
-                    variant={expense.account_personal ? "secondary" : "default"}
+                  <AccountBadge
+                    accountName={expense.account_name}
+                    isPersonal={expense.account_personal}
                     className="text-xs"
-                  >
-                    {expense.account_name}
-                  </Badge>
+                  />
                 </div>
                 <p className="text-lg text-gray-600 dark:text-gray-400">{expense.description}</p>
               </div>

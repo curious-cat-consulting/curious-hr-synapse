@@ -1,41 +1,24 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(36);
+select plan(33);
 
 -- Test function existence
 select function_returns('public', 'get_expense_details', ARRAY['uuid'], 'json',
     'get_expense_details function should exist and return json');
 
--- Create test users
-select tests.create_supabase_user('test1', 'test1@test.com');
-select tests.create_supabase_user('test2', 'test2@test.com');
+-- Create test scenarios using helpers
+-- Scenario 1: Basic expense with no line items (test1 user)
+SELECT synapse_tests.create_random_expense('test1@test.com', 'Test Expense 1', 'Test Description 1') as expense1 \gset
+SELECT set_config('test.expense1_id', (:'expense1'::json)->>'id', false);
 
--- Create test expenses for the users
-select tests.authenticate_as('test1');
-select public.create_expense('Test Expense 1', tests.get_supabase_uid('test1'), 'Test Description 1');
-select public.create_expense('Test Expense 2', tests.get_supabase_uid('test1'), 'Test Description 2');
+-- Scenario 2: Second basic expense for same user
+SELECT synapse_tests.create_random_expense('test1@test.com', 'Test Expense 2', 'Test Description 2') as expense2 \gset
+SELECT set_config('test.expense2_id', (:'expense2'::json)->>'id', false);
 
-select tests.authenticate_as('test2');
-select public.create_expense('Test Expense 3', tests.get_supabase_uid('test2'), 'Test Description 3');
-
--- Get expense IDs for testing
-select tests.authenticate_as('test1');
-DO $$
-DECLARE
-    expense1_id uuid;
-    expense2_id uuid;
-    expense3_id uuid;
-BEGIN
-    SELECT id INTO expense1_id FROM synapse.expenses WHERE user_id = tests.get_supabase_uid('test1') AND title = 'Test Expense 1' LIMIT 1;
-    SELECT id INTO expense2_id FROM synapse.expenses WHERE user_id = tests.get_supabase_uid('test1') AND title = 'Test Expense 2' LIMIT 1;
-    SELECT id INTO expense3_id FROM synapse.expenses WHERE user_id = tests.get_supabase_uid('test2') AND title = 'Test Expense 3' LIMIT 1;
-    
-    -- Store for later use
-    PERFORM set_config('test.expense1_id', expense1_id::text, false);
-    PERFORM set_config('test.expense2_id', expense2_id::text, false);
-    PERFORM set_config('test.expense3_id', expense3_id::text, false);
-END $$;
+-- Scenario 3: Cross-user expense (test2 user)
+SELECT synapse_tests.create_random_expense('test2@test.com', 'Test Expense 3', 'Test Description 3') as expense3 \gset
+SELECT set_config('test.expense3_id', (:'expense3'::json)->>'id', false);
 
 -- Test basic expense details retrieval
 select tests.authenticate_as('test1');
@@ -112,85 +95,113 @@ select throws_ok(
   'get_expense_details should not allow unauthenticated users'
 );
 
--- Test with receipt line items
+-- Test with receipt line items using helper
 select tests.authenticate_as('test1');
 
--- Create storage object for receipt
-select lives_ok(
-    $$ insert into storage.objects (bucket_id, name, owner_id)
-       values ('receipts', concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense1_id'), '/test-receipt.png'), tests.get_supabase_uid('test1')) $$,
-    'User should be able to create storage object for receipt'
-);
+-- Create expense with receipt and line items using helper
+SELECT synapse_tests.create_expense_with_line_items(
+  'test1@test.com',
+  'Expense with Receipt Items',
+  '[
+    {"description": "Office Supplies", "quantity": 2, "unit_price": 25.00, "category": "Office"},
+    {"description": "Coffee", "quantity": 1, "unit_price": 5.00, "category": "Meals"}
+  ]'::jsonb
+) as expense_with_items \gset
 
--- Get the storage object ID
-DO $$
-DECLARE
-    receipt_obj_id uuid;
-BEGIN
-    SELECT id INTO receipt_obj_id FROM storage.objects 
-    WHERE name = concat(tests.get_supabase_uid('test1'), '/', current_setting('test.expense1_id'), '/test-receipt.png')
-    LIMIT 1;
-    
-    PERFORM set_config('test.receipt_obj_id', receipt_obj_id::text, false);
-END $$;
-
--- Add receipt line items
-select lives_ok(
-    $$ insert into synapse.receipt_line_items (expense_id, receipt_id, description, quantity, unit_price, total_amount, category, is_ai_generated, line_item_date)
-       values 
-         (current_setting('test.expense1_id')::uuid, current_setting('test.receipt_obj_id')::uuid, 'Office Supplies', 2, 25.00, 50.00, 'Office', true, '2024-01-15'),
-         (current_setting('test.expense1_id')::uuid, current_setting('test.receipt_obj_id')::uuid, 'Coffee', 1, 5.00, 5.00, 'Meals', false, '2024-01-15') $$,
-    'User should be able to insert receipt line items'
-);
-
--- Add receipt metadata to make the receipt "processed"
-select lives_ok(
-    $$ insert into synapse.receipt_metadata (expense_id, receipt_id, vendor_name, receipt_date, receipt_total, confidence_score, currency_code)
-       values (current_setting('test.expense1_id')::uuid, current_setting('test.receipt_obj_id')::uuid, 'Test Vendor', '2024-01-15', 55.00, 0.95, 'USD') $$,
-    'User should be able to insert receipt metadata'
-);
+-- Store the expense ID for testing
+SELECT set_config('test.expense_with_items_id', (:'expense_with_items'::json)->'expense'->>'id', false);
 
 -- Test that receipt line items are included in response
 select is(
-  (json_array_length((public.get_expense_details(current_setting('test.expense1_id')::uuid))->'receipt_line_items'))::text,
+  (json_array_length((public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'receipt_line_items'))::text,
   '2',
   'get_expense_details should include receipt line items in response'
 );
 
 -- Test receipt line item structure
 select ok(
-  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'receipt_line_items'->0->>'id' IS NOT NULL,
+  (public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'receipt_line_items'->0->>'id' IS NOT NULL,
   'Receipt line items should have id field'
 );
 
 select ok(
-  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'receipt_line_items'->0->>'_type' IS NOT NULL,
+  (public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'receipt_line_items'->0->>'_type' IS NOT NULL,
   'Receipt line items should have _type field'
 );
 
 select is(
-  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'receipt_line_items'->0->>'_type',
+  (public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'receipt_line_items'->0->>'_type',
   'regular',
   'Receipt line items should have _type set to regular'
 );
 
--- Test with mileage line items
+-- Test with mileage line items - add manually to existing expense
 select lives_ok(
     $$ insert into synapse.mileage_line_items (expense_id, from_address, to_address, category, miles_driven, mileage_rate, total_amount, line_item_date)
        values 
-         (current_setting('test.expense1_id')::uuid, '123 Main St', '456 Oak Ave', 'Business Travel', 25.5, 0.655, 16.70, '2024-01-15'),
-         (current_setting('test.expense1_id')::uuid, '456 Oak Ave', '789 Pine St', 'Client Meeting', 15.2, 0.75, 11.40, '2024-01-16') $$,
+         (current_setting('test.expense_with_items_id')::uuid, '123 Main St', '456 Oak Ave', 'Business Travel', 25.5, 0.655, 16.70, '2024-01-15'),
+         (current_setting('test.expense_with_items_id')::uuid, '456 Oak Ave', '789 Pine St', 'Client Meeting', 15.2, 0.75, 11.40, '2024-01-16') $$,
     'User should be able to insert mileage line items'
 );
 
 -- Test that mileage line items are included in response
 select is(
-  (json_array_length((public.get_expense_details(current_setting('test.expense1_id')::uuid))->'mileage_line_items'))::text,
+  (json_array_length((public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'mileage_line_items'))::text,
   '2',
   'get_expense_details should include mileage line items in response'
 );
 
--- Test that unprocessed_receipts field is included in response
+-- Test mileage line item structure
+select ok(
+  (public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'mileage_line_items'->0->>'id' IS NOT NULL,
+  'Mileage line items should have id field'
+);
+
+select ok(
+  (public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'mileage_line_items'->0->>'_type' IS NOT NULL,
+  'Mileage line items should have _type field'
+);
+
+select is(
+  (public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'mileage_line_items'->0->>'_type',
+  'miles',
+  'Mileage line items should have _type set to miles'
+);
+
+-- Test results_eq for mileage line items order
+select results_eq(
+  $$ select json_array_elements((public.get_expense_details(current_setting('test.expense_with_items_id')::uuid))->'mileage_line_items') ->> 'from_address' $$,
+  ARRAY['123 Main St', '456 Oak Ave'],
+  'Mileage line items should be ordered by created_at'
+);
+
+-- Test expense with no line items still returns empty arrays
+select is(
+  json_array_length((public.get_expense_details(current_setting('test.expense2_id')::uuid))->'receipt_line_items'),
+  0,
+  'Expense without receipt line items should return empty array'
+);
+
+select is(
+  json_array_length((public.get_expense_details(current_setting('test.expense2_id')::uuid))->'mileage_line_items'),
+  0,
+  'Expense without mileage line items should return empty array'
+);
+
+-- Test that account information is included
+SELECT results_eq(
+  $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_name' $$,
+  $$ SELECT 'test1' $$,
+  'get_expense_details should include account_name field'
+);
+
+SELECT results_eq(
+  $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_personal' $$,
+  $$ SELECT 'true' $$,
+  'get_expense_details should include account_personal field'
+);
+
+-- Test unprocessed_receipts field is included in response
 select ok(
   (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'unprocessed_receipts' IS NOT NULL,
   'get_expense_details should include unprocessed_receipts field'
@@ -234,63 +245,5 @@ select ok(
   'Unprocessed receipts should have path field'
 );
 
--- Test mileage line item structure
-select ok(
-  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'mileage_line_items'->0->>'id' IS NOT NULL,
-  'Mileage line items should have id field'
-);
-
-select ok(
-  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'mileage_line_items'->0->>'_type' IS NOT NULL,
-  'Mileage line items should have _type field'
-);
-
-select is(
-  (public.get_expense_details(current_setting('test.expense1_id')::uuid))->'mileage_line_items'->0->>'_type',
-  'miles',
-  'Mileage line items should have _type set to miles'
-);
-
--- Test results_eq for mileage line items order
-select results_eq(
-  $$ select json_array_elements((public.get_expense_details(current_setting('test.expense1_id')::uuid))->'mileage_line_items') ->> 'from_address' $$,
-  ARRAY['123 Main St', '456 Oak Ave'],
-  'Mileage line items should be ordered by created_at'
-);
-
--- Test expense with no line items still returns empty arrays
-select is(
-  json_array_length((public.get_expense_details(current_setting('test.expense2_id')::uuid))->'receipt_line_items'),
-  0,
-  'Expense without receipt line items should return empty array'
-);
-
-select is(
-  json_array_length((public.get_expense_details(current_setting('test.expense2_id')::uuid))->'mileage_line_items'),
-  0,
-  'Expense without mileage line items should return empty array'
-);
-
--- Test that account information is included
-SELECT results_eq(
-  $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_name' $$,
-  $$ SELECT 'test1' $$,
-  'get_expense_details should include account_name field'
-);
-
-SELECT results_eq(
-  $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_personal' $$,
-  $$ SELECT 'true' $$,
-  'get_expense_details should include account_personal field'
-);
-
--- SELECT results_eq(
---   $$ SELECT (public.get_expense_details(current_setting('test.expense1_id')::uuid))->>'account_id' $$,
---   $$ SELECT current_setting('test.personal_account_id') $$,
---   'get_expense_details should include account_id field'
--- );
-
-SELECT *
-FROM finish();
-
-ROLLBACK; 
+SELECT * FROM finish();
+ROLLBACK;

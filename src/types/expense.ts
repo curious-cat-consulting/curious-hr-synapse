@@ -9,6 +9,7 @@ export interface Expense {
   created_at: string;
   updated_at: string;
   user_id: string;
+  user_name: string;
   account_id: string;
   account_name: string;
   account_personal: boolean;

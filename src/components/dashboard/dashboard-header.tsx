@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import UserAccountButton from "@components/basejump/user-account-button";
 import NavigatingAccountSelector from "@components/dashboard/navigation-account-selector";
-import BasejumpLogo from "@components/getting-started/basejump-logo";
 import { NotificationBell } from "@components/notifications/notification-bell";
+import AppLogo from "@components/shared/app-logo";
 import { ThemeToggle } from "@components/theme-toggle";
 
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
@@ -21,9 +21,7 @@ export default function DashboardHeader({ accountId, navigation = [] }: Props) {
     <nav className="flex w-full items-center justify-between border-b p-4">
       <div className="hidden items-center justify-start gap-x-4 md:flex lg:gap-x-6">
         <div className="flex items-center gap-x-4">
-          <Link href="/">
-            <BasejumpLogo logoOnly />
-          </Link>
+          <AppLogo logoOnly />
           <span className="h-6 rotate-12 border-l" />
           <NavigatingAccountSelector accountId={accountId} />
         </div>
@@ -43,9 +41,7 @@ export default function DashboardHeader({ accountId, navigation = [] }: Props) {
         </SheetTrigger>
         <SheetContent side="left">
           <div className="absolute left-2 top-2">
-            <Link href="/">
-              <BasejumpLogo logoOnly />
-            </Link>
+            <AppLogo logoOnly />
           </div>
 
           <div className="-mx-4 flex flex-col items-center gap-y-4 pt-12 text-center">

@@ -1,12 +1,18 @@
+"use client";
+
 import { format } from "date-fns";
+import { useEffect, useState } from "react";
 
 import { DuplicateDetectionCard } from "@/src/components/expenses/duplicate-detection-card";
 import { ExpenseApprovalButtons } from "@/src/components/expenses/expense-approval-buttons";
-import { ReceiptsAndLineItemsWrapper } from "@/src/components/expenses/receipts-and-line-items-wrapper";
+import { ReceiptsAndLineItems } from "@/src/components/expenses/receipts-and-line-items";
 import { ExportExpenseDetailsButton } from "@components/expenses/export-expense-details-button";
+import { AccountBadge } from "@components/ui/account-badge";
 import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
-import { createClient } from "@lib/supabase/server";
+import { LoadingSpinner } from "@components/ui/loading-spinner";
+import { useCurrentUser } from "@lib/hooks/use-accounts";
+import { createClient } from "@lib/supabase/client";
 import { getStatusColor } from "@lib/utils";
 import type { Expense } from "@type/expense";
 
@@ -17,21 +23,62 @@ interface TeamExpenseDetailsPageProps {
   }>;
 }
 
-export default async function TeamExpenseDetailsPage({
-  params,
-}: Readonly<TeamExpenseDetailsPageProps>) {
-  const { accountSlug, id } = await params;
+interface AccountData {
+  account_id: string;
+  name: string;
+  metadata?: {
+    self_approvals_enabled?: boolean;
+  };
+}
 
-  const supabase = createClient();
-  const { data: expense, error } = await supabase.rpc("get_expense_details", {
-    expense_id: id,
-  });
+export default function TeamExpenseDetailsPage({ params }: Readonly<TeamExpenseDetailsPageProps>) {
+  const [expense, setExpense] = useState<Expense | null>(null);
+  const [accountData, setAccountData] = useState<AccountData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { data: currentUser } = useCurrentUser();
 
-  if (error !== null) {
-    console.error("Error fetching expense:", error);
+  const fetchExpenseDetails = async () => {
+    try {
+      const { id, accountSlug } = await params;
+      const supabase = createClient();
+
+      // Fetch expense details
+      const { data: expenseData, error: expenseError } = await supabase.rpc("get_expense_details", {
+        expense_id: id,
+      });
+
+      if (expenseError !== null) {
+        console.error("Error fetching expense:", expenseError);
+        return;
+      }
+
+      // Fetch account data to check self approvals setting
+      const { data: accountData, error: accountError } = await supabase.rpc("get_account_by_slug", {
+        slug: accountSlug,
+      });
+
+      if (accountError !== null) {
+        console.error("Error fetching account:", accountError);
+        return;
+      }
+
+      setExpense(expenseData as Expense);
+      setAccountData(accountData as AccountData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenseDetails();
+  }, []);
+
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Error loading expense</div>
+        <LoadingSpinner size="lg" text="Loading expense details..." />
       </div>
     );
   }
@@ -47,10 +94,16 @@ export default async function TeamExpenseDetailsPage({
   const expenseData = expense as Expense;
 
   // Get current user to check if they're the expense owner
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const isExpenseOwner = user?.id === expenseData.user_id;
+  const isExpenseOwner = currentUser?.id === expenseData.user_id;
+
+  // Check if self approvals are enabled for this account
+  const selfApprovalsEnabled = accountData?.metadata?.self_approvals_enabled ?? false;
+
+  // Show approval buttons if:
+  // 1. User is not the expense owner (existing logic), OR
+  // 2. User is the expense owner AND self approvals are enabled
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const shouldShowApprovalButtons = !isExpenseOwner || (isExpenseOwner && selfApprovalsEnabled);
 
   return (
     <div className="space-y-8">
@@ -66,12 +119,11 @@ export default async function TeamExpenseDetailsPage({
                     {expenseData.account_expense_id}
                   </span>
                   <h1 className="text-3xl font-bold">{expenseData.title}</h1>
-                  <Badge
-                    variant={expenseData.account_personal ? "secondary" : "default"}
+                  <AccountBadge
+                    accountName={expenseData.user_name}
+                    isPersonal={true}
                     className="text-xs"
-                  >
-                    {expenseData.account_name}
-                  </Badge>
+                  />
                 </div>
                 <p className="text-lg text-gray-600 dark:text-gray-400">
                   {expenseData.description}
@@ -88,14 +140,11 @@ export default async function TeamExpenseDetailsPage({
             </div>
 
             {/* Approval Buttons for Team Owners */}
-            {!isExpenseOwner && (
+            {shouldShowApprovalButtons && (
               <div className="mb-6">
                 <ExpenseApprovalButtons
                   expense={expenseData}
-                  onStatusUpdated={() => {
-                    // This will need to be handled differently in server component
-                    // For now, we'll rely on page refresh
-                  }}
+                  onStatusUpdated={fetchExpenseDetails}
                   isOwner={true}
                 />
               </div>
@@ -132,10 +181,16 @@ export default async function TeamExpenseDetailsPage({
         </Card>
 
         {/* Duplicate Detection Card */}
-        <DuplicateDetectionCard expenseId={id} accountSlug={accountSlug} />
+        <DuplicateDetectionCard expenseId={expenseData.id} accountSlug={expenseData.account_name} />
 
         {/* Receipts & Line Items with Tabs */}
-        <ReceiptsAndLineItemsWrapper expense={expenseData} isExpenseOwner={isExpenseOwner} />
+        <ReceiptsAndLineItems
+          expense={expenseData}
+          onReceiptsUploaded={fetchExpenseDetails}
+          onLineItemAdded={fetchExpenseDetails}
+          onLineItemDeleted={fetchExpenseDetails}
+          isExpenseOwner={isExpenseOwner}
+        />
       </div>
     </div>
   );

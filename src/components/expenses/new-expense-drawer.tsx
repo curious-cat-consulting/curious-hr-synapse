@@ -169,9 +169,6 @@ export function NewExpenseDrawer({
         // Ignore callback errors
       }
 
-      // Show success toast
-      toast.success("Expense report created successfully");
-
       // Reset form
       setTitle("");
       setDescription("");

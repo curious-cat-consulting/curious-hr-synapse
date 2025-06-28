@@ -78,3 +78,15 @@ INSERT INTO synapse.expenses (
   created_at, updated_at
 )
 SELECT * FROM final_expenses;
+
+-- update existing counters since circumventing create_expense
+INSERT INTO synapse.account_expense_counters (account_id, last_expense_id, updated_at)
+SELECT 
+  account_id,
+  COALESCE(MAX(account_expense_id), 0) as last_expense_id,
+  now() as updated_at
+FROM synapse.expenses
+GROUP BY account_id
+ON CONFLICT (account_id) DO UPDATE SET
+  last_expense_id = EXCLUDED.last_expense_id,
+  updated_at = EXCLUDED.updated_at;
