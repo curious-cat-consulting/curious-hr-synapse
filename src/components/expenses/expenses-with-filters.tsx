@@ -61,7 +61,7 @@ export function ExpensesWithFilters({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ExpenseFilters
         statusFilters={filters.statusFilters}
         onStatusFiltersChange={actions.setStatusFilters}
@@ -72,6 +72,9 @@ export function ExpensesWithFilters({
         onResetFilters={actions.resetFilters}
         expenses={filteredAndSortedExpenses}
         exportFilename={exportFilename}
+        currentPage={1}
+        pageSize={filteredAndSortedExpenses.length}
+        totalCount={expenses.length}
       />
 
       {filteredAndSortedExpenses.length === 0 ? (

@@ -59,6 +59,11 @@ interface ExpenseFiltersProps {
 
   // Fraud Filter
   fraudFilter?: string | null;
+
+  // Pagination (optional)
+  currentPage?: number;
+  pageSize?: number;
+  totalCount?: number;
 }
 
 const STATUS_OPTIONS: MultiSelectOption[] = [
@@ -86,6 +91,9 @@ export function ExpenseFilters({
   expenses = [],
   exportFilename,
   fraudFilter,
+  currentPage,
+  pageSize,
+  totalCount,
 }: ExpenseFiltersProps) {
   const hasActiveFilters = React.useMemo(() => {
     const defaultStatuses = ["NEW", "PENDING", "ANALYZED"];
@@ -99,12 +107,27 @@ export function ExpenseFilters({
     return hasNonDefaultStatus || hasUserFilter || hasNonDefaultSort || hasFraudFilter;
   }, [statusFilters, selectedUser, sortBy, includeTeamFeatures, fraudFilter]);
 
+  // Calculate page range for display
+  let pageDisplay: string | null = null;
+  if (
+    typeof currentPage === "number" &&
+    typeof pageSize === "number" &&
+    typeof totalCount === "number" &&
+    totalCount > 0 &&
+    currentPage > 0 &&
+    pageSize > 0
+  ) {
+    const start = (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalCount);
+    pageDisplay = `Showing ${start}–${end} of ${totalCount}`;
+  }
+
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Fraud Filter Indicator */}
       {fraudFilter === "high" && (
-        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
-          <CardContent className="p-4">
+        <Card className="mb-2 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+          <CardContent className="p-3">
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               <div className="flex-1">
@@ -127,10 +150,17 @@ export function ExpenseFilters({
         </Card>
       )}
 
+      {/* Page count display */}
+      {typeof pageDisplay === "string" && pageDisplay.length > 0 && (
+        <div className="mb-1 flex justify-end text-xs font-medium text-muted-foreground">
+          {pageDisplay}
+        </div>
+      )}
+
       <Card className="border-0 bg-gradient-to-r from-muted/50 to-muted/30">
-        <CardContent className="p-6">
+        <CardContent className="p-4 lg:p-5">
           {/* Reset Filters Button - Top Right */}
-          <div className="mb-4 flex justify-end gap-2">
+          <div className="mb-2 flex justify-end gap-2">
             {expenses.length > 0 && (
               <ExportExpenseButton
                 expenses={expenses}
@@ -152,9 +182,9 @@ export function ExpenseFilters({
             )}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr_1fr]">
+          <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
             {/* Status Filter */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="flex items-center gap-2 text-sm font-semibold">
                 <Filter className="h-4 w-4" />
                 Status Filter
@@ -171,7 +201,7 @@ export function ExpenseFilters({
 
             {/* User Filter - Only show for team features */}
             {includeTeamFeatures && onSelectedUserChange != null && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-semibold">
                   <Users className="h-4 w-4" />
                   User Filter
@@ -193,7 +223,7 @@ export function ExpenseFilters({
             )}
 
             {/* Sort Control */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="flex items-center gap-2 text-sm font-semibold">
                 <ListOrdered className="h-4 w-4" />
                 Sort
@@ -208,7 +238,7 @@ export function ExpenseFilters({
 
           {/* View Mode Toggle - Only for team features */}
           {includeTeamFeatures && onViewModeChange != null && (
-            <div className="mt-6 border-t border-border/50 pt-6">
+            <div className="mt-4 border-t border-border/50 pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-semibold">View Mode</Label>
                 <Tabs

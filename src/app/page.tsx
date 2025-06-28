@@ -1,4 +1,16 @@
-import { Receipt, Shield, Zap, Users, BarChart3, Star, Check, TrendingUp } from "lucide-react";
+import {
+  Receipt,
+  Shield,
+  Zap,
+  Users,
+  BarChart3,
+  Check,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  Globe,
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { HeroSection } from "@components/landing/hero-section";
@@ -177,6 +189,15 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+        <div className="mt-12">
+          <Image
+            src="/images/approvals.png"
+            alt="Synapse Dashboard Preview"
+            width={800}
+            height={400}
+            className="mx-auto rounded-lg border shadow-2xl"
+          />
+        </div>
       </section>
 
       {/* Pricing Plans */}
@@ -274,79 +295,105 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Why Choose Synapse */}
       <section className="container bg-muted/30 px-4 py-24">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Trusted by Teams Worldwide</h2>
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Why Choose Synapse</h2>
           <p className="mb-12 text-xl text-muted-foreground">
-            Join thousands of companies saving time and money
+            Built for modern teams who demand efficiency and accuracy
           </p>
 
           <div className="grid gap-8 md:grid-cols-3">
             <Card className="text-center">
               <CardContent className="pt-6">
                 <div className="mb-4 flex justify-center">
-                  {[...Array(5)].map((i) => (
-                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  ))}
+                  <Zap className="h-12 w-12 text-primary" />
                 </div>
-                <p className="mb-4 text-muted-foreground">
-                  &ldquo;Synapse has completely transformed our expense management. What used to
-                  take hours now takes minutes.&rdquo;
+                <h3 className="mb-4 text-lg font-semibold">Lightning Fast Processing</h3>
+                <p className="text-muted-foreground">
+                  AI-powered receipt analysis that processes expenses in seconds, not hours. Get
+                  instant insights and approvals for your team.
                 </p>
-                <p className="font-semibold">Sarah Johnson</p>
-                <p className="text-sm text-muted-foreground">CFO, TechCorp</p>
               </CardContent>
             </Card>
 
             <Card className="text-center">
               <CardContent className="pt-6">
                 <div className="mb-4 flex justify-center">
-                  {[...Array(5)].map((i) => (
-                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  ))}
+                  <Shield className="h-12 w-12 text-primary" />
                 </div>
-                <p className="mb-4 text-muted-foreground">
-                  &ldquo;The AI accuracy is incredible. We&rsquo;ve reduced our expense processing
-                  time by 80%.&rdquo;
+                <h3 className="mb-4 text-lg font-semibold">Built-in Fraud Detection</h3>
+                <p className="text-muted-foreground">
+                  Advanced AI algorithms automatically detect suspicious patterns and duplicates,
+                  protecting your organization from expense fraud.
                 </p>
-                <p className="font-semibold">Mike Chen</p>
-                <p className="text-sm text-muted-foreground">Operations Manager, StartupXYZ</p>
               </CardContent>
             </Card>
 
             <Card className="text-center">
               <CardContent className="pt-6">
                 <div className="mb-4 flex justify-center">
-                  {[...Array(5)].map((i) => (
-                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  ))}
+                  <Users className="h-12 w-12 text-primary" />
                 </div>
-                <p className="mb-4 text-muted-foreground">
-                  &ldquo;Best expense management solution we&rsquo;ve used. The team collaboration
-                  features are game-changing.&rdquo;
+                <h3 className="mb-4 text-lg font-semibold">Seamless Team Collaboration</h3>
+                <p className="text-muted-foreground">
+                  Streamlined approval workflows, real-time notifications, and comprehensive
+                  analytics that keep everyone on the same page.
                 </p>
-                <p className="font-semibold">Lisa Rodriguez</p>
-                <p className="text-sm text-muted-foreground">Finance Director, GlobalCo</p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 opacity-60">
-            <div className="text-2xl font-bold">500+</div>
-            <Separator orientation="vertical" className="h-8" />
-            <div className="text-2xl font-bold">10,000+</div>
-            <Separator orientation="vertical" className="h-8" />
-            <div className="text-2xl font-bold">$2M+</div>
-            <Separator orientation="vertical" className="h-8" />
-            <div className="text-2xl font-bold">99.9%</div>
+          <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <BarChart3 className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="mb-2 font-semibold">Real-time Analytics</h3>
+              <p className="text-sm text-muted-foreground">
+                Instant insights into spending patterns and team performance
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <CheckCircle className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="mb-2 font-semibold">99% AI Accuracy</h3>
+              <p className="text-sm text-muted-foreground">
+                Industry-leading accuracy for receipt processing and data extraction
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <Clock className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="mb-2 font-semibold">24/7 Processing</h3>
+              <p className="text-sm text-muted-foreground">
+                Submit expenses anytime and get instant AI analysis and feedback
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <Globe className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="mb-2 font-semibold">Global Ready</h3>
+              <p className="text-sm text-muted-foreground">
+                Multi-currency support and international compliance standards
+              </p>
+            </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
-            <div>Companies</div>
-            <div>Receipts Processed</div>
-            <div>Expenses Managed</div>
-            <div>Uptime</div>
-          </div>
+        </div>
+        <div className="mt-12">
+          <Image
+            src="/images/personal-analytics.png"
+            alt="Synapse Dashboard Preview"
+            width={800}
+            height={400}
+            className="mx-auto rounded-lg border shadow-2xl"
+          />
         </div>
       </section>
 
@@ -474,6 +521,15 @@ export default function LandingPage() {
           <p className="mt-4 text-sm text-muted-foreground">
             No credit card required • 14-day free trial • Cancel anytime
           </p>
+        </div>
+        <div className="mt-12">
+          <Image
+            src="/images/personal-dashboard.png"
+            alt="Synapse Dashboard Preview"
+            width={800}
+            height={400}
+            className="mx-auto rounded-lg border shadow-2xl"
+          />
         </div>
       </section>
 

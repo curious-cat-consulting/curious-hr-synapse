@@ -252,6 +252,9 @@ export function TeamExpensesWithFilters({
         expenses={filteredAndSortedExpenses}
         exportFilename={exportFilename}
         fraudFilter={fraudFilter}
+        currentPage={1}
+        pageSize={filteredAndSortedExpenses.length}
+        totalCount={expenses.length}
       />
 
       {filteredAndSortedExpenses.length === 0 ? (
