@@ -16,6 +16,11 @@ export default async function Login({
   const signIn = async (_prevState: unknown, formData: FormData) => {
     "use server";
 
+    // Helper function to check if returnUrl is valid
+    const isValidReturnUrl = (url: string | undefined): boolean => {
+      return url != null && url !== "" && url !== "undefined";
+    };
+
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const supabase = createClient();
@@ -26,14 +31,24 @@ export default async function Login({
     });
 
     if (error !== null) {
-      return redirect(`/login?message=Could not authenticate user&returnUrl=${params.returnUrl}`);
+      // Only include returnUrl if it's valid
+      const returnUrlParam = isValidReturnUrl(params.returnUrl)
+        ? `&returnUrl=${params.returnUrl}`
+        : "";
+      return redirect(`/login?message=Could not authenticate user${returnUrlParam}`);
     }
 
-    return redirect(params.returnUrl ?? "/dashboard");
+    // Only redirect to returnUrl if it's valid, otherwise go to dashboard
+    return redirect(isValidReturnUrl(params.returnUrl) ? params.returnUrl! : "/dashboard");
   };
 
   const signUp = async (_prevState: unknown, formData: FormData) => {
     "use server";
+
+    // Helper function to check if returnUrl is valid
+    const isValidReturnUrl = (url: string | undefined): boolean => {
+      return url != null && url !== "" && url !== "undefined";
+    };
 
     const headersList = await headers();
     const origin = headersList.get("origin");
@@ -45,17 +60,26 @@ export default async function Login({
       email,
       password,
       options: {
-        emailRedirectTo: `${origin}/auth/callback?returnUrl=${params.returnUrl}`,
+        // Only include returnUrl in emailRedirectTo if it's valid
+        emailRedirectTo: isValidReturnUrl(params.returnUrl)
+          ? `${origin}/auth/callback?returnUrl=${params.returnUrl}`
+          : `${origin}/auth/callback`,
       },
     });
 
     if (error !== null) {
-      return redirect(`/login?message=Could not authenticate user&returnUrl=${params.returnUrl}`);
+      // Only include returnUrl if it's valid
+      const returnUrlParam = isValidReturnUrl(params.returnUrl)
+        ? `&returnUrl=${params.returnUrl}`
+        : "";
+      return redirect(`/login?message=Could not authenticate user${returnUrlParam}`);
     }
 
-    return redirect(
-      `/login?message=Check email to continue sign in process&returnUrl=${params.returnUrl}`
-    );
+    // Only include returnUrl in success message if it's valid
+    const returnUrlParam = isValidReturnUrl(params.returnUrl)
+      ? `&returnUrl=${params.returnUrl}`
+      : "";
+    return redirect(`/login?message=Check email to continue sign in process${returnUrlParam}`);
   };
 
   return (
@@ -103,10 +127,15 @@ export default async function Login({
           autoComplete="current-password"
           required
         />
-        <SubmitButton formAction={signIn} pendingText="Signing In...">
+        <SubmitButton formAction={signIn} pendingText="Signing In..." data-testid="sign-in-button">
           Sign In
         </SubmitButton>
-        <SubmitButton formAction={signUp} variant="outline" pendingText="Signing Up...">
+        <SubmitButton
+          formAction={signUp}
+          variant="outline"
+          pendingText="Signing Up..."
+          data-testid="sign-up-button"
+        >
           Sign Up
         </SubmitButton>
         {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}

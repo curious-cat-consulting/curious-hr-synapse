@@ -91,7 +91,7 @@ export function LineItemsList({
               receipts={receipts}
               selectedReceiptId={selectedReceiptId}
               trigger={
-                <Button size="sm">
+                <Button size="sm" data-testid="add-line-item-button">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Line Item
                 </Button>

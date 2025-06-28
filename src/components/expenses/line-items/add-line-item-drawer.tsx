@@ -164,7 +164,7 @@ export function AddLineItemDrawer({
     <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerTrigger asChild>
         {trigger ?? (
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" data-testid="add-line-item-drawer-trigger">
             <Plus className="h-4 w-4" />
           </Button>
         )}
@@ -233,6 +233,7 @@ export function AddLineItemDrawer({
               disabled={isSubmitting}
               form={type === "regular" ? "regular-line-item-form" : "mileage-line-item-form"}
               className="flex-1"
+              data-testid="add-line-item-submit-button"
             >
               {isSubmitting ? "Adding..." : "Add Line Item"}
             </Button>

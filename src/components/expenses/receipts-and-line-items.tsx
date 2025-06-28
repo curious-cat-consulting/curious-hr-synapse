@@ -164,6 +164,7 @@ export function ReceiptsAndLineItems({
                                 variant="outline"
                                 onClick={() => openAddDrawer(receipt.receipt_id)}
                                 className="ml-2"
+                                data-testid="add-line-item-from-receipt"
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>

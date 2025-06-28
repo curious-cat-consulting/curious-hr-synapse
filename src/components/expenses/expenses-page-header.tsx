@@ -20,11 +20,13 @@ export function ExpensesPageHeader({
       <h1 className="text-2xl font-bold">
         {fraudFilter === "high" ? "Fraud Flagged Expenses" : "Team Expenses"}
       </h1>
-      <NewExpenseDrawer
-        onExpenseCreated={onExpenseCreated}
-        accountId={accountId}
-        accountName={accountName}
-      />
+      <div data-testid="expenses-page-new-expense">
+        <NewExpenseDrawer
+          onExpenseCreated={onExpenseCreated}
+          accountId={accountId}
+          accountName={accountName}
+        />
+      </div>
     </div>
   );
 }

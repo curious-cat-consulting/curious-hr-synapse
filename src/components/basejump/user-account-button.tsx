@@ -29,7 +29,7 @@ export default async function UserAccountButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
+        <Button variant="ghost" data-testid="user-account-button">
           <UserIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -55,7 +55,7 @@ export default async function UserAccountButton() {
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <form action={signOut}>
-            <button>Log out</button>
+            <button data-testid="logout-button">Log out</button>
           </form>
         </DropdownMenuItem>
       </DropdownMenuContent>

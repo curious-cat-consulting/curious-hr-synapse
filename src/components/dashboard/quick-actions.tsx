@@ -102,7 +102,11 @@ export const personalQuickActions: QuickAction[] = [
     title: "Submit Expense",
     description: "Upload receipts and let AI extract the details",
     badge: { text: "New", variant: "secondary" },
-    action: <NewExpenseDrawer fullWidth={true} />,
+    action: (
+      <div data-testid="quick-actions-new-expense">
+        <NewExpenseDrawer fullWidth={true} />
+      </div>
+    ),
   },
   {
     icon: <CheckCircle className="h-5 w-5 text-green-600" />,
@@ -110,7 +114,13 @@ export const personalQuickActions: QuickAction[] = [
     description: "View and manage all your submitted expenses",
     badge: { text: "View", variant: "outline" },
     action: (
-      <Button asChild className="w-full" size="sm" variant="outline">
+      <Button
+        asChild
+        className="w-full"
+        size="sm"
+        variant="outline"
+        data-testid="my-expenses-button"
+      >
         <Link href="/dashboard/expenses">View Expenses</Link>
       </Button>
     ),
@@ -121,7 +131,13 @@ export const personalQuickActions: QuickAction[] = [
     description: "Track your spending patterns and trends",
     badge: { text: "Analytics", variant: "outline" },
     action: (
-      <Button asChild className="w-full" size="sm" variant="outline">
+      <Button
+        asChild
+        className="w-full"
+        size="sm"
+        variant="outline"
+        data-testid="spending-insights-button"
+      >
         <Link href="/dashboard/analytics">View Analytics</Link>
       </Button>
     ),
@@ -132,7 +148,13 @@ export const personalQuickActions: QuickAction[] = [
     description: "Manage your account preferences and profile",
     badge: { text: "Settings", variant: "outline" },
     action: (
-      <Button asChild className="w-full" size="sm" variant="outline">
+      <Button
+        asChild
+        className="w-full"
+        size="sm"
+        variant="outline"
+        data-testid="account-settings-button"
+      >
         <Link href="/dashboard/settings">Manage Settings</Link>
       </Button>
     ),

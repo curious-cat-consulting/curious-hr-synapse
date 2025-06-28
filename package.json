@@ -10,7 +10,13 @@
     "format": "prettier --write .",
     "db:reset": "npx supabase db reset",
     "db:test": "npx supabase test db",
-    "update": "npx npm-check-updates -u && npm i"
+    "update": "npx npm-check-updates -u && npm i",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:install": "playwright install",
+    "test:e2e:setup": "echo 'Please ensure your .env.local file contains: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and NEXT_PUBLIC_URL'"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
@@ -55,11 +61,13 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.1",
     "@types/google.maps": "^3.58.1",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "20.11.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "dotenv": "^16.4.5",
     "encoding": "^0.1.13",
     "eslint": "8",
     "eslint-config-next": "^15.3.3",

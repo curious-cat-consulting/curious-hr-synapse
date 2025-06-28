@@ -198,7 +198,7 @@ export function NewExpenseDrawer({
     <>
       <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerTrigger asChild>
-          <Button className={fullWidth === true ? "w-full" : ""}>
+          <Button className={fullWidth === true ? "w-full" : ""} data-testid="new-expense-button">
             <Plus className="mr-2 h-4 w-4" />
             New Expense
           </Button>
@@ -269,6 +269,7 @@ export function NewExpenseDrawer({
                 disabled={isSubmitting || isLoadingAccount}
                 form="new-expense-form"
                 className="flex-1"
+                data-testid="create-expense-button"
               >
                 {isSubmitting ? "Creating..." : "Create Expense Report"}
               </Button>
