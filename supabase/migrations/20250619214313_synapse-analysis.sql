@@ -317,9 +317,30 @@ BEGIN
 END;
 $$;
 
+/**
+  Gets storage object name for a specific receipt ID, ensuring user has access
+ */
+CREATE OR REPLACE FUNCTION public.get_receipt_download_info(expense_id uuid, receipt_id uuid)
+  RETURNS json
+  LANGUAGE sql
+  SET search_path = ''
+AS
+$$
+SELECT json_build_object(
+  'storage_name', obj.name,
+  'file_name', split_part(obj.name, '/', 3),
+  'mime_type', COALESCE(obj.metadata->>'mimetype', 'application/octet-stream')
+)
+FROM storage.objects obj
+WHERE obj.id = receipt_id
+  AND obj.bucket_id = 'receipts'
+  AND obj.owner_id::uuid = auth.uid();
+$$;
+
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.get_expense_details(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_receipts_to_process(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.store_receipt_analyses(uuid, jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION synapse.store_receipt_analysis(uuid, uuid, jsonb) TO authenticated;
-GRANT EXECUTE ON FUNCTION synapse.get_username(uuid) TO authenticated; 
+GRANT EXECUTE ON FUNCTION synapse.get_username(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_receipt_download_info(uuid, uuid) TO authenticated; 

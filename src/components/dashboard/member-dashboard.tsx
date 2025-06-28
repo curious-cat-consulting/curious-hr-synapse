@@ -1,4 +1,4 @@
-import { FileText, Calendar, Users } from "lucide-react";
+import { FileText, Calendar, Users, Target } from "lucide-react";
 import Link from "next/link";
 
 import { RecentActivity } from "@components/dashboard/recent-activity";
@@ -16,9 +16,14 @@ interface MemberDashboardProps {
     account_role: string;
     is_primary_owner: boolean;
   };
+  isPostingTeam: boolean;
 }
 
-export function MemberDashboard({ teamAccount, userRole }: Readonly<MemberDashboardProps>) {
+export function MemberDashboard({
+  teamAccount,
+  userRole,
+  isPostingTeam,
+}: Readonly<MemberDashboardProps>) {
   return (
     <div className="container mx-auto max-w-7xl p-6">
       {/* Header */}
@@ -92,6 +97,15 @@ export function MemberDashboard({ teamAccount, userRole }: Readonly<MemberDashbo
                   {userRole.is_primary_owner && <Badge variant="outline">Primary Owner</Badge>}
                 </div>
               </div>
+              {isPostingTeam && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Posting Team</p>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Target className="mr-1 h-3 w-3" />
+                    Posting Team
+                  </Badge>
+                </div>
+              )}
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Team ID</p>
                 <p className="rounded bg-muted p-2 font-mono text-sm">{teamAccount.account_id}</p>

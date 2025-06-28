@@ -4,6 +4,7 @@ import { Receipt, FileText, Plus, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 import { LineItemsList } from "@/src/components/expenses/line-items/line-items-list";
+import { ReceiptDownloadButton } from "@/src/components/expenses/receipt-download-button";
 import { ReceiptUploader } from "@/src/components/shared/receipt-uploader";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
@@ -94,12 +95,20 @@ export function ReceiptsAndLineItems({
                             </p>
                           </div>
                         </div>
-                        <Badge
-                          variant="secondary"
-                          className="flex-shrink-0 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                        >
-                          Pending Analysis
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <ReceiptDownloadButton
+                            expenseId={expense.id}
+                            receiptId={receipt.id}
+                            variant="outline"
+                            size="sm"
+                          />
+                          <Badge
+                            variant="secondary"
+                            className="flex-shrink-0 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                          >
+                            Pending Analysis
+                          </Badge>
+                        </div>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         This receipt was uploaded but hasn&apos;t been analyzed yet. It will be
@@ -137,6 +146,12 @@ export function ReceiptsAndLineItems({
                             Confidence: {(receipt.confidence_score * 100).toFixed(1)}%
                           </p>
                         </div>
+                        <ReceiptDownloadButton
+                          expenseId={expense.id}
+                          receiptId={receipt.receipt_id}
+                          variant="outline"
+                          size="sm"
+                        />
                         {canEdit && isExpenseOwner && (
                           <AddLineItemDrawer
                             expenseId={expense.id}

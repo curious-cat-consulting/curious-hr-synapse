@@ -2,6 +2,7 @@ import { Receipt, Shield, Zap, Users, BarChart3, Star, Check, TrendingUp } from 
 import Link from "next/link";
 
 import { HeroSection } from "@components/landing/hero-section";
+import AppLogo from "@components/shared/app-logo";
 import { ThemeToggle } from "@components/theme-toggle";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
@@ -15,8 +16,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Receipt className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">Synapse</span>
+            <AppLogo />
           </div>
           <div className="flex items-center space-x-4">
             <ThemeToggle />
@@ -286,7 +286,7 @@ export default function LandingPage() {
             <Card className="text-center">
               <CardContent className="pt-6">
                 <div className="mb-4 flex justify-center">
-                  {[...Array(5)].map((_, i) => (
+                  {[...Array(5)].map((i) => (
                     <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
@@ -302,7 +302,7 @@ export default function LandingPage() {
             <Card className="text-center">
               <CardContent className="pt-6">
                 <div className="mb-4 flex justify-center">
-                  {[...Array(5)].map((_, i) => (
+                  {[...Array(5)].map((i) => (
                     <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
@@ -318,7 +318,7 @@ export default function LandingPage() {
             <Card className="text-center">
               <CardContent className="pt-6">
                 <div className="mb-4 flex justify-center">
-                  {[...Array(5)].map((_, i) => (
+                  {[...Array(5)].map((i) => (
                     <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
