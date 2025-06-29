@@ -196,6 +196,7 @@ export function ExpenseFilters({
                 placeholder="Select statuses..."
                 searchPlaceholder="Search statuses..."
                 emptyText="No statuses found"
+                data-testid="status-filter"
               />
             </div>
 

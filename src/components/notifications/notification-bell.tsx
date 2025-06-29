@@ -294,12 +294,13 @@ export function NotificationBell() {
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpenChange}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="relative" data-testid="notification-bell">
+          <Bell className="h-4 w-4" data-testid="bell-icon" />
           {safeUnreadCount > 0 && (
             <Badge
               variant="destructive"
               className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
+              data-testid="notification-badge"
             >
               {safeUnreadCount > 99 ? "99+" : safeUnreadCount}
             </Badge>
@@ -307,7 +308,7 @@ export function NotificationBell() {
           <span className="sr-only">Notifications</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80" data-testid="notification-dropdown">
         <div className="flex items-center justify-between p-4">
           <h4 className="font-semibold">Notifications</h4>
           {notifications.length > 0 && (
@@ -320,6 +321,7 @@ export function NotificationBell() {
                     onClick={markAllAsRead}
                     disabled={isLoading || safeUnreadCount === 0}
                     aria-label="Mark all as read"
+                    data-testid="mark-all-read-button"
                   >
                     <Check className="h-4 w-4" />
                   </Button>
@@ -335,6 +337,7 @@ export function NotificationBell() {
                     disabled={isLoading}
                     aria-label="Clear all notifications"
                     className="text-destructive hover:text-destructive"
+                    data-testid="delete-all-button"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -347,7 +350,10 @@ export function NotificationBell() {
         <Separator />
         <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
+            <div
+              className="p-4 text-center text-sm text-muted-foreground"
+              data-testid="no-notifications"
+            >
               No notifications yet
             </div>
           ) : (
@@ -362,6 +368,7 @@ export function NotificationBell() {
                   className={`flex cursor-pointer flex-col items-start gap-2 p-4 ${
                     isUnread ? "bg-muted/50" : ""
                   }`}
+                  data-testid={`notification-item-${notification.id}`}
                   onClick={() => {
                     if (link != null) {
                       window.location.href = link;

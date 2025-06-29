@@ -24,7 +24,7 @@ export function ExpenseSortControl({
   return (
     <div className="flex items-center gap-2">
       <Select value={sortBy} onValueChange={(value: ExpenseSortOption) => onSortChange(value)}>
-        <SelectTrigger id="sort" className="w-40">
+        <SelectTrigger id="sort" className="w-40" data-testid="sort-control">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

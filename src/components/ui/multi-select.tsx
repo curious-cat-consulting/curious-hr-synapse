@@ -32,6 +32,7 @@ interface MultiSelectProps {
   maxDisplay?: number;
   searchPlaceholder?: string;
   emptyText?: string;
+  "data-testid"?: string;
 }
 
 export function MultiSelect({
@@ -44,7 +45,8 @@ export function MultiSelect({
   maxDisplay = 3,
   searchPlaceholder = "Search...",
   emptyText = "No options found",
-}: MultiSelectProps) {
+  "data-testid": dataTestId,
+}: Readonly<MultiSelectProps>) {
   const [open, setOpen] = React.useState(false);
 
   const handleUnselect = (value: string) => {
@@ -86,6 +88,7 @@ export function MultiSelect({
             className
           )}
           disabled={disabled}
+          data-testid={dataTestId}
         >
           <div className="flex flex-nowrap gap-1 overflow-hidden">
             {selected.length <= maxDisplay ? (
