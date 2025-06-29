@@ -36,7 +36,10 @@ export async function RecentActivity({ title, accountId }: RecentActivityProps) 
   if (error != null || !Array.isArray(expenses) || expenses.length === 0) {
     content = (
       <div className="py-8 text-center">
-        <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+        <Clock
+          className="mx-auto mb-4 h-12 w-12 text-muted-foreground"
+          data-testid="recent-activity-empty-clock"
+        />
         <p className="text-muted-foreground">
           Recent activity will appear here as you start submitting expenses
         </p>
@@ -44,7 +47,7 @@ export async function RecentActivity({ title, accountId }: RecentActivityProps) 
     );
   } else {
     content = (
-      <ul className="divide-y">
+      <ul className="divide-y" data-testid="recent-activity">
         {expenses.map(
           (expense: {
             id: string;
@@ -74,6 +77,7 @@ export async function RecentActivity({ title, accountId }: RecentActivityProps) 
                 <span className="font-semibold">${expense.amount.toFixed(2)}</span>
                 <span
                   className={`rounded-full bg-gray-100 px-2 py-1 text-xs ${getStatusStyles(expense.status)}`}
+                  data-testid={`expense-status-${expense.status.toLowerCase()}`}
                 >
                   {expense.status}
                 </span>

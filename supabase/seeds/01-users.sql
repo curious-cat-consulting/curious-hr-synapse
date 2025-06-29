@@ -69,21 +69,4 @@ INSERT INTO auth.users (
   '',
   '',
   ''
-),
-(
-  '00000000-0000-0000-0000-000000000000',
-  gen_random_uuid(),
-  'authenticated',
-  'authenticated',
-  'test@curiouscat.consulting',
-  crypt('curious', gen_salt('bf')),
-  current_timestamp,
-  '{"provider":"email","providers":["email"]}',
-  '{"full_name":"Curious Cat Tester","avatar_url":"https://th.bing.com/th/id/OIP.Q6R49EFCR62g4QtakGPRFAHaHZ?rs=1&pid=ImgDetMain&cb=idpwebpc1"}',
-  current_timestamp,
-  current_timestamp,
-  '',
-  '',
-  '',
-  ''
 );
