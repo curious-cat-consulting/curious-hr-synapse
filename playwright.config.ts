@@ -1,4 +1,3 @@
-import { existsSync } from "fs";
 import { join } from "path";
 
 import { defineConfig, devices } from "@playwright/test";
@@ -6,31 +5,9 @@ import { config } from "dotenv";
 
 // Load environment variables from .env.local
 const envLocalPath = join(process.cwd(), ".env.local");
-if (existsSync(envLocalPath)) {
-  config({ path: envLocalPath });
-} else {
-  console.warn("⚠️  .env.local file not found. Please ensure environment variables are set.");
-}
+config({ path: envLocalPath });
 
 const CI = process.env.CI != null && process.env.CI !== "" && process.env.CI !== "false";
-
-// Validate required environment variables
-const requiredEnvVars = {
-  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-  NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
-};
-
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key]) => key);
-
-if (missingVars.length > 0) {
-  console.error("❌ Missing required environment variables:");
-  missingVars.forEach((varName) => console.error(`   - ${varName}`));
-  console.error("\nPlease ensure these are set in your .env.local file.");
-  process.exit(1);
-}
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -63,6 +40,9 @@ export default defineConfig({
 
     /* Record video on failure */
     video: "retain-on-failure",
+
+    /* Use storage state from global setup */
+    storageState: "./tests/e2e/storage-state.json",
   },
 
   /* Configure projects for major browsers */

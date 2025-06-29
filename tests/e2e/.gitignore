@@ -1,0 +1,3 @@
+# Ignore JSON files (including storage state files)
+*.json 
+!no-state.json

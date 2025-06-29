@@ -264,7 +264,7 @@ Each test automatically cleans up its test data in the `afterEach` hook using th
 
 After all tests complete (even if they fail), the global teardown runs and cleans up any orphaned test users by:
 
-- Finding test users created in the last hour with `@curious.consulting` email domain
+- Finding test users created in the last hour with `@curiouscat.consulting` email domain
 - Deleting them and their associated data
 
 ### 3. Helper Functions

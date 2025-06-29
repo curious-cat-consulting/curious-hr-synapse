@@ -44,7 +44,7 @@ CREATE TABLE synapse.expenses (
 
 -- Create table to track the last used account_expense_id per account (for thread safety)
 CREATE TABLE synapse.account_expense_counters (
-  account_id uuid REFERENCES basejump.accounts(id) PRIMARY KEY,
+  account_id uuid REFERENCES basejump.accounts(id) ON DELETE CASCADE PRIMARY KEY,
   last_expense_id integer NOT NULL DEFAULT 0,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );

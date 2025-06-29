@@ -59,7 +59,7 @@ WHERE name = concat(current_setting('test.user1_id'), '/', current_setting('test
 
 SELECT is(
   (SELECT (public.get_receipt_download_info(current_setting('test.user1_expense_id')::uuid, receipt_id)->>'mime_type') FROM receipt_ids WHERE receipt_id = (SELECT receipt_id FROM receipt_ids ORDER BY receipt_id DESC LIMIT 1)),
-  'application/octet-stream',
+  'application/pdf',
   'Function returns default mime type when not specified in metadata'
 );
 

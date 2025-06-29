@@ -8,6 +8,8 @@ import {
   cleanupTestData,
 } from "../helpers/test-utils";
 
+test.use({ storageState: "./tests/e2e/no-state.json" });
+
 test.describe("User Registration", () => {
   let testEmail: string;
 

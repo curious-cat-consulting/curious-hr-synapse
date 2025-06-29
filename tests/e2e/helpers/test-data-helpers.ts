@@ -22,7 +22,7 @@ const TEST_PASSWORD = "curious";
  */
 export function generateTestEmail(prefix: string = "test-user"): string {
   const guid = randomUUID();
-  return `${prefix}-${guid}@curious.consulting`;
+  return `${prefix}-${guid}@curiouscat.consulting`;
 }
 
 /**

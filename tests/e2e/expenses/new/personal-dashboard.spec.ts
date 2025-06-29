@@ -2,50 +2,44 @@ import { test } from "@playwright/test";
 
 import {
   createExpenseFromQuickActions,
-  generateTestEmail,
-  cleanupTestData,
-  setupTestUserAndSignIn,
   verifyExpenseCreated,
   testExpenseFormValidation,
+  waitForDashboard,
 } from "../../helpers/test-utils";
 
-// Test configuration
-const TEST_EXPENSE_TITLE = "Test Expense Report";
-const TEST_EXPENSE_DESCRIPTION = "This is a test expense created by Playwright E2E test";
+// Helper function to generate a unique title and description
+const generateUniqueExpenseData = () => {
+  const guid = crypto.randomUUID();
+  return {
+    title: `Test Expense Report ${guid}`,
+    description: `This is a test expense created by Playwright - ${guid}`,
+  };
+};
 
-test.describe("Expense Creation E2E", () => {
-  let testEmail: string;
-  let testUserId: string | undefined;
-
-  test.beforeEach(async () => {
-    // Generate unique test email for each test run
-    testEmail = generateTestEmail();
-  });
-
-  test.afterEach(async () => {
-    // Comprehensive cleanup that handles both API-created and signup-created users
-    await cleanupTestData(testEmail, testUserId);
-  });
-
+test.describe("Expense Creation", () => {
   test("Complete expense creation and verification flow", async ({ page }) => {
-    // Setup test user and sign in
-    testUserId = await setupTestUserAndSignIn(page, testEmail);
+    const { title: uniqueTitle, description: uniqueDescription } = generateUniqueExpenseData();
+
+    // Navigate to dashboard
+    await waitForDashboard(page, true);
 
     // Create a new expense from quick actions
-    await createExpenseFromQuickActions(page, TEST_EXPENSE_TITLE, TEST_EXPENSE_DESCRIPTION);
+    await createExpenseFromQuickActions(page, uniqueTitle, uniqueDescription);
 
     // Verify the expense was created
-    await verifyExpenseCreated(page, TEST_EXPENSE_TITLE, TEST_EXPENSE_DESCRIPTION);
+    await verifyExpenseCreated(page, uniqueTitle, uniqueDescription);
   });
 
   test("Expense creation with validation", async ({ page }) => {
-    // Setup test user and sign in
-    testUserId = await setupTestUserAndSignIn(page, testEmail);
+    const { title: uniqueTitle, description: uniqueDescription } = generateUniqueExpenseData();
+
+    // Navigate to dashboard
+    await waitForDashboard(page, true);
 
     // Test form validation and create expense
-    await testExpenseFormValidation(page, TEST_EXPENSE_DESCRIPTION, TEST_EXPENSE_TITLE);
+    await testExpenseFormValidation(page, uniqueDescription, uniqueTitle);
 
     // Verify expense was created
-    await verifyExpenseCreated(page, TEST_EXPENSE_TITLE, TEST_EXPENSE_DESCRIPTION);
+    await verifyExpenseCreated(page, uniqueTitle, uniqueDescription);
   });
 });

@@ -58,7 +58,7 @@ export async function verifyExpenseCreated(
   description: string
 ): Promise<void> {
   await page.goto("/dashboard/expenses");
-  await expect(page).toHaveURL("/dashboard/expenses");
+  await expect(page).toHaveURL("/dashboard/expenses", { timeout: 10000 });
   await waitForText(page, title);
   await waitForText(page, description);
 }

@@ -28,7 +28,7 @@ CREATE TYPE synapse.notification_status AS ENUM (
 CREATE TABLE synapse.notifications (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id) NOT NULL,
-  account_id uuid REFERENCES basejump.accounts(id) NOT NULL,
+  account_id uuid REFERENCES basejump.accounts(id) ON DELETE CASCADE NOT NULL,
   type synapse.notification_type NOT NULL,
   title text NOT NULL,
   message text NOT NULL,

@@ -1,4 +1,4 @@
--- Seed Expenses for User 1 (curious@cat.com)
+-- Seed Expenses for User 1 (curious@curiouscat.consulting)
 -- User 1 ID: 11111111-1111-1111-1111-111111111111
 -- Team Curious ID: 744dec03-c891-4663-a0b3-f9050473f173
 -- Personal Account ID: 11111111-1111-1111-1111-111111111111 (same as user ID)
@@ -19,7 +19,7 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     1,
-    '11111111-1111-1111-1111-111111111111', -- curious@cat.com
+    '11111111-1111-1111-1111-111111111111', -- curious@curiouscat.consulting
     '744dec03-c891-4663-a0b3-f9050473f173', -- Team Curious
     'Team Lunch Meeting',
     45.75,
@@ -31,7 +31,7 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     2,
-    '11111111-1111-1111-1111-111111111111', -- curious@cat.com
+    '11111111-1111-1111-1111-111111111111', -- curious@curiouscat.consulting
     '744dec03-c891-4663-a0b3-f9050473f173', -- Team Curious
     'Office Supplies',
     23.50,
@@ -43,7 +43,7 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     3,
-    '22222222-2222-2222-2222-222222222222', -- curious+2@cat.com
+    '22222222-2222-2222-2222-222222222222', -- curious+2@curiouscat.consulting
     '744dec03-c891-4663-a0b3-f9050473f173', -- Team Curious
     'Client Dinner',
     89.50,
@@ -69,7 +69,7 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     1,
-    '11111111-1111-1111-1111-111111111111', -- curious@cat.com
+    '11111111-1111-1111-1111-111111111111', -- curious@curiouscat.consulting
     '11111111-1111-1111-1111-111111111111', -- Personal account
     'Personal Coffee Run',
     8.25,
@@ -81,7 +81,7 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     1,
-    '22222222-2222-2222-2222-222222222222', -- curious+2@cat.com
+    '22222222-2222-2222-2222-222222222222', -- curious+2@curiouscat.consulting
     '22222222-2222-2222-2222-222222222222', -- Personal account
     'Grocery Shopping',
     67.30,

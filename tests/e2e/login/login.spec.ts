@@ -4,36 +4,21 @@ import {
   waitForLoginPage,
   signIn,
   waitForDashboard,
-  generateTestEmail,
   waitForText,
-  cleanupTestData,
-  createTestUser,
   testLoginFormValidation,
 } from "../helpers/test-utils";
 
+const TEST_EMAIL = "test@curiouscat.consulting";
+
+test.use({ storageState: "./tests/e2e/no-state.json" });
+
 test.describe("User Login", () => {
-  let testEmail: string;
-  let testUserId: string | undefined;
-
-  test.beforeEach(async () => {
-    // Generate unique test email for each test run
-    testEmail = generateTestEmail();
-  });
-
-  test.afterEach(async () => {
-    // Comprehensive cleanup that handles both API-created and signup-created users
-    await cleanupTestData(testEmail, testUserId);
-  });
-
   test("Handle existing user login flow", async ({ page }) => {
-    // First, create a user via API for this test
-    testUserId = await createTestUser(testEmail);
-
     // Step 1: Navigate to login page
     await waitForLoginPage(page);
 
     // Step 2: Sign in with existing account
-    await signIn(page, testEmail);
+    await signIn(page, TEST_EMAIL);
 
     // Step 3: Verify redirect to dashboard
     await waitForDashboard(page);
@@ -55,6 +40,6 @@ test.describe("User Login", () => {
     await waitForLoginPage(page);
 
     // Step 2: Test form validation
-    await testLoginFormValidation(page, testEmail);
+    await testLoginFormValidation(page, TEST_EMAIL);
   });
 });
