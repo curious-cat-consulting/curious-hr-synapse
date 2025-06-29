@@ -70,6 +70,7 @@ export default function AccountSelector({
             aria-expanded={open}
             aria-label="Select a team"
             className={cn("w-[250px] justify-between", className)}
+            data-testid="account-selector"
           >
             {selectedAccount?.name ?? placeholder}
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
@@ -90,6 +91,7 @@ export default function AccountSelector({
                     setOpen(false);
                   }}
                   className="text-sm"
+                  data-testid="account-option-personal"
                 >
                   {personalAccount?.name}
                   <Check

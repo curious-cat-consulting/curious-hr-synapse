@@ -36,7 +36,7 @@ export default function DashboardHeader({ accountId, navigation = [] }: Props) {
         ))}
       </div>
       <Sheet>
-        <SheetTrigger className="md:hidden">
+        <SheetTrigger className="md:hidden" data-testid="mobile-menu-button">
           <Menu className="h-6 w-6" />
         </SheetTrigger>
         <SheetContent side="left">

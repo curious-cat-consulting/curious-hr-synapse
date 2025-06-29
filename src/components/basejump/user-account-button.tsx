@@ -43,13 +43,19 @@ export default async function UserAccountButton() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard">My Account</Link>
+            <Link href="/dashboard" data-testid="my-account-link">
+              My Account
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">Settings</Link>
+            <Link href="/dashboard/settings" data-testid="settings-link">
+              Settings
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings/teams">Teams</Link>
+            <Link href="/dashboard/settings/teams" data-testid="teams-link">
+              Teams
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

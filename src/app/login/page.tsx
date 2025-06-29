@@ -8,9 +8,9 @@ import { createClient } from "@lib/supabase/server";
 
 export default async function Login({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ message: string; returnUrl?: string }>;
-}) {
+}>) {
   const params = await searchParams;
 
   const signIn = async (_prevState: unknown, formData: FormData) => {

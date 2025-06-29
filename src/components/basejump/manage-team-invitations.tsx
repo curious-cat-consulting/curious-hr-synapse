@@ -20,7 +20,7 @@ interface Invitation {
   account_role: string;
 }
 
-export default async function ManageTeamInvitations({ accountId }: Props) {
+export default async function ManageTeamInvitations({ accountId }: Readonly<Props>) {
   const supabaseClient = createClient();
 
   const { data: invitations } = await supabaseClient.rpc("get_account_invitations", {

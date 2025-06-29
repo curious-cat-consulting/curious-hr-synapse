@@ -115,4 +115,40 @@ INSERT INTO synapse.account_expense_counters (account_id, last_expense_id, updat
 VALUES ('6027b4bd-0bcf-48e1-b803-195c6cb566c3', 5, now())
 ON CONFLICT (account_id) DO UPDATE SET
   last_expense_id = EXCLUDED.last_expense_id,
-  updated_at = EXCLUDED.updated_at; 
+  updated_at = EXCLUDED.updated_at;
+
+-- Create Test Team account for e2e testing
+-- Team account ID: 88888888-8888-8888-8888-888888888888
+INSERT INTO basejump.accounts (
+  id,
+  name,
+  slug,
+  primary_owner_user_id,
+  personal_account,
+  created_at,
+  updated_at,
+  created_by,
+  updated_by,
+  private_metadata,
+  public_metadata
+) VALUES (
+  '88888888-8888-8888-8888-888888888888',
+  'Test Team',
+  'test-team',
+  '6027b4bd-0bcf-48e1-b803-195c6cb566c3', -- test@curiouscat.consulting as primary owner
+  false, -- This is a team account, not personal
+  current_timestamp,
+  current_timestamp,
+  '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+  '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+  '{}',
+  '{}'
+);
+
+-- Add e2e user as owner of the Test Team
+INSERT INTO basejump.account_user (
+  user_id,
+  account_id,
+  account_role
+) VALUES 
+  ('6027b4bd-0bcf-48e1-b803-195c6cb566c3', '88888888-8888-8888-8888-888888888888', 'owner'); 

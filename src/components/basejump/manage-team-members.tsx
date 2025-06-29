@@ -12,7 +12,7 @@ type Props = {
   accountId: string;
 };
 
-export default async function ManageTeamMembers({ accountId }: Props) {
+export default async function ManageTeamMembers({ accountId }: Readonly<Props>) {
   const supabaseClient = createClient();
 
   const { data: members } = await supabaseClient.rpc("get_account_members", {

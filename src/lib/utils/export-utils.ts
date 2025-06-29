@@ -82,7 +82,7 @@ export function prepareExpenseDataForExport(
 
     // Include line items if requested and available
     if (includeLineItems && "receipt_line_items" in expense) {
-      const fullExpense = expense as Expense;
+      const fullExpense = expense;
 
       // Add receipt line items
       fullExpense.receipt_line_items.forEach((item) => {
