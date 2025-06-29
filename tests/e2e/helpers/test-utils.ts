@@ -9,10 +9,14 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Create Supabase client with service role key for cleanup operations
 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+// Test configuration
+const TEST_PASSWORD = "curious";
+
 /**
  * Helper function to wait for and verify the login page is loaded
  */
 export async function waitForLoginPage(page: Page): Promise<void> {
+  await page.goto("/login");
   await expect(page).toHaveURL("/login");
   await expect(page.locator('input[name="email"]')).toBeVisible();
   await expect(page.locator('input[name="password"]')).toBeVisible();
@@ -29,8 +33,8 @@ export async function fillLoginForm(page: Page, email: string, password: string)
 /**
  * Helper function to sign in
  */
-export async function signIn(page: Page, email: string, password: string): Promise<void> {
-  await fillLoginForm(page, email, password);
+export async function signIn(page: Page, email: string): Promise<void> {
+  await fillLoginForm(page, email, TEST_PASSWORD);
   const signInButton = page.locator('[data-testid="sign-in-button"]');
   await expect(signInButton).toBeVisible();
   await signInButton.click();
@@ -39,8 +43,8 @@ export async function signIn(page: Page, email: string, password: string): Promi
 /**
  * Helper function to sign up
  */
-export async function signUp(page: Page, email: string, password: string): Promise<void> {
-  await fillLoginForm(page, email, password);
+export async function signUp(page: Page, email: string): Promise<void> {
+  await fillLoginForm(page, email, TEST_PASSWORD);
   const signUpButton = page.locator('[data-testid="sign-up-button"]');
   await expect(signUpButton).toBeVisible();
   await signUpButton.click();
@@ -254,106 +258,12 @@ export async function waitForText(page: Page, text: string): Promise<void> {
 }
 
 /**
- * Helper function to find a user by email
- */
-export async function findUserByEmail(email: string): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.auth.admin.listUsers();
-    if (error != null) {
-      console.error("Error listing users:", error);
-      return null;
-    }
-
-    const user = data.users.find((u) => u.email === email);
-    return user?.id ?? null;
-  } catch (error) {
-    console.error("Error finding user by email:", error);
-    return null;
-  }
-}
-
-/**
- * Helper function to delete a user by ID
- */
-export async function deleteUserById(userId: string): Promise<void> {
-  try {
-    // First, try to delete any expenses created by the user (if table exists)
-    try {
-      const { error: expensesError } = await supabase
-        .from("expenses")
-        .delete()
-        .eq("created_by", userId);
-
-      if (expensesError != null) {
-        console.error("Error cleaning up expenses:", expensesError);
-      }
-    } catch {
-      // Table might not exist, which is fine
-      console.log("Expenses table not available for cleanup");
-    }
-
-    // Try to delete any personal accounts associated with the user (if table exists)
-    try {
-      const { error: accountsError } = await supabase
-        .from("accounts")
-        .delete()
-        .eq("owner_id", userId);
-
-      if (accountsError != null) {
-        console.error("Error cleaning up accounts:", accountsError);
-      }
-    } catch {
-      // Table might not exist, which is fine
-      console.log("Accounts table not available for cleanup");
-    }
-
-    // Delete the user from auth.users
-    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
-    if (authError != null) {
-      console.error("Error deleting user:", authError);
-    } else {
-      console.log(`Successfully deleted user: ${userId}`);
-    }
-  } catch (error) {
-    console.error("Error during user deletion:", error);
-  }
-}
-
-/**
- * Helper function to delete a user by email
- */
-export async function deleteUserByEmail(email: string): Promise<void> {
-  const userId = await findUserByEmail(email);
-  if (userId != null) {
-    await deleteUserById(userId);
-  }
-}
-
-/**
- * Comprehensive cleanup function that handles all test data
- */
-export async function cleanupTestData(testEmail: string, testUserId?: string): Promise<void> {
-  try {
-    // If we have a user ID, use it for cleanup
-    if (testUserId != null) {
-      await deleteUserById(testUserId);
-    }
-
-    // Also try to find and delete by email (in case user was created via signup)
-    await deleteUserByEmail(testEmail);
-  } catch (error) {
-    console.error("Error during comprehensive test cleanup:", error);
-  }
-}
-
-/**
  * Helper function to create a test user via API
  */
-export async function createTestUser(email: string, password: string): Promise<string> {
+export async function createTestUser(email: string): Promise<string> {
   const { data, error } = await supabase.auth.admin.createUser({
     email,
-    password,
+    password: TEST_PASSWORD,
     email_confirm: true, // Auto-confirm email for testing
   });
 
@@ -365,32 +275,133 @@ export async function createTestUser(email: string, password: string): Promise<s
 }
 
 /**
- * Helper function to clean up orphaned test users
+ * Helper function to clean up test data using public functions
+ * Now simplified since the database handles cascading deletes automatically
+ */
+export async function cleanupTestData(testEmail: string, testUserId?: string): Promise<void> {
+  try {
+    // Call the public cleanup function
+    // This will delete the user and all associated data will be cleaned up automatically
+    // via CASCADE DELETE constraints
+    const { error } = await supabase.rpc("cleanup_test_user_data", {
+      p_user_email: testEmail,
+      p_user_id: testUserId ?? null,
+    });
+
+    if (error != null) {
+      console.error("Error during synapse cleanup:", error);
+    } else {
+      console.log(`Successfully cleaned up test data for: ${testEmail}`);
+    }
+  } catch (error) {
+    console.error("Error during synapse test cleanup:", error);
+  }
+}
+
+/**
+ * Helper function to clean up orphaned test users using public functions
  * This can be called in global teardown to clean up any test users that weren't cleaned up properly
  */
 export async function cleanupOrphanedTestUsers(): Promise<void> {
   try {
-    const { data, error } = await supabase.auth.admin.listUsers();
-    if (error != null) {
-      console.error("Error listing users for orphan cleanup:", error);
-      return;
-    }
-
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago
-    const testUsers = data.users.filter((user) => {
-      // Look for test users created in the last hour with our test email pattern
-      const isTestEmail = user.email?.includes("@curious.consulting") ?? false;
-      const isRecent = new Date(user.created_at) > oneHourAgo;
-      return isTestEmail && isRecent;
+    // Call the public cleanup function for multiple users
+    const { error } = await supabase.rpc("cleanup_multiple_test_users", {
+      p_user_emails: null, // This will use the default test users
     });
 
-    console.log(`Found ${testUsers.length} orphaned test users to clean up`);
-
-    for (const user of testUsers) {
-      await deleteUserById(user.id);
-      console.log(`Cleaned up orphaned test user: ${user.email}`);
+    if (error != null) {
+      console.error("Error during orphaned test user cleanup:", error);
+    } else {
+      console.log("Successfully cleaned up orphaned test users");
     }
   } catch (error) {
     console.error("Error during orphaned test user cleanup:", error);
   }
+}
+
+/**
+ * Helper function to setup a test user and sign them in
+ */
+export async function setupTestUserAndSignIn(page: Page, email: string): Promise<string> {
+  const userId = await createTestUser(email);
+
+  await waitForLoginPage(page);
+  await signIn(page, email);
+
+  // Wait for authentication to complete
+  await waitForNetworkIdle(page);
+
+  await waitForDashboard(page);
+
+  return userId;
+}
+
+/**
+ * Helper function to verify expense was created successfully
+ */
+export async function verifyExpenseCreated(
+  page: Page,
+  title: string,
+  description: string
+): Promise<void> {
+  await page.goto("/dashboard/expenses");
+  await expect(page).toHaveURL("/dashboard/expenses");
+  await waitForText(page, title);
+  await waitForText(page, description);
+}
+
+/**
+ * Helper function to test expense form validation
+ */
+export async function testExpenseFormValidation(
+  page: Page,
+  description: string,
+  title: string
+): Promise<void> {
+  const newExpenseButton = getQuickActionsNewExpenseButton(page);
+  await expect(newExpenseButton).toBeVisible();
+  await newExpenseButton.click();
+
+  // Wait for drawer to open
+  await expect(page.locator('[role="dialog"]')).toBeVisible();
+  await expect(page.locator('h2:has-text("New Expense Report")')).toBeVisible();
+
+  // Fill only description (leave title empty)
+  await page.fill('input[id="description"]', description);
+
+  // Try to submit - should not work due to required title field
+  const createButton = page.locator('[data-testid="create-expense-button"]');
+  await expect(createButton).toBeVisible();
+  await createButton.click();
+
+  // Verify drawer is still open (form validation prevented submission)
+  await expect(page.locator('[role="dialog"]')).toBeVisible();
+
+  // Now create expense with valid data
+  await page.fill('input[id="title"]', title);
+  await createButton.click();
+
+  // Verify drawer closes
+  await expect(page.locator('[role="dialog"]')).not.toBeVisible();
+}
+
+/**
+ * Helper function to test login form validation
+ */
+export async function testLoginFormValidation(page: Page, testEmail: string): Promise<void> {
+  // Try to submit empty form
+  const signInButton = page.locator('[data-testid="sign-in-button"]');
+  await expect(signInButton).toBeVisible();
+  await signInButton.click();
+
+  // Verify form validation prevents submission
+  // The form should have required attributes, so browser validation should prevent submission
+  await expect(page).toHaveURL("/login");
+
+  // Fill only email and try to submit
+  await page.fill('input[name="email"]', testEmail);
+  await signInButton.click();
+
+  // Verify still on login page (password required)
+  await expect(page).toHaveURL("/login");
 }

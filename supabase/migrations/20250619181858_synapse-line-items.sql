@@ -7,8 +7,8 @@
 -- Create receipt metadata table
 CREATE TABLE synapse.receipt_metadata (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  expense_id UUID REFERENCES synapse.expenses(id),
-  receipt_id UUID REFERENCES storage.objects(id) NOT NULL,
+  expense_id UUID REFERENCES synapse.expenses(id) ON DELETE CASCADE,
+  receipt_id UUID REFERENCES storage.objects(id) ON DELETE CASCADE NOT NULL,
   vendor_name VARCHAR(255),
   receipt_date DATE,
   receipt_total DECIMAL,
@@ -56,8 +56,8 @@ GRANT SELECT, INSERT, UPDATE ON TABLE synapse.receipt_metadata TO authenticated;
 -- Create receipt line items table
 CREATE TABLE synapse.receipt_line_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  expense_id UUID REFERENCES synapse.expenses(id),
-  receipt_id UUID REFERENCES storage.objects(id) NOT NULL,
+  expense_id UUID REFERENCES synapse.expenses(id) ON DELETE CASCADE,
+  receipt_id UUID REFERENCES storage.objects(id) ON DELETE CASCADE NOT NULL,
   description TEXT NOT NULL,
   quantity DECIMAL,
   unit_price DECIMAL,

@@ -687,6 +687,91 @@ BEGIN
 END;
 $$;
 
+-- Helper: Flexible cleanup function for specific test users
+-- Now simplified since the database handles cascading deletes automatically
+CREATE OR REPLACE FUNCTION public.cleanup_test_user_data(
+  p_user_email text DEFAULT NULL,
+  p_user_id uuid DEFAULT NULL
+) RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  target_user_id uuid;
+  username text;
+BEGIN
+  -- Determine which user to clean up
+  IF p_user_id IS NOT NULL THEN
+    target_user_id := p_user_id;
+  ELSIF p_user_email IS NOT NULL THEN
+    username := split_part(p_user_email, '@', 1);
+    BEGIN
+      SELECT tests.get_supabase_uid(username) INTO target_user_id;
+    EXCEPTION WHEN OTHERS THEN
+      -- User doesn't exist, nothing to clean up
+      RETURN;
+    END;
+  ELSE
+    -- No parameters provided, nothing to clean up
+    RETURN;
+  END IF;
+
+  -- Clean up in dependency order (most dependent first)
+  -- Note: The database now handles cascading deletes automatically via foreign key constraints
+  
+  -- 1. Clean up expenses (this will automatically delete all related data via CASCADE)
+  DELETE FROM synapse.expenses WHERE user_id = target_user_id;
+  
+  -- 2. Clean up storage objects (not handled by CASCADE since it's in a different schema)
+  DELETE FROM storage.objects WHERE bucket_id = 'receipts' AND owner_id = target_user_id;
+  
+  -- 3. Clean up any personal account (if exists)
+  DELETE FROM public.accounts WHERE owner_id = target_user_id;
+  
+  -- 4. Clean up any team memberships (if exists)
+  DELETE FROM public.account_members WHERE user_id = target_user_id;
+  
+  -- 5. Clean up any invitations (if exists)
+  DELETE FROM public.invitations WHERE email = p_user_email;
+  
+  -- 6. Finally, clean up the user from auth (if we have the username)
+  IF p_user_email IS NOT NULL THEN
+    username := split_part(p_user_email, '@', 1);
+    BEGIN
+      PERFORM tests.delete_supabase_user(username);
+    EXCEPTION WHEN OTHERS THEN
+      -- User might not exist in tests schema, that's okay
+      NULL;
+    END;
+  END IF;
+END;
+$$;
+
+-- Helper: Cleanup function for multiple test users
+CREATE OR REPLACE FUNCTION public.cleanup_multiple_test_users(
+  p_user_emails text[] DEFAULT NULL
+) RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  user_email text;
+BEGIN
+  -- If no emails provided, use default test users
+  IF p_user_emails IS NULL THEN
+    p_user_emails := ARRAY['test1@example.com', 'test2@example.com', 'user1@example.com', 'user2@example.com'];
+  END IF;
+  
+  -- Clean up each user
+  FOREACH user_email IN ARRAY p_user_emails
+  LOOP
+    PERFORM public.cleanup_test_user_data(user_email);
+  END LOOP;
+END;
+$$;
+
+-- Grant permissions for public functions
+GRANT EXECUTE ON FUNCTION public.cleanup_test_user_data(text, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.cleanup_multiple_test_users(text[]) TO authenticated;
+
 -- Grant permissions after all functions are created
 GRANT USAGE ON SCHEMA synapse_tests TO PUBLIC;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA synapse_tests TO PUBLIC;

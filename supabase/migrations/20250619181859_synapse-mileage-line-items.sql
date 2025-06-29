@@ -7,7 +7,7 @@
 -- Create mileage line items table
 CREATE TABLE synapse.mileage_line_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  expense_id UUID REFERENCES synapse.expenses(id),
+  expense_id UUID REFERENCES synapse.expenses(id) ON DELETE CASCADE,
   from_address VARCHAR(255) NOT NULL,
   to_address VARCHAR(255) NOT NULL,
   category VARCHAR(100),

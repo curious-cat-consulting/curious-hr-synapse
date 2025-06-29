@@ -16,7 +16,7 @@ const fontSans = FontSans({
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Curious HR Synapse - AI-Powered HR & Employee Admin Assistant",
+  title: "Curious HR: Synapse - AI-Powered HR & Employee Admin Assistant",
   description: "Streamline your HR and administrative tasks with AI-powered expense management.",
   icons: {
     icon: [
