@@ -5,7 +5,11 @@ import {
   generateTestEmail,
   setupTestUserAndSignIn,
   waitForDashboard,
+  waitForLoginPage,
+  signIn,
 } from "../../helpers/test-utils";
+
+test.use({ storageState: "./tests/e2e/no-state.json" });
 
 test.describe("Personal Dashboard RecentActivity", () => {
   let testEmail: string;
@@ -38,7 +42,15 @@ test.describe("Personal Dashboard RecentActivity", () => {
   });
 
   test("shows all expected fields for expenses", async ({ page }) => {
-    await waitForDashboard(page, true);
+    // Use the seeded test user with expenses
+    testEmail = "test2@curiouscat.consulting";
+    testUserId = "88888888-8888-8888-8888-888888888888";
+
+    // Sign in with the seeded user
+    await waitForLoginPage(page);
+    await signIn(page, testEmail);
+
+    await waitForDashboard(page);
 
     // Wait a bit for the component to load data
     await page.waitForTimeout(2000);
@@ -69,7 +81,15 @@ test.describe("Personal Dashboard RecentActivity", () => {
   });
 
   test("shows correct expense details with proper formatting", async ({ page }) => {
-    await waitForDashboard(page, true);
+    // Use the seeded test user with expenses
+    testEmail = "test2@curiouscat.consulting";
+    testUserId = "88888888-8888-8888-8888-888888888888";
+
+    // Sign in with the seeded user
+    await waitForLoginPage(page);
+    await signIn(page, testEmail);
+
+    await waitForDashboard(page);
 
     // Wait a bit for the component to load data
     await page.waitForTimeout(2000);
@@ -86,7 +106,15 @@ test.describe("Personal Dashboard RecentActivity", () => {
   });
 
   test("shows correct status styling", async ({ page }) => {
-    await waitForDashboard(page, true);
+    // Use the seeded test user with expenses
+    testEmail = "test2@curiouscat.consulting";
+    testUserId = "88888888-8888-8888-8888-888888888888";
+
+    // Sign in with the seeded user
+    await waitForLoginPage(page);
+    await signIn(page, testEmail);
+
+    await waitForDashboard(page);
 
     // Wait a bit for the component to load data
     await page.waitForTimeout(2000);

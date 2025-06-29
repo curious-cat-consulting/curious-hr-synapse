@@ -1,6 +1,7 @@
 -- E2E Test Users
 -- This file contains users specifically for end-to-end testing
 -- User: test@curiouscat.consulting -> 6027b4bd-0bcf-48e1-b803-195c6cb566c3
+-- User: test2@curiouscat.consulting -> 5e17d984-449e-4371-ad7b-b36f552ac24b
 
 INSERT INTO auth.users (
   instance_id,
@@ -18,25 +19,43 @@ INSERT INTO auth.users (
   email_change,
   email_change_token_new,
   recovery_token
-) VALUES (
-  '00000000-0000-0000-0000-000000000000',
-  '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
-  'authenticated',
-  'authenticated',
-  'test@curiouscat.consulting',
-  crypt('curious', gen_salt('bf')),
-  current_timestamp,
-  '{"provider":"email","providers":["email"]}',
-  '{"full_name":"Curious Cat Tester","avatar_url":"https://th.bing.com/th/id/OIP.Q6R49EFCR62g4QtakGPRFAHaHZ?rs=1&pid=ImgDetMain&cb=idpwebpc1"}',
-  current_timestamp,
-  current_timestamp,
-  '',
-  '',
-  '',
-  ''
-);
+) VALUES 
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+    'authenticated',
+    'authenticated',
+    'test@curiouscat.consulting',
+    crypt('curious', gen_salt('bf')),
+    current_timestamp,
+    '{"provider":"email","providers":["email"]}',
+    '{"full_name":"Curious Cat Tester","avatar_url":"https://th.bing.com/th/id/OIP.Q6R49EFCR62g4QtakGPRFAHaHZ?rs=1&pid=ImgDetMain&cb=idpwebpc1"}',
+    current_timestamp,
+    current_timestamp,
+    '',
+    '',
+    '',
+    ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
+    'authenticated',
+    'authenticated',
+    'test2@curiouscat.consulting',
+    crypt('curious', gen_salt('bf')),
+    current_timestamp,
+    '{"provider":"email","providers":["email"]}',
+    '{"full_name":"Second Test User","avatar_url":"https://th.bing.com/th/id/OIP.Q6R49EFCR62g4QtakGPRFAHaHZ?rs=1&pid=ImgDetMain&cb=idpwebpc1"}',
+    current_timestamp,
+    current_timestamp,
+    '',
+    '',
+    '',
+    ''
+  );
 
--- Create 5 test expenses for e2e user with different statuses
+-- Create 5 test expenses for second e2e user with different statuses
 INSERT INTO synapse.expenses (
   id,
   account_expense_id,
@@ -52,8 +71,8 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     1,
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
     'Test Expense 1',
     'Description for Test Expense 1',
     50.00,
@@ -64,8 +83,8 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     2,
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
     'Test Expense 2',
     'Description for Test Expense 2',
     75.50,
@@ -76,8 +95,8 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     3,
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
     'Test Expense 3',
     'Description for Test Expense 3',
     25.99,
@@ -88,8 +107,8 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     4,
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
     'Test Expense 4',
     'Description for Test Expense 4',
     100.00,
@@ -100,8 +119,8 @@ INSERT INTO synapse.expenses (
   (
     gen_random_uuid(),
     5,
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
-    '6027b4bd-0bcf-48e1-b803-195c6cb566c3',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
+    '5e17d984-449e-4371-ad7b-b36f552ac24b',
     'Office Supplies Purchase',
     'Purchased office supplies for the team',
     123.45,
@@ -110,15 +129,15 @@ INSERT INTO synapse.expenses (
     now()
   );
 
--- Update account expense counter
+-- Update account expense counter for second test user
 INSERT INTO synapse.account_expense_counters (account_id, last_expense_id, updated_at)
-VALUES ('6027b4bd-0bcf-48e1-b803-195c6cb566c3', 5, now())
+VALUES ('5e17d984-449e-4371-ad7b-b36f552ac24b', 5, now())
 ON CONFLICT (account_id) DO UPDATE SET
   last_expense_id = EXCLUDED.last_expense_id,
   updated_at = EXCLUDED.updated_at;
 
 -- Create Test Team account for e2e testing
--- Team account ID: 88888888-8888-8888-8888-888888888888
+-- Team account ID: 99999999-9999-9999-9999-999999999999
 INSERT INTO basejump.accounts (
   id,
   name,
@@ -132,7 +151,7 @@ INSERT INTO basejump.accounts (
   private_metadata,
   public_metadata
 ) VALUES (
-  '88888888-8888-8888-8888-888888888888',
+  '99999999-9999-9999-9999-999999999999',
   'Test Team',
   'test-team',
   '6027b4bd-0bcf-48e1-b803-195c6cb566c3', -- test@curiouscat.consulting as primary owner
@@ -145,10 +164,11 @@ INSERT INTO basejump.accounts (
   '{}'
 );
 
--- Add e2e user as owner of the Test Team
+-- Add both e2e users to the Test Team
 INSERT INTO basejump.account_user (
   user_id,
   account_id,
   account_role
 ) VALUES 
-  ('6027b4bd-0bcf-48e1-b803-195c6cb566c3', '88888888-8888-8888-8888-888888888888', 'owner'); 
+  ('6027b4bd-0bcf-48e1-b803-195c6cb566c3', '99999999-9999-9999-9999-999999999999', 'owner'),
+  ('5e17d984-449e-4371-ad7b-b36f552ac24b', '99999999-9999-9999-9999-999999999999', 'member'); 
