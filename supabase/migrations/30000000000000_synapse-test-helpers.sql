@@ -694,6 +694,7 @@ CREATE OR REPLACE FUNCTION public.cleanup_test_user_data(
   p_user_id uuid DEFAULT NULL
 ) RETURNS void
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
   target_user_id uuid;
@@ -721,19 +722,17 @@ BEGIN
   -- 1. Clean up expenses (this will automatically delete all related data via CASCADE)
   DELETE FROM synapse.expenses WHERE user_id = target_user_id;
   
-  -- 2. Clean up storage objects (not handled by CASCADE since it's in a different schema)
-  DELETE FROM storage.objects WHERE bucket_id = 'receipts' AND owner_id = target_user_id;
+  -- 2. Clean up any team memberships first (this triggers notifications)
+  DELETE FROM basejump.account_user WHERE user_id = target_user_id;
   
-  -- 3. Clean up any personal account (if exists)
-  DELETE FROM public.accounts WHERE owner_id = target_user_id;
+  -- 3. Clean up storage objects (not handled by CASCADE since it's in a different schema)
+  -- Cast target_user_id to text since storage.objects.owner_id is text type
+  DELETE FROM storage.objects WHERE bucket_id = 'receipts' AND owner_id = target_user_id::text;
   
-  -- 4. Clean up any team memberships (if exists)
-  DELETE FROM public.account_members WHERE user_id = target_user_id;
+  -- 4. Finally, clean up any personal account (if exists) - do this last to avoid FK violations
+  DELETE FROM basejump.accounts WHERE primary_owner_user_id = target_user_id;
   
-  -- 5. Clean up any invitations (if exists)
-  DELETE FROM public.invitations WHERE email = p_user_email;
-  
-  -- 6. Finally, clean up the user from auth (if we have the username)
+  -- 5. Finally, clean up the user from auth (if we have the username)
   IF p_user_email IS NOT NULL THEN
     username := split_part(p_user_email, '@', 1);
     BEGIN
