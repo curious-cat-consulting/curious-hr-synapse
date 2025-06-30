@@ -11,7 +11,8 @@ export interface ProcessedReceipt {
 export async function runReceiptAnalysis(
   supabase: SupabaseClient,
   receiptId: string,
-  receiptName: string
+  receiptName: string,
+  expenseId: string
 ): Promise<ProcessedReceipt> {
   console.log(`Processing receipt: ${receiptName}`);
 
@@ -32,7 +33,7 @@ export async function runReceiptAnalysis(
   console.log(`Analyzing receipt ${receiptName} with OpenAI`);
 
   // Analyze receipt using OpenAI
-  const analysis = await analyzeReceipt(base64);
+  const analysis = await analyzeReceipt(base64, expenseId);
 
   console.log(`Analysis complete for ${receiptName}`);
 

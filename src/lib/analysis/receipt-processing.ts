@@ -54,7 +54,7 @@ export async function processReceiptsForExpense(
   // Process receipts with AI analysis and prepare data for RPC
   const analysesData = await Promise.all(
     receiptsData.map((receipt: { name: string; id: string }) =>
-      runReceiptAnalysis(supabase, receipt.id, receipt.name)
+      runReceiptAnalysis(supabase, receipt.id, receipt.name, expenseId)
     )
   );
 

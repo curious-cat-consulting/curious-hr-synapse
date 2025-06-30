@@ -53,7 +53,7 @@ export function NotificationBell() {
 
   useEffect(() => {
     fetchUnreadCount();
-  }, []);
+  });
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -106,6 +106,7 @@ export function NotificationBell() {
 
   const getNotificationIcon = (type: string) => {
     return (
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       NOTIFICATION_ICONS[type as keyof typeof NOTIFICATION_ICONS] ?? NOTIFICATION_ICONS.GENERAL
     );
   };
