@@ -32,7 +32,7 @@ export function SubmitButton({
   const isPending = pending && action === internalFormAction;
 
   return (
-    <div className="flex w-full flex-col gap-y-4">
+    <div className="flex w-full flex-col">
       {Boolean(errorMessage ?? (state as { message?: string }).message) && (
         <Alert variant="destructive" className="w-full">
           <AlertTriangle className="h-4 w-4" />

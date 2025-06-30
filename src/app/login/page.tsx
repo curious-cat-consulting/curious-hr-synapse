@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { GoogleOAuthButton } from "@components/ui/google-oauth-button";
 import { Input } from "@components/ui/input";
 import { SubmitButton } from "@components/ui/submit-button";
 import { createClient } from "@lib/supabase/server";
@@ -127,17 +128,26 @@ export default async function Login({
           autoComplete="current-password"
           required
         />
-        <SubmitButton formAction={signIn} pendingText="Signing In..." data-testid="sign-in-button">
-          Sign In
-        </SubmitButton>
-        <SubmitButton
-          formAction={signUp}
-          variant="outline"
-          pendingText="Signing Up..."
-          data-testid="sign-up-button"
-        >
-          Sign Up
-        </SubmitButton>
+        <div className="flex w-full gap-2">
+          <SubmitButton
+            formAction={signIn}
+            pendingText="Signing In..."
+            data-testid="sign-in-button"
+            className="w-full"
+          >
+            Sign In
+          </SubmitButton>
+          <SubmitButton
+            formAction={signUp}
+            variant="outline"
+            pendingText="Signing Up..."
+            data-testid="sign-up-button"
+            className="w-full"
+          >
+            Sign Up
+          </SubmitButton>
+        </div>
+        <GoogleOAuthButton returnUrl={params.returnUrl} />
         {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
         {params.message?.length > 0 && (
           <p className="mt-4 bg-foreground/10 p-4 text-center text-foreground">{params.message}</p>

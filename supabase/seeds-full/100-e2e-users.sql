@@ -153,7 +153,7 @@ INSERT INTO basejump.accounts (
 ) VALUES (
   '99999999-9999-9999-9999-999999999999',
   'Test Team',
-  'test-team',
+  'test-team-e2e',
   '6027b4bd-0bcf-48e1-b803-195c6cb566c3', -- test@curiouscat.consulting as primary owner
   false, -- This is a team account, not personal
   current_timestamp,

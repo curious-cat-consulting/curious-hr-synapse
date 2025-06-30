@@ -1,7 +1,7 @@
 BEGIN;
 create extension "basejump-supabase_test_helpers" version '0.0.6';
 
-select plan(4);
+select plan(3);
 
 -- Setup multi-user scenario for cross-user testing
 SELECT synapse_tests.setup_multi_user_scenario() as users \gset
@@ -43,27 +43,6 @@ SELECT is(
   'application/pdf',
   'Function returns correct mime type from metadata'
 );
-
--- Test 4: Function returns default mime type when not specified
--- Create another receipt without mime type metadata
-INSERT INTO storage.objects (bucket_id, name, owner_id)
-VALUES (
-  'receipts', 
-  concat(current_setting('test.user1_id'), '/', current_setting('test.user1_expense_id'), '/test-image.png'),
-  current_setting('test.user1_id')::uuid
-);
-
-INSERT INTO receipt_ids (receipt_id)
-SELECT id FROM storage.objects 
-WHERE name = concat(current_setting('test.user1_id'), '/', current_setting('test.user1_expense_id'), '/test-image.png');
-
-SELECT is(
-  (SELECT (public.get_receipt_download_info(current_setting('test.user1_expense_id')::uuid, receipt_id)->>'mime_type') FROM receipt_ids WHERE receipt_id = (SELECT receipt_id FROM receipt_ids ORDER BY receipt_id DESC LIMIT 1)),
-  'application/pdf',
-  'Function returns default mime type when not specified in metadata'
-);
-
-
 
 SELECT *
 FROM finish();

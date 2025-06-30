@@ -19,6 +19,13 @@ export async function editPersonalAccountName(prevState: unknown, formData: Form
       message: error.message,
     };
   }
+
+  // Revalidate the settings page to refresh the data
+  revalidatePath("/dashboard/settings");
+
+  return {
+    message: "Name updated successfully",
+  };
 }
 
 export async function updatePostingTeam(prevState: unknown, formData: FormData) {
