@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 
 import { GoogleOAuthButton } from "@components/ui/google-oauth-button";
 import { Input } from "@components/ui/input";
+import { MicrosoftOAuthButton } from "@components/ui/microsoft-oauth-button";
+import { OAuthErrorHandler } from "@components/ui/oauth-error-handler";
 import { SubmitButton } from "@components/ui/submit-button";
 import { createClient } from "@lib/supabase/server";
 
@@ -107,47 +109,58 @@ export default async function Login({
       </Link>
 
       <form className="flex w-full flex-1 flex-col justify-center gap-2 text-foreground animate-in">
-        <label className="text-md" htmlFor="email">
-          Email
-        </label>
-        <Input
-          id="email"
-          name="email"
-          placeholder="you@example.com"
-          autoComplete="email"
-          required
-        />
-        <label className="text-md" htmlFor="password">
-          Password
-        </label>
-        <Input
-          id="password"
-          type="password"
-          name="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
-          required
-        />
-        <div className="flex w-full gap-2">
-          <SubmitButton
-            formAction={signIn}
-            pendingText="Signing In..."
-            data-testid="sign-in-button"
-            className="w-full"
-          >
-            Sign In
-          </SubmitButton>
-          <SubmitButton
-            formAction={signUp}
-            variant="outline"
-            pendingText="Signing Up..."
-            data-testid="sign-up-button"
-            className="w-full"
-          >
-            Sign Up
-          </SubmitButton>
+        <OAuthErrorHandler />
+        <div className="flex w-full flex-col gap-2">
+          <GoogleOAuthButton returnUrl={params.returnUrl} />
+          <MicrosoftOAuthButton returnUrl={params.returnUrl} />
         </div>
-        <GoogleOAuthButton returnUrl={params.returnUrl} />
+        <div className="my-4 flex items-center gap-2">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-sm text-muted-foreground">or continue with email</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <div>
+          <label className="text-md" htmlFor="email">
+            Email
+          </label>
+          <Input
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
+          <label className="text-md" htmlFor="password">
+            Password
+          </label>
+          <Input
+            id="password"
+            type="password"
+            name="password"
+            placeholder="••••••••"
+            autoComplete="current-password"
+            required
+          />
+          <div className="flex w-full gap-2">
+            <SubmitButton
+              formAction={signIn}
+              pendingText="Signing In..."
+              data-testid="sign-in-button"
+              className="w-full"
+            >
+              Sign In
+            </SubmitButton>
+            <SubmitButton
+              formAction={signUp}
+              variant="outline"
+              pendingText="Signing Up..."
+              data-testid="sign-up-button"
+              className="w-full"
+            >
+              Sign Up
+            </SubmitButton>
+          </div>
+        </div>
         {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
         {params.message?.length > 0 && (
           <p className="mt-4 bg-foreground/10 p-4 text-center text-foreground">{params.message}</p>

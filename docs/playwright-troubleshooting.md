@@ -26,7 +26,7 @@ Make sure your `.env.local` file contains these variables:
 
 ```env
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 
 # For test data management (Service Role Key)
@@ -81,7 +81,7 @@ yarn test:e2e:ui
 You can also export the variables directly in your terminal:
 
 ```bash
-export NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+export NEXT_PUBLIC_SUPABASE_URL="http://localhost:54321"
 export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
 export NEXT_PUBLIC_URL="http://localhost:3000"
 

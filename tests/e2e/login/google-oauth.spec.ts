@@ -10,9 +10,6 @@ test.describe("Google OAuth", () => {
 
     // Check that the button has the correct text
     await expect(googleButton).toContainText("Continue with Google");
-
-    // Check that the separator text is present
-    await expect(page.getByText("Or continue with")).toBeVisible();
   });
 
   test("should handle returnUrl parameter in Google OAuth flow", async ({ page }) => {

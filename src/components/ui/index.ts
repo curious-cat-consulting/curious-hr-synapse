@@ -54,10 +54,13 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
+export { GoogleOAuthButton } from "./google-oauth-button";
 export { Input } from "./input";
 export { Label } from "./label";
 export { LoadingIndicator } from "./loading-indicator";
 export { LoadingSpinner } from "./loading-spinner";
+export { MicrosoftOAuthButton } from "./microsoft-oauth-button";
+export { OAuthErrorHandler } from "./oauth-error-handler";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export { Progress } from "./progress";
 export {

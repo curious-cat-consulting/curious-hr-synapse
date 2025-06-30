@@ -31,7 +31,7 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 
 # For test data management (Service Role Key)

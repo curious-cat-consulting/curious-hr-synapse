@@ -629,16 +629,15 @@ export default function LandingPage() {
           <Separator className="my-8" />
 
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-muted-foreground">© 2024 Synapse. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Synapse. All rights reserved.
+            </p>
             <div className="flex space-x-6 text-sm text-muted-foreground">
-              <Link href="#" className="hover:text-primary">
+              <Link href="/privacy" className="hover:text-primary">
                 Privacy Policy
               </Link>
-              <Link href="#" className="hover:text-primary">
+              <Link href="/terms" className="hover:text-primary">
                 Terms of Service
-              </Link>
-              <Link href="#" className="hover:text-primary">
-                Cookie Policy
               </Link>
             </div>
           </div>

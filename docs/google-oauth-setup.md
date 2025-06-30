@@ -36,7 +36,7 @@ This document explains how to set up Google OAuth authentication for the Curious
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
 3. Choose "Web application" as the application type
 4. Add the following authorized redirect URIs:
-   - For local development: `http://127.0.0.1:54321/auth/v1/callback`
+   - For local development: `http://localhost:54321/auth/v1/callback`
    - For production: `https://your-project-ref.supabase.co/auth/v1/callback`
 5. Note down the Client ID and Client Secret
 

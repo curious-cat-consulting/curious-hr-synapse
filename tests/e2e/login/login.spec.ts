@@ -1,4 +1,5 @@
 import { test } from "@playwright/test";
+import { expect } from "@playwright/test";
 
 import {
   waitForLoginPage,
@@ -41,5 +42,24 @@ test.describe("User Login", () => {
 
     // Step 2: Test form validation
     await testLoginFormValidation(page, TEST_EMAIL);
+  });
+
+  test("OAuth buttons are present on login page", async ({ page }) => {
+    // Step 1: Navigate to login page
+    await waitForLoginPage(page);
+
+    // Step 2: Check that Google OAuth button is present
+    const googleButton = page.getByTestId("google-sign-in-button");
+    await googleButton.waitFor({ state: "visible" });
+    await googleButton.isVisible();
+
+    // Step 3: Check that Microsoft OAuth button is present
+    const microsoftButton = page.getByTestId("microsoft-sign-in-button");
+    await microsoftButton.waitFor({ state: "visible" });
+    await microsoftButton.isVisible();
+
+    // Step 4: Verify button text
+    await expect(googleButton).toContainText("Continue with Google");
+    await expect(microsoftButton).toContainText("Continue with Microsoft");
   });
 });
